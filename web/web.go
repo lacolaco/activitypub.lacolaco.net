@@ -100,12 +100,14 @@ func (s *service) handlePerson(c *gin.Context) {
 func (s *service) handleInbox(c *gin.Context) {
 	username := c.Param("username")
 	if c.Request.Header.Get("Content-Type") != "application/activity+json" {
+		fmt.Println("invalid content type", c.Request.Header.Get("Content-Type"))
 		c.String(http.StatusBadRequest, "invalid content type")
 		return
 	}
 	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
 	activity := &ap.Activity{}
 	if err := c.BindJSON(&activity); err != nil {
+		fmt.Println(err)
 		c.String(http.StatusBadRequest, "invalid json")
 		return
 	}
@@ -150,5 +152,6 @@ func (s *service) handleInbox(c *gin.Context) {
 		}
 	}
 
+	fmt.Println("invalid activity type", activity.Type)
 	c.String(http.StatusBadRequest, "invalid activity type")
 }
