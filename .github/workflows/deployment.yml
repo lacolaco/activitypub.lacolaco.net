@@ -26,4 +26,5 @@ jobs:
         run: |
           gcloud --quiet run deploy activitypub-lacolaco-net \
           --source . \
+          --allow-unauthenticated \
           --execution-environment gen1 --region asia-northeast1 --platform managed --memory 128Mi
