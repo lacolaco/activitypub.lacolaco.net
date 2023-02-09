@@ -33,7 +33,7 @@ func GetActor(ctx context.Context, id string) (*Actor, error) {
 	return actor, nil
 }
 
-func PostActivity(ctx context.Context, to *Actor, activity *Activity) error {
+func PostActivity(ctx context.Context, from string, to *Actor, activity *Activity) error {
 	addr := to.Inbox
 	req, err := http.NewRequestWithContext(ctx, "POST", addr, nil)
 	if err != nil {
@@ -50,7 +50,8 @@ func PostActivity(ctx context.Context, to *Actor, activity *Activity) error {
 
 	conf := config.FromContext(ctx)
 	req.Header.Set("Content-Type", "application/activity+json")
-	signer.SignRequest(conf.RsaKeys.PrivateKey, sign.DefaultPublicKeyID, req, payload)
+	keyId := fmt.Sprintf("%s#%s", from, sign.DefaultPublicKeyID)
+	signer.SignRequest(conf.RsaKeys.PrivateKey, keyId, req, payload)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err

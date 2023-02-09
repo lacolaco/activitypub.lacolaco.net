@@ -98,6 +98,7 @@ func (s *service) handleInbox(c *gin.Context) {
 		c.String(http.StatusBadRequest, "invalid content type")
 		return
 	}
+	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
 	activity := &ap.Activity{}
 	if err := c.BindJSON(&activity); err != nil {
 		c.String(http.StatusBadRequest, "invalid json")
@@ -118,7 +119,7 @@ func (s *service) handleInbox(c *gin.Context) {
 		res := &ap.Activity{
 			Context: ap.ActivityPubContext,
 			Type:    ap.ActivityTypeAccept,
-			Actor:   ap.Actor{ID: fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)},
+			Actor:   ap.Actor{ID: id},
 			Object:  activity.ToObject(),
 		}
 
@@ -128,7 +129,7 @@ func (s *service) handleInbox(c *gin.Context) {
 			c.String(http.StatusInternalServerError, "invalid actor")
 			return
 		}
-		if err := ap.PostActivity(c.Request.Context(), actor, res); err != nil {
+		if err := ap.PostActivity(c.Request.Context(), id, actor, res); err != nil {
 			fmt.Println(err)
 			c.String(http.StatusInternalServerError, "internal server error")
 			return
