@@ -22,14 +22,8 @@ jobs:
           service_account: 'github-actions@lacolaco-activitypub.iam.gserviceaccount.com'
       - uses: google-github-actions/setup-gcloud@v0
       - uses: ./.github/actions/setup-go
-      - uses: imjasonh/setup-ko@v0.6
-        env:
-          KO_DOCKER_REPO: us-central1-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/cloud-run-builds
-      - name: Build Docker image of worker
-        id: 'build-image'
-        run: echo "::set-output name=image::$(ko build .)"
       - name: Deploy to Cloud Run
         run: |
           gcloud --quiet run deploy activitypub-lacolaco-net \
-          --image ${{ steps.build-image.outputs.image }} \
+          --source . \
           --execution-environment gen1 --region asia-northeast1 --platform managed --memory 128Mi
