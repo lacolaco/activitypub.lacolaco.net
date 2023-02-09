@@ -111,9 +111,9 @@ func (s *service) handleInbox(c *gin.Context) {
 	{
 		req := c.Copy().Request
 		raw := make(map[string]interface{})
-		json.NewDecoder(c.Request.Body).Decode(&raw)
+		json.NewDecoder(req.Body).Decode(&raw)
 		fmt.Println("raw body")
-		fmt.Println(req.Body)
+		fmt.Printf("%#v", raw)
 	}
 	if err := c.BindJSON(&activity); err != nil {
 		fmt.Println(err)
