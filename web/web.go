@@ -37,6 +37,7 @@ func handlePerson(c *gin.Context) {
 	username := c.Param("username")
 	p := &ap.Person{
 		Context:           "https://www.w3.org/ns/activitystreams",
+		Type:              "Person",
 		ID:                fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username),
 		Name:              "lacolaco",
 		PreferredUsername: username,
