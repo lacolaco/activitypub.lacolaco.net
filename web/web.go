@@ -26,6 +26,11 @@ func Start(conf *config.Config) error {
 
 	r := gin.Default()
 	r.Use(config.Middleware(conf))
+	r.Use(func(ctx *gin.Context) {
+		// set default cache-control header
+		ctx.Header("Cache-Control", "no-store")
+		ctx.Next()
+	})
 
 	r.GET("/.well-known/host-meta", handleWellKnownHostMeta)
 	r.GET("/.well-known/webfinger", handleWebfinger)
