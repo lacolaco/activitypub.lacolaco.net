@@ -1,13 +1,14 @@
 package web
 
 import (
-	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	goap "github.com/go-ap/activitypub"
 	ap "github.com/lacolaco/activitypub.lacolaco.net/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	firestore "github.com/lacolaco/activitypub.lacolaco.net/firestore"
@@ -106,14 +107,19 @@ func (s *service) handleInbox(c *gin.Context) {
 		return
 	}
 	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
+
 	activity := &ap.Activity{}
 	// log body json
 	{
 		req := c.Copy().Request
-		raw := make(map[string]interface{})
-		json.NewDecoder(req.Body).Decode(&raw)
+		body, _ := io.ReadAll(req.Body)
 		fmt.Println("raw body")
-		fmt.Printf("%#v", raw)
+		fmt.Printf("%s", string(body))
+		o, err := goap.UnmarshalJSON(body)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Printf("%#v", o)
 	}
 	if err := c.BindJSON(&activity); err != nil {
 		fmt.Println(err)

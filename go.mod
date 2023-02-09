@@ -7,7 +7,10 @@ require (
 	cloud.google.com/go/compute v1.12.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
 	cloud.google.com/go/longrunning v0.3.0 // indirect
+	git.sr.ht/~mariusor/go-xsd-duration v0.0.0-20220703122237-02e73435a078 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/go-ap/errors v0.0.0-20221205040414-01c1adfc98ea // indirect
+	github.com/go-ap/jsonld v0.0.0-20221030091449-f2a191312c73 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
@@ -24,6 +27,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
+	github.com/valyala/fastjson v1.6.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/net v0.4.0 // indirect
@@ -44,6 +48,7 @@ require (
 require (
 	cloud.google.com/go/firestore v1.9.0
 	github.com/gin-gonic/gin v1.8.2
+	github.com/go-ap/activitypub v0.0.0-20230204125704-b4f1d45500ae
 	github.com/go-fed/httpsig v1.1.0
 	github.com/joho/godotenv v1.5.1
 )
