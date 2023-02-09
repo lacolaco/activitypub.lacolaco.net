@@ -1,7 +1,7 @@
 package activitypub
 
 type Actor struct {
-	Context           string       `json:"@context,omitempty"`
+	Context           any          `json:"@context,omitempty"`
 	ID                string       `json:"id,omitempty"`
 	Type              ActivityType `json:"type,omitempty"`
 	Name              string       `json:"name,omitempty"`
