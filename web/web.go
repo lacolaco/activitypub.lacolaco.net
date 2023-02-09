@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -106,6 +107,14 @@ func (s *service) handleInbox(c *gin.Context) {
 	}
 	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
 	activity := &ap.Activity{}
+	// log body json
+	{
+		req := c.Copy().Request
+		raw := make(map[string]interface{})
+		json.NewDecoder(c.Request.Body).Decode(&raw)
+		fmt.Println("raw body")
+		fmt.Println(req.Body)
+	}
 	if err := c.BindJSON(&activity); err != nil {
 		fmt.Println(err)
 		c.String(http.StatusBadRequest, "invalid json")
