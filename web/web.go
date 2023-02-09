@@ -8,24 +8,39 @@ import (
 
 	"github.com/gin-gonic/gin"
 	ap "github.com/lacolaco/activitypub.lacolaco.net/activitypub"
+	"github.com/lacolaco/activitypub.lacolaco.net/config"
+	firestore "github.com/lacolaco/activitypub.lacolaco.net/firestore"
+	"github.com/lacolaco/activitypub.lacolaco.net/model"
+	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 )
 
-func Start(port string) error {
+type service struct {
+	firestoreClient *firestore.Client
+}
+
+func Start(conf *config.Config) error {
+	log.Print("starting server...")
+	w := &service{
+		firestoreClient: firestore.NewFirestoreClient(),
+	}
+
 	r := gin.Default()
+	r.Use(config.Middleware(conf))
 
 	r.GET("/.well-known/host-meta", handleWellKnownHostMeta)
 	r.GET("/.well-known/webfinger", handleWebfinger)
 
-	r.GET("/users/:username", handlePerson)
-	r.GET("/@:username", handlePerson)
-	r.GET("/", handler)
+	r.GET("/users/:username", w.handlePerson)
+	r.GET("/@:username", w.handlePerson)
+	r.POST("/users/:username/inbox", w.handleInbox)
+	r.GET("/", w.handler)
 
 	// Start HTTP server.
-	log.Printf("listening on http://localhost:%s", port)
-	return r.Run(":" + port)
+	log.Printf("listening on http://localhost:%s", conf.Port)
+	return r.Run(":" + conf.Port)
 }
 
-func handler(c *gin.Context) {
+func (s *service) handler(c *gin.Context) {
 	name := os.Getenv("NAME")
 	if name == "" {
 		name = "World"
@@ -33,22 +48,43 @@ func handler(c *gin.Context) {
 	c.String(http.StatusOK, "Hello %s!", name)
 }
 
-func handlePerson(c *gin.Context) {
+func (s *service) handlePerson(c *gin.Context) {
 	username := c.Param("username")
+	userDoc, err := s.firestoreClient.Collection("users").Doc(username).Get(c.Request.Context())
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	user := &model.User{}
+	if err := userDoc.DataTo(user); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	conf := config.FromContext(c.Request.Context())
+
+	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
 	p := &ap.Person{
-		Context:           "https://www.w3.org/ns/activitystreams",
-		Type:              "Person",
-		ID:                fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username),
-		Name:              "lacolaco",
+		Context:           ap.ActivityPubContext,
+		Type:              ap.ActivityTypePerson,
+		ID:                id,
+		Name:              user.Name,
 		PreferredUsername: username,
-		Summary:           "I'm a software engineer.",
-		Inbox:             fmt.Sprintf("https://activitypub.lacolaco.net/users/%s/inbox", username),
-		Outbox:            fmt.Sprintf("https://activitypub.lacolaco.net/users/%s/outbox", username),
+		Summary:           user.Description,
+		Inbox:             fmt.Sprintf("%s/inbox", id),
+		Outbox:            fmt.Sprintf("%s/outbox", id),
 		URL:               fmt.Sprintf("https://activitypub.lacolaco.net/@%s", username),
 		Icon: ap.Icon{
 			Type:      "Image",
-			MediaType: "image/png",
-			URL:       "https://github.com/lacolaco.png",
+			MediaType: user.Icon.MediaType,
+			URL:       user.Icon.URL,
+		},
+		PublicKey: ap.PublicKey{
+			Context:      ap.ActivityPubContext,
+			Type:         "Key",
+			ID:           fmt.Sprintf("%s#%s", id, sign.DefaultPublicKeyID),
+			Owner:        id,
+			PublicKeyPem: conf.RsaKeys.PublicKey,
 		},
 	}
 
@@ -56,31 +92,57 @@ func handlePerson(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
-func handleWellKnownHostMeta(c *gin.Context) {
-	c.Header("Content-Type", "application/xrd+xml")
-	c.String(http.StatusOK, `<?xml version="1.0"?>
-<XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
-	<Link rel="lrdd" type="application/xrd+xml" template="https://activitypub.lacolaco.net/.well-known/webfinger?resource={uri}" />
-</XRD>
-`)
-}
-
-func handleWebfinger(c *gin.Context) {
-	resource := c.Query("resource")
-	if resource == "" {
-		c.String(http.StatusBadRequest, "resource is required")
+func (s *service) handleInbox(c *gin.Context) {
+	username := c.Param("username")
+	if c.Request.Header.Get("Content-Type") != "application/activity+json" {
+		c.String(http.StatusBadRequest, "invalid content type")
 		return
 	}
+	activity := &ap.Activity{}
+	if err := c.BindJSON(&activity); err != nil {
+		c.String(http.StatusBadRequest, "invalid json")
+		return
+	}
+	fmt.Printf("%#v", activity)
 
-	c.Header("Content-Type", "application/jrd+json")
-	c.String(http.StatusOK, `{
-	"subject": "acct:lacolaco@activitypub.lacolaco.net",
-	"links": [
-		{
-			"rel": "self",
-			"type": "application/activity+json",
-			"href": "https://activitypub.lacolaco.net/users/lacolaco"
+	switch activity.Type {
+	case ap.ActivityTypeFollow:
+		followersCollection := s.firestoreClient.Collection("users").Doc(username).Collection("followers")
+		_, err := followersCollection.Doc(activity.Actor.ID).Set(c.Request.Context(), map[string]interface{}{})
+		if err != nil {
+			fmt.Println(err)
+			c.String(http.StatusInternalServerError, "internal server error")
+			return
 		}
-	]
-}`)
+
+		res := &ap.Activity{
+			Context: ap.ActivityPubContext,
+			Type:    ap.ActivityTypeAccept,
+			Actor:   ap.Actor{ID: fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)},
+			Object:  activity.ToObject(),
+		}
+
+		actor, err := ap.GetActor(c.Request.Context(), activity.Actor.ID)
+		if err != nil {
+			fmt.Println(err)
+			c.String(http.StatusInternalServerError, "invalid actor")
+			return
+		}
+		if err := ap.PostActivity(c.Request.Context(), actor, res); err != nil {
+			fmt.Println(err)
+			c.String(http.StatusInternalServerError, "internal server error")
+			return
+		}
+
+		c.JSON(http.StatusOK, res)
+		return
+	case ap.ActivityTypeUndo:
+		switch activity.Object.Type {
+		case ap.ActivityTypeFollow:
+			// TODO: unfollow
+			return
+		}
+	}
+
+	c.String(http.StatusBadRequest, "invalid activity type")
 }

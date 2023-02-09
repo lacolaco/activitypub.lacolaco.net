@@ -3,21 +3,19 @@ package main
 
 import (
 	"log"
-	"os"
 
+	"github.com/joho/godotenv"
+	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/web"
 )
 
 func main() {
-	log.Print("starting server...")
-
-	// Determine port for HTTP service.
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	godotenv.Load()
+	conf, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	if err := web.Start(port); err != nil {
+	if err := web.Start(conf); err != nil {
 		log.Fatal(err)
 	}
 }
