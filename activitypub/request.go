@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	goap "github.com/go-ap/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 )
@@ -33,7 +34,7 @@ func GetActor(ctx context.Context, id string) (*Actor, error) {
 	return actor, nil
 }
 
-func PostActivity(ctx context.Context, from string, to *Actor, activity *Activity) error {
+func PostActivity(ctx context.Context, from string, to *Actor, activity *goap.Activity) error {
 	addr := to.Inbox
 	req, err := http.NewRequestWithContext(ctx, "POST", addr, nil)
 	if err != nil {
@@ -43,7 +44,7 @@ func PostActivity(ctx context.Context, from string, to *Actor, activity *Activit
 	if err != nil {
 		return err
 	}
-	payload, err := json.Marshal(activity)
+	payload, err := activity.MarshalJSON()
 	if err != nil {
 		return err
 	}
