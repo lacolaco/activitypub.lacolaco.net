@@ -1,6 +1,11 @@
 package sign
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"log"
+
 	"github.com/go-fed/httpsig"
 )
 
@@ -16,4 +21,18 @@ func NewHeaderSigner() (httpsig.Signer, error) {
 		return nil, err
 	}
 	return signer, nil
+}
+
+func ExportPublicKey(x rsa.PublicKey) string {
+	y, err := x509.MarshalPKIXPublicKey(x)
+	if err != nil {
+		log.Fatal(err)
+	}
+	z := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "PUBLIC KEY",
+			Bytes: y,
+		},
+	)
+	return string(z)
 }

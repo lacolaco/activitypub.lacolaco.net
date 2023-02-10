@@ -28,6 +28,9 @@ func Start(conf *config.Config) error {
 	w := &service{
 		firestoreClient: firestore.NewFirestoreClient(),
 	}
+	if conf.IsRunningOnCloud() {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	r := gin.Default()
 	r.Use(config.Middleware(conf))
@@ -102,7 +105,7 @@ func (s *service) handlePerson(c *gin.Context) {
 			Type:         "Key",
 			ID:           fmt.Sprintf("%s#%s", id, sign.DefaultPublicKeyID),
 			Owner:        id,
-			PublicKeyPem: conf.RsaKeys.PublicKey,
+			PublicKeyPem: sign.ExportPublicKey(conf.RsaPrivateKey.PublicKey),
 		},
 	}
 

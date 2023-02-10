@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
 	goap "github.com/go-ap/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
+	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 )
 
@@ -39,6 +41,7 @@ func GetActor(ctx context.Context, id string) (*Actor, error) {
 }
 
 func PostActivity(ctx context.Context, from string, to *Actor, activity *goap.Activity) error {
+	logger := logging.FromContext(ctx)
 	addr := to.Inbox
 	req, err := http.NewRequestWithContext(ctx, "POST", addr, nil)
 	if err != nil {
@@ -56,14 +59,17 @@ func PostActivity(ctx context.Context, from string, to *Actor, activity *goap.Ac
 	conf := config.FromContext(ctx)
 	req.Header.Set("Content-Type", "application/activity+json")
 	keyId := fmt.Sprintf("%s#%s", from, sign.DefaultPublicKeyID)
-	signer.SignRequest(conf.RsaKeys.PrivateKey, keyId, req, payload)
+	signer.SignRequest(conf.RsaPrivateKey, keyId, req, payload)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return err
 	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	logger.Sugar().Infoln("raw body")
+	logger.Sugar().Infof("%s", string(body))
 	return nil
 }
