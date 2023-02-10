@@ -108,44 +108,44 @@ func (s *service) handleInbox(c *gin.Context) {
 	}
 	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
 
-	activity := &ap.Activity{}
-	// log body json
-	{
-		req := c.Copy().Request
-		body, _ := io.ReadAll(req.Body)
-		fmt.Println("raw body")
-		fmt.Printf("%s", string(body))
-		o, err := goap.UnmarshalJSON(body)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Printf("%#v", o)
+	body, _ := io.ReadAll(c.Request.Body)
+	fmt.Println("raw body")
+	fmt.Printf("%s", string(body))
+	o, err := goap.UnmarshalJSON(body)
+	if err != nil {
+		fmt.Println(err)
 	}
-	if err := c.BindJSON(&activity); err != nil {
+	var activity *goap.Activity
+	// log body json
+	err = goap.OnActivity(o, func(a *goap.Activity) error {
+		activity = a
+		return nil
+	})
+	if err != nil {
 		fmt.Println(err)
 		c.String(http.StatusBadRequest, "invalid json")
-		return
 	}
 	fmt.Printf("%#v", activity)
+	from := activity.Actor.GetID()
 
 	switch activity.Type {
-	case ap.ActivityTypeFollow:
+	case goap.FollowType:
 		followersCollection := s.firestoreClient.Collection("users").Doc(username).Collection("followers")
-		_, err := followersCollection.Doc(activity.Actor.ID).Set(c.Request.Context(), map[string]interface{}{})
+		_, err := followersCollection.Doc(string(from)).Set(c.Request.Context(), map[string]interface{}{})
 		if err != nil {
 			fmt.Println(err)
 			c.String(http.StatusInternalServerError, "internal server error")
 			return
 		}
 
-		res := &ap.Activity{
-			Context: ap.ActivityPubContext,
-			Type:    ap.ActivityTypeAccept,
-			Actor:   ap.Actor{ID: id},
-			Object:  activity.ToObject(),
+		res := &goap.Activity{
+			Context: activity.Context,
+			Type:    goap.AcceptType,
+			Actor:   goap.IRI(id),
+			Object:  activity.Object,
 		}
 
-		actor, err := ap.GetActor(c.Request.Context(), activity.Actor.ID)
+		actor, err := ap.GetActor(c.Request.Context(), string(activity.Actor.GetID()))
 		if err != nil {
 			fmt.Println(err)
 			c.String(http.StatusInternalServerError, "invalid actor")
@@ -159,12 +159,12 @@ func (s *service) handleInbox(c *gin.Context) {
 
 		c.JSON(http.StatusOK, res)
 		return
-	case ap.ActivityTypeUndo:
-		switch activity.Object.Type {
-		case ap.ActivityTypeFollow:
-			// TODO: unfollow
-			return
-		}
+		// case ap.ActivityTypeUndo:
+		// 	switch activity.Object.Type {
+		// 	case ap.ActivityTypeFollow:
+		// 		// TODO: unfollow
+		// 		return
+		// 	}
 	}
 
 	fmt.Println("invalid activity type", activity.Type)
