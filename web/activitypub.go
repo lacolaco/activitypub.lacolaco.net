@@ -35,6 +35,7 @@ func (e *activitypubEndpoints) RegisterRoutes(r *gin.Engine) {
 	r.GET("/users/:username/outbox", e.handleOutbox)
 	r.GET("/users/:username/followers", e.handleFollowers)
 	r.GET("/users/:username/following", e.handleFollowing)
+	r.GET("/users/:username/collections/featured", e.handleFeatured)
 }
 
 func (s *activitypubEndpoints) handlePerson(c *gin.Context) {
@@ -156,6 +157,25 @@ func (s *activitypubEndpoints) handleOutbox(c *gin.Context) {
 	}
 	res := &goap.OrderedCollection{
 		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/outbox"),
+		Type:       goap.OrderedCollectionType,
+		TotalItems: 0,
+	}
+	sendActivityJSON(c, http.StatusOK, res)
+}
+
+func (s *activitypubEndpoints) handleFeatured(c *gin.Context) {
+	logger := logging.FromContext(c.Request.Context())
+	baseURI := getBaseURI(c)
+
+	username := c.Param("username")
+	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	if err != nil {
+		logger.Error("failed to get user", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	res := &goap.OrderedCollection{
+		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/collections/featured"),
 		Type:       goap.OrderedCollectionType,
 		TotalItems: 0,
 	}

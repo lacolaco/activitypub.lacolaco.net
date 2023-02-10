@@ -51,6 +51,9 @@ func (u *User) ToPerson(baseUri string, publicKey *rsa.PublicKey) *goap.Person {
 		Outbox:            goap.IRI(fmt.Sprintf("%s/outbox", apID)),
 		Followers:         goap.IRI(fmt.Sprintf("%s/followers", apID)),
 		Following:         goap.IRI(fmt.Sprintf("%s/following", apID)),
+		Endpoints: &goap.Endpoints{
+			
+		},
 		URL:               goap.IRI(fmt.Sprintf("%s/@%s", baseUri, u.ID)),
 		Icon: &goap.Object{
 			Type:      goap.ImageType,

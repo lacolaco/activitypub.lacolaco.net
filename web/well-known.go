@@ -13,7 +13,9 @@ import (
 
 var (
 	//go:embed template/host-meta.xml.template
-	hostMetaTemplate string
+	hostMetaXMLTemplate string
+	//go:embed template/host-meta.json.template
+	hostMetaJSONTemplate string
 )
 
 type wellKnownEndpoints struct{}
@@ -24,21 +26,40 @@ func NewWellKnownEndpoints() *wellKnownEndpoints {
 
 func (e *wellKnownEndpoints) RegisterRoutes(r *gin.Engine) {
 	r.GET("/.well-known/host-meta", e.handleHostMeta)
+	r.GET("/.well-known/host-meta.json", e.handleHostMeta)
 	r.GET("/.well-known/webfinger", e.handleWebfinger)
 }
 
 func (e *wellKnownEndpoints) handleHostMeta(c *gin.Context) {
-	tmpl := template.New("host-meta.xml.template")
-	tmpl, err := tmpl.Parse(hostMetaTemplate)
-	if err != nil {
-		panic(err)
+	accept := c.GetHeader("Accept")
+	switch accept {
+	case "application/json":
+		tmpl := template.New("host-meta.json.template")
+		tmpl, err := tmpl.Parse(hostMetaJSONTemplate)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		buf := bytes.NewBuffer(nil)
+		tmpl.Execute(buf, map[string]interface{}{
+			"Host": c.Request.Host,
+		})
+		c.Header("Content-Type", "application/json")
+		c.String(http.StatusOK, buf.String())
+	default:
+		tmpl := template.New("host-meta.xml.template")
+		tmpl, err := tmpl.Parse(hostMetaXMLTemplate)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		buf := bytes.NewBuffer(nil)
+		tmpl.Execute(buf, map[string]interface{}{
+			"Host": c.Request.Host,
+		})
+		c.Header("Content-Type", "application/xrd+xml; charset=utf-8")
+		c.String(http.StatusOK, buf.String())
 	}
-	buf := bytes.NewBuffer(nil)
-	tmpl.Execute(buf, map[string]interface{}{
-		"Host": c.Request.Host,
-	})
-	c.Header("Content-Type", "application/xml; charset=utf-8")
-	c.String(http.StatusOK, buf.String())
 }
 
 func (e *wellKnownEndpoints) handleWebfinger(c *gin.Context) {

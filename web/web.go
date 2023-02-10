@@ -32,14 +32,13 @@ func Start(conf *config.Config) error {
 	r.Use(requestLogger())
 	r.Use(func(ctx *gin.Context) {
 		// set default cache-control header
-		ctx.Header("Cache-Control", "no-store")
+		ctx.Header("Cache-Control", "public, no-cache")
 		ctx.Next()
 	})
 
-	// health check
-	r.GET("/", func(ctx *gin.Context) {
-		ctx.String(http.StatusOK, "OK")
-	})
+	r.StaticFile("/", "./static/index.html")
+	r.StaticFile("/index.html", "./static/index.html")
+	r.StaticFile("/robots.txt", "./static/robots.txt")
 
 	wkService := &wellKnownEndpoints{}
 	wkService.RegisterRoutes(r)
