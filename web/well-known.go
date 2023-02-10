@@ -15,6 +15,7 @@ func (e *wellKnownEndpoints) RegisterRoutes(r *gin.Engine) {
 }
 
 func (e *wellKnownEndpoints) handleWebfinger(c *gin.Context) {
+	host := c.Request.Host
 	resource := c.Query("resource")
 	if resource == "" {
 		c.String(http.StatusBadRequest, "resource is required")
@@ -31,15 +32,20 @@ func (e *wellKnownEndpoints) handleWebfinger(c *gin.Context) {
 	}
 	username := strings.Split(sub.Opaque, "@")[0]
 
+	res := gin.H{
+		"subject": "acct:" + username + "@" + host,
+		"aliases": []string{
+			"https://" + host + "/@" + username,
+			"https://" + host + "/users/" + username,
+		},
+		"links": []interface{}{
+			map[string]string{
+				"rel":  "self",
+				"type": "application/activity+json",
+				"href": "https://" + host + "/users/" + username,
+			},
+		},
+	}
 	c.Header("Content-Type", "application/jrd+json")
-	c.String(http.StatusOK, `{
-	"subject": "acct:%s@activitypub.lacolaco.net",
-	"links": [
-		{
-			"rel": "self",
-			"type": "application/activity+json",
-			"href": "https://activitypub.lacolaco.net/users/%s"
-		}
-	]
-}`, username, username)
+	c.JSON(http.StatusOK, res)
 }

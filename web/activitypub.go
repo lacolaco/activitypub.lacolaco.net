@@ -13,14 +13,14 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
-	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 	"go.uber.org/zap"
 )
 
 type UserRepository interface {
 	FindByUsername(ctx context.Context, username string) (*model.User, error)
-	AddFollower(ctx context.Context, username, followerID string) error
-	RemoveFollower(ctx context.Context, username, followerID string) error
+	AddFollower(ctx context.Context, user *model.User, followerID string) error
+	RemoveFollower(ctx context.Context, user *model.User, followerID string) error
+	ListFollowers(ctx context.Context, user *model.User) ([]*model.Follower, error)
 }
 
 type activitypubEndpoints struct {
@@ -31,10 +31,12 @@ func (e *activitypubEndpoints) RegisterRoutes(r *gin.Engine) {
 	r.GET("/users/:username", e.handlePerson)
 	r.GET("/@:username", e.handlePerson)
 	r.POST("/users/:username/inbox", e.handleInbox)
+	r.GET("/users/:username/followers", e.handleFollowers)
 }
 
 func (s *activitypubEndpoints) handlePerson(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
+	conf := config.FromContext(c.Request.Context())
 	username := c.Param("username")
 	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
 	if err != nil {
@@ -42,44 +44,28 @@ func (s *activitypubEndpoints) handlePerson(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	conf := config.FromContext(c.Request.Context())
-
-	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
-	p := &goap.Person{
-		Context:           goap.ActivityBaseURI,
-		Type:              goap.PersonType,
-		ID:                goap.IRI(id),
-		Name:              goap.DefaultNaturalLanguageValue(user.Name),
-		PreferredUsername: goap.DefaultNaturalLanguageValue(username),
-		Summary:           goap.DefaultNaturalLanguageValue(user.Description),
-		Inbox:             goap.IRI(fmt.Sprintf("%s/inbox", id)),
-		Outbox:            goap.IRI(fmt.Sprintf("%s/outbox", id)),
-		URL:               goap.IRI(fmt.Sprintf("https://activitypub.lacolaco.net/@%s", username)),
-		Icon: &goap.Object{
-			Type:      "Image",
-			MediaType: goap.MimeType(user.Icon.MediaType),
-			URL:       goap.IRI(user.Icon.URL),
-		},
-		PublicKey: goap.PublicKey{
-			ID:           goap.ID(fmt.Sprintf("%s#%s", id, sign.DefaultPublicKeyID)),
-			Owner:        goap.IRI(id),
-			PublicKeyPem: sign.ExportPublicKey(&conf.RsaPrivateKey.PublicKey),
-		},
-	}
-
-	c.Header("Content-Type", "application/activity+json")
-	c.JSON(http.StatusOK, p)
+	logger.Debug("user found", zap.Any("user", user))
+	p := user.ToPerson(getBaseURI(c), &conf.RsaPrivateKey.PublicKey)
+	sendActivityJSON(c, http.StatusOK, p)
 }
 
 func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
+
 	if c.Request.Header.Get("Content-Type") != "application/activity+json" {
 		logger.Sugar().Errorln("invalid content type", c.Request.Header.Get("Content-Type"))
 		c.String(http.StatusBadRequest, "invalid content type")
 		return
 	}
+	baseURI := getBaseURI(c)
 	username := c.Param("username")
-	self := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
+	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	if err != nil {
+		logger.Error("failed to get user", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	selfID := user.GetActivityPubID(baseURI)
 
 	body, _ := io.ReadAll(c.Request.Body)
 	o, err := goap.UnmarshalJSON(body)
@@ -102,7 +88,7 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 
 	switch activity.GetType() {
 	case goap.FollowType:
-		err := s.userRepo.AddFollower(c.Request.Context(), username, string(from.GetID()))
+		err := s.userRepo.AddFollower(c.Request.Context(), user, string(from.GetID()))
 		if err != nil {
 			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "add follower failed")
@@ -116,17 +102,17 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 			return
 		}
 		logger.Debug("post activity")
-		accept := ap.NewAccept(fmt.Sprintf("%s/%d", self, time.Now().Unix()), self, activity)
-		if err := ap.PostActivity(c.Request.Context(), self, actor, accept); err != nil {
+		res := ap.NewAccept(fmt.Sprintf("%s/%d", selfID, time.Now().Unix()), selfID, activity)
+		if err := ap.PostActivity(c.Request.Context(), selfID, actor, res); err != nil {
 			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "post activity failed")
 			return
 		}
-		c.JSON(http.StatusOK, accept)
+		c.JSON(http.StatusOK, res)
 	case goap.UndoType:
 		switch activity.Object.GetType() {
 		case goap.FollowType:
-			err := s.userRepo.RemoveFollower(c.Request.Context(), username, string(from.GetID()))
+			err := s.userRepo.RemoveFollower(c.Request.Context(), user, string(from.GetID()))
 			if err != nil {
 				logger.Error(err.Error())
 				c.String(http.StatusInternalServerError, "internal server error")
@@ -140,17 +126,50 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 				return
 			}
 			logger.Debug("post activity to", zap.Any("actor", actor))
-			accept := ap.NewAccept(fmt.Sprintf("%s/%d", self, time.Now().Unix()), self, activity)
-			if err := ap.PostActivity(c.Request.Context(), self, actor, accept); err != nil {
+			res := ap.NewAccept(fmt.Sprintf("%s/%d", selfID, time.Now().Unix()), selfID, activity)
+			if err := ap.PostActivity(c.Request.Context(), selfID, actor, res); err != nil {
 				logger.Error(err.Error())
 				c.String(http.StatusInternalServerError, "internal server error")
 				return
 			}
 
-			c.JSON(http.StatusOK, accept)
+			c.JSON(http.StatusOK, res)
 		}
 	default:
 		logger.Error("unsuppoted activity type")
 		c.String(http.StatusBadRequest, "invalid activity type")
 	}
+}
+
+func (s *activitypubEndpoints) handleFollowers(c *gin.Context) {
+	logger := logging.FromContext(c.Request.Context())
+	baseURI := getBaseURI(c)
+
+	username := c.Param("username")
+	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	if err != nil {
+		logger.Error("failed to get user", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	followers, err := s.userRepo.ListFollowers(c.Request.Context(), user)
+	if err != nil {
+		logger.Error("failed to get followers", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	res := &goap.OrderedCollection{
+		Context:    goap.ActivityBaseURI,
+		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/followers"),
+		Type:       goap.OrderedCollectionType,
+		TotalItems: uint(len(followers)),
+		OrderedItems: func() []goap.Item {
+			items := make([]goap.Item, len(followers))
+			for i, follower := range followers {
+				items[i] = goap.IRI(follower.ID)
+			}
+			return items
+		}(),
+	}
+	sendActivityJSON(c, http.StatusOK, res)
 }

@@ -1,10 +1,14 @@
 package web
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	goap "github.com/go-ap/activitypub"
+	ap "github.com/lacolaco/activitypub.lacolaco.net/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	firestore "github.com/lacolaco/activitypub.lacolaco.net/firestore"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
@@ -78,4 +82,18 @@ func requestLogger() gin.HandlerFunc {
 			zap.Int("size", c.Writer.Size()),
 		)
 	}
+}
+
+func sendActivityJSON(c *gin.Context, code int, item goap.Item) error {
+	body, err := ap.MarshalActivityJSON(item)
+	if err != nil {
+		return err
+	}
+	c.Header("Content-Type", "application/activity+json")
+	c.String(code, string(body))
+	return nil
+}
+
+func getBaseURI(c *gin.Context) string {
+	return fmt.Sprintf("%s://%s", c.Request.URL.Scheme, c.Request.URL.Host)
 }

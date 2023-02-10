@@ -58,7 +58,7 @@ func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *go
 	logger := logging.FromContext(ctx)
 
 	addr := string(to.Inbox.GetLink())
-	payload, err := activity.MarshalJSON()
+	payload, err := MarshalActivityJSON(activity)
 	if err != nil {
 		return err
 	}
