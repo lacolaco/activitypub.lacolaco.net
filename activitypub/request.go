@@ -63,7 +63,7 @@ func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *go
 	if err != nil {
 		return err
 	}
-	logger.Info("raw payload", zap.String("payload", string(payload)))
+	logger.Info("raw payload", zap.Any("payload", string(payload)))
 
 	conf := config.FromContext(ctx)
 	keyId := fmt.Sprintf("%s#%s", from, sign.DefaultPublicKeyID)
@@ -84,6 +84,6 @@ func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *go
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	logger.Sugar().Infoln("raw response", string(body))
+	logger.Info("raw response", zap.Any("response", string(body)))
 	return nil
 }
