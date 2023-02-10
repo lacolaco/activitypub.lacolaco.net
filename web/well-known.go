@@ -1,17 +1,37 @@
 package web
 
 import (
+	"bytes"
 	"net/http"
 	"net/url"
 	"strings"
+	"text/template"
 
 	"github.com/gin-gonic/gin"
 )
 
 type wellKnownEndpoints struct{}
 
+func NewWellKnownEndpoints() *wellKnownEndpoints {
+	return &wellKnownEndpoints{}
+}
+
 func (e *wellKnownEndpoints) RegisterRoutes(r *gin.Engine) {
+	r.GET("/.well-known/host-meta", e.handleHostMeta)
 	r.GET("/.well-known/webfinger", e.handleWebfinger)
+}
+
+func (e *wellKnownEndpoints) handleHostMeta(c *gin.Context) {
+	tmpl, err := template.ParseFiles("./template/host-meta.xml.template")
+	if err != nil {
+		panic(err)
+	}
+	buf := bytes.NewBuffer(nil)
+	tmpl.Execute(buf, map[string]interface{}{
+		"Host": c.Request.Host,
+	})
+	c.Header("Content-Type", "application/xml; charset=utf-8")
+	c.String(http.StatusOK, buf.String())
 }
 
 func (e *wellKnownEndpoints) handleWebfinger(c *gin.Context) {
