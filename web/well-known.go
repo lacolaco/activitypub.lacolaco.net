@@ -2,7 +2,7 @@ package web
 
 import (
 	"bytes"
-	"embed"
+	_ "embed"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	//go:embed template
-	templates embed.FS
+	//go:embed template/host-meta.xml.template
+	hostMetaTemplate string
 )
 
 type wellKnownEndpoints struct{}
@@ -28,7 +28,8 @@ func (e *wellKnownEndpoints) RegisterRoutes(r *gin.Engine) {
 }
 
 func (e *wellKnownEndpoints) handleHostMeta(c *gin.Context) {
-	tmpl, err := template.ParseFS(templates, "template/host-meta.xml.template")
+	tmpl := template.New("host-meta.xml.template")
+	tmpl, err := tmpl.Parse(hostMetaTemplate)
 	if err != nil {
 		panic(err)
 	}
