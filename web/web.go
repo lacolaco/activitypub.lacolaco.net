@@ -105,7 +105,7 @@ func (s *service) handlePerson(c *gin.Context) {
 			Type:         "Key",
 			ID:           fmt.Sprintf("%s#%s", id, sign.DefaultPublicKeyID),
 			Owner:        id,
-			PublicKeyPem: sign.ExportPublicKey(conf.RsaPrivateKey.PublicKey),
+			PublicKeyPem: sign.ExportPublicKey(&conf.RsaPrivateKey.PublicKey),
 		},
 	}
 

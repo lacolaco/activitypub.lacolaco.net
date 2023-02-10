@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"golang.org/x/crypto/ssh"
+	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 	"golang.org/x/oauth2/google"
 )
 
@@ -38,11 +38,11 @@ func Load() (*Config, error) {
 	if rsaPrivateKey == "" {
 		return nil, fmt.Errorf("RSA keys are not set")
 	}
-	privateKey, err := ssh.ParseRawPrivateKey([]byte(rsaPrivateKey))
+	privateKey, err := sign.ImportPrivateKey(rsaPrivateKey)
 	if err != nil {
 		return nil, err
 	}
-	config.RsaPrivateKey = privateKey.(*rsa.PrivateKey)
+	config.RsaPrivateKey = privateKey
 
 	config.googleCredentials = findGoogleCredentials()
 	config.isRunningOnCloud = os.Getenv("K_SERVICE") != ""

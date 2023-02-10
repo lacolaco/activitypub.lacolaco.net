@@ -8,8 +8,10 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"fmt"
 	"log"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-fed/httpsig"
@@ -65,10 +67,31 @@ func SignHeaders(payload []byte, inbox string, privateKey *rsa.PrivateKey, publi
 	return headers, nil
 }
 
-func ExportPublicKey(x rsa.PublicKey) string {
+func ImportPrivateKey(s string) (*rsa.PrivateKey, error) {
+	s = strings.TrimPrefix(s, "\"")
+	s = strings.TrimSuffix(s, "\"")
+	s = strings.Join(strings.Split(s, "\\n"), "\n")
+
+	block, _ := pem.Decode([]byte(s))
+	if block == nil {
+		return nil, fmt.Errorf("failed to parse PEM block containing the key: %s", block.Type)
+	}
+
+	if block == nil {
+		return nil, nil
+	}
+	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	return key.(*rsa.PrivateKey), nil
+}
+
+func ExportPublicKey(x *rsa.PublicKey) string {
 	y, err := x509.MarshalPKIXPublicKey(x)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to marshal public key: %v", err)
+		return ""
 	}
 	z := pem.EncodeToMemory(
 		&pem.Block{
