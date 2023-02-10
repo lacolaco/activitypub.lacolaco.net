@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -14,19 +15,26 @@ import (
 	firestore "github.com/lacolaco/activitypub.lacolaco.net/firestore"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
+	"github.com/lacolaco/activitypub.lacolaco.net/repository"
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
 	"go.uber.org/zap"
 )
 
+type UserRepository interface {
+	FindByUsername(ctx context.Context, username string) (*model.User, error)
+	AddFollower(ctx context.Context, username string, follower *model.Follower) error
+}
+
 type service struct {
-	firestoreClient *firestore.Client
+	userRepo UserRepository
 }
 
 func Start(conf *config.Config) error {
 	log.Print("starting server...")
+	firestoreClient := firestore.NewFirestoreClient()
 	w := &service{
-		firestoreClient: firestore.NewFirestoreClient(),
+		userRepo: repository.NewUserRepository(firestoreClient),
 	}
 	if conf.IsRunningOnCloud() {
 		gin.SetMode(gin.ReleaseMode)
@@ -69,19 +77,12 @@ func (s *service) handler(c *gin.Context) {
 func (s *service) handlePerson(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	username := c.Param("username")
-	userDoc, err := s.firestoreClient.Collection("users").Doc(username).Get(c.Request.Context())
+	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
 	if err != nil {
 		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	user := &model.User{}
-	if err := userDoc.DataTo(user); err != nil {
-		logger.Error("failed to parse user", zap.Error(err))
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-
 	conf := config.FromContext(c.Request.Context())
 
 	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
@@ -147,9 +148,8 @@ func (s *service) handleInbox(c *gin.Context) {
 
 	switch activity.Type {
 	case goap.FollowType:
-		followersCollection := s.firestoreClient.Collection("users").Doc(username).Collection("followers")
-		_, _, err := followersCollection.Add(c.Request.Context(), map[string]interface{}{
-			"id": string(from.GetID()),
+		err := s.userRepo.AddFollower(c.Request.Context(), username, &model.Follower{
+			ID: string(from.GetID()),
 		})
 		if err != nil {
 			logger.Error(err.Error())

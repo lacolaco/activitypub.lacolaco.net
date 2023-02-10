@@ -8,3 +8,7 @@ type User struct {
 		MediaType string `json:"media_type"`
 	} `json:"icon"`
 }
+
+type Follower struct {
+	ID string `json:"id"`
+}
