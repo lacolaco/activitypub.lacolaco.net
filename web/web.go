@@ -140,12 +140,14 @@ func (s *service) handleInbox(c *gin.Context) {
 		return
 	}
 	l.Sugar().Infof("%#v", activity)
-	from := activity.Actor.GetID()
+	from := activity.Actor
 
 	switch activity.Type {
 	case goap.FollowType:
 		followersCollection := s.firestoreClient.Collection("users").Doc(username).Collection("followers")
-		_, err := followersCollection.Doc(string(from)).Set(c.Request.Context(), map[string]interface{}{})
+		_, _, err := followersCollection.Add(c.Request.Context(), map[string]interface{}{
+			id: string(from.GetID()),
+		})
 		if err != nil {
 			l.Error(err.Error())
 			c.String(http.StatusInternalServerError, "internal server error")
@@ -159,7 +161,7 @@ func (s *service) handleInbox(c *gin.Context) {
 			Object:  activity.Object,
 		}
 
-		actor, err := ap.GetActor(c.Request.Context(), string(activity.Actor.GetID()))
+		actor, err := ap.GetActor(c.Request.Context(), string(from.GetID()))
 		if err != nil {
 			l.Error(err.Error())
 			c.String(http.StatusInternalServerError, "invalid actor")
