@@ -27,5 +27,5 @@ jobs:
           --source . \
           --allow-unauthenticated \
           --service-account api-service@lacolaco-activitypub.iam.gserviceaccount.com \
-          --update-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
+          --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
           --execution-environment gen1 --region asia-northeast1 --platform managed --memory 128Mi
