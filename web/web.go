@@ -64,14 +64,17 @@ func (s *service) handler(c *gin.Context) {
 }
 
 func (s *service) handlePerson(c *gin.Context) {
+	l := logger.FromContext(c.Request.Context())
 	username := c.Param("username")
 	userDoc, err := s.firestoreClient.Collection("users").Doc(username).Get(c.Request.Context())
 	if err != nil {
+		l.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	user := &model.User{}
 	if err := userDoc.DataTo(user); err != nil {
+		l.Error("failed to parse user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -122,7 +125,7 @@ func (s *service) handleInbox(c *gin.Context) {
 	l.Sugar().Infof("%s", string(body))
 	o, err := goap.UnmarshalJSON(body)
 	if err != nil {
-		fmt.Println(err)
+		l.Error(err.Error())
 		return
 	}
 	var activity *goap.Activity
@@ -132,7 +135,7 @@ func (s *service) handleInbox(c *gin.Context) {
 		return nil
 	})
 	if err != nil {
-		l.Sugar().Errorln(err)
+		l.Error(err.Error())
 		c.String(http.StatusBadRequest, "invalid json")
 		return
 	}
@@ -144,7 +147,7 @@ func (s *service) handleInbox(c *gin.Context) {
 		followersCollection := s.firestoreClient.Collection("users").Doc(username).Collection("followers")
 		_, err := followersCollection.Doc(string(from)).Set(c.Request.Context(), map[string]interface{}{})
 		if err != nil {
-			fmt.Println(err)
+			l.Error(err.Error())
 			c.String(http.StatusInternalServerError, "internal server error")
 			return
 		}
@@ -158,12 +161,12 @@ func (s *service) handleInbox(c *gin.Context) {
 
 		actor, err := ap.GetActor(c.Request.Context(), string(activity.Actor.GetID()))
 		if err != nil {
-			fmt.Println(err)
+			l.Error(err.Error())
 			c.String(http.StatusInternalServerError, "invalid actor")
 			return
 		}
 		if err := ap.PostActivity(c.Request.Context(), id, actor, res); err != nil {
-			fmt.Println(err)
+			l.Error(err.Error())
 			c.String(http.StatusInternalServerError, "internal server error")
 			return
 		}
@@ -178,7 +181,7 @@ func (s *service) handleInbox(c *gin.Context) {
 		// 	}
 	}
 
-	fmt.Println("invalid activity type", activity.Type)
+	l.Error("invalid activity type")
 	c.String(http.StatusBadRequest, "invalid activity type")
 }
 
