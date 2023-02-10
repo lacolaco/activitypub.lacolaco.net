@@ -87,26 +87,24 @@ func (s *service) handlePerson(c *gin.Context) {
 	conf := config.FromContext(c.Request.Context())
 
 	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
-	p := &ap.Person{
-		Context:           ap.ActivityPubContext,
-		Type:              ap.ActivityTypePerson,
-		ID:                id,
-		Name:              user.Name,
-		PreferredUsername: username,
-		Summary:           user.Description,
-		Inbox:             fmt.Sprintf("%s/inbox", id),
-		Outbox:            fmt.Sprintf("%s/outbox", id),
-		URL:               fmt.Sprintf("https://activitypub.lacolaco.net/@%s", username),
-		Icon: ap.Icon{
+	p := &goap.Person{
+		Context:           goap.ActivityBaseURI,
+		Type:              goap.PersonType,
+		ID:                goap.IRI(id),
+		Name:              goap.DefaultNaturalLanguageValue(user.Name),
+		PreferredUsername: goap.DefaultNaturalLanguageValue(username),
+		Summary:           goap.DefaultNaturalLanguageValue(user.Description),
+		Inbox:             goap.IRI(fmt.Sprintf("%s/inbox", id)),
+		Outbox:            goap.IRI(fmt.Sprintf("%s/outbox", id)),
+		URL:               goap.IRI(fmt.Sprintf("https://activitypub.lacolaco.net/@%s", username)),
+		Icon: &goap.Object{
 			Type:      "Image",
-			MediaType: user.Icon.MediaType,
-			URL:       user.Icon.URL,
+			MediaType: goap.MimeType(user.Icon.MediaType),
+			URL:       goap.IRI(user.Icon.URL),
 		},
-		PublicKey: ap.PublicKey{
-			Context:      ap.ActivityPubContext,
-			Type:         "Key",
-			ID:           fmt.Sprintf("%s#%s", id, sign.DefaultPublicKeyID),
-			Owner:        id,
+		PublicKey: goap.PublicKey{
+			ID:           goap.ID(fmt.Sprintf("%s#%s", id, sign.DefaultPublicKeyID)),
+			Owner:        goap.IRI(id),
 			PublicKeyPem: sign.ExportPublicKey(&conf.RsaPrivateKey.PublicKey),
 		},
 	}
