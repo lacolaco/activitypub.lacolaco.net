@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type User struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -10,5 +12,6 @@ type User struct {
 }
 
 type Follower struct {
-	ID string `json:"id"`
+	ID        string    `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
 }

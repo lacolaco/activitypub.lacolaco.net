@@ -8,16 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func handleWellKnownHostMeta(c *gin.Context) {
-	c.Header("Content-Type", "application/xrd+xml")
-	c.String(http.StatusOK, `<?xml version="1.0"?>
-<XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
-	<Link rel="lrdd" type="application/xrd+xml" template="https://activitypub.lacolaco.net/.well-known/webfinger?resource={uri}" />
-</XRD>
-`)
+type wellKnownEndpoints struct{}
+
+func (e *wellKnownEndpoints) RegisterRoutes(r *gin.Engine) {
+	r.GET("/.well-known/webfinger", e.handleWebfinger)
 }
 
-func handleWebfinger(c *gin.Context) {
+func (e *wellKnownEndpoints) handleWebfinger(c *gin.Context) {
 	resource := c.Query("resource")
 	if resource == "" {
 		c.String(http.StatusBadRequest, "resource is required")

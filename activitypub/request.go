@@ -56,12 +56,13 @@ func GetActor(ctx context.Context, id string) (*goap.Actor, error) {
 func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *goap.Activity) error {
 	conf := config.FromContext(ctx)
 	logger := logging.FromContext(ctx)
+
 	addr := string(to.Inbox.GetLink())
 	payload, err := activity.MarshalJSON()
 	if err != nil {
 		return err
 	}
-	logger.Info("raw payload", zap.Any("payload", string(payload)))
+	logger.Debug("raw payload", zap.Any("payload", string(payload)))
 
 	req, err := http.NewRequestWithContext(ctx, "POST", addr, bytes.NewBuffer(payload))
 	if err != nil {
@@ -85,6 +86,6 @@ func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *go
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	logger.Info("raw response", zap.Any("response", string(body)))
+	logger.Debug("raw response", zap.Any("response", string(body)))
 	return nil
 }
