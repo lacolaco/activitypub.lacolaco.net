@@ -12,7 +12,7 @@ import (
 	ap "github.com/lacolaco/activitypub.lacolaco.net/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	firestore "github.com/lacolaco/activitypub.lacolaco.net/firestore"
-	"github.com/lacolaco/activitypub.lacolaco.net/logger"
+	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
@@ -33,7 +33,7 @@ func Start(conf *config.Config) error {
 	r.Use(config.Middleware(conf))
 	r.Use(config.Middleware(conf))
 	r.Use(tracing.Middleware(conf))
-	r.Use(logger.Middleware(conf))
+	r.Use(logging.Middleware(conf))
 	r.Use(errorHandler())
 	r.Use(requestLogger())
 	r.Use(func(ctx *gin.Context) {
@@ -64,17 +64,17 @@ func (s *service) handler(c *gin.Context) {
 }
 
 func (s *service) handlePerson(c *gin.Context) {
-	l := logger.FromContext(c.Request.Context())
+	logger := logging.FromContext(c.Request.Context())
 	username := c.Param("username")
 	userDoc, err := s.firestoreClient.Collection("users").Doc(username).Get(c.Request.Context())
 	if err != nil {
-		l.Error("failed to get user", zap.Error(err))
+		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 	user := &model.User{}
 	if err := userDoc.DataTo(user); err != nil {
-		l.Error("failed to parse user", zap.Error(err))
+		logger.Error("failed to parse user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -111,21 +111,21 @@ func (s *service) handlePerson(c *gin.Context) {
 }
 
 func (s *service) handleInbox(c *gin.Context) {
-	l := logger.FromContext(c.Request.Context())
+	logger := logging.FromContext(c.Request.Context())
 	username := c.Param("username")
 	if c.Request.Header.Get("Content-Type") != "application/activity+json" {
-		l.Sugar().Errorln("invalid content type", c.Request.Header.Get("Content-Type"))
+		logger.Sugar().Errorln("invalid content type", c.Request.Header.Get("Content-Type"))
 		c.String(http.StatusBadRequest, "invalid content type")
 		return
 	}
 	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
 
 	body, _ := io.ReadAll(c.Request.Body)
-	l.Sugar().Infoln("raw body")
-	l.Sugar().Infof("%s", string(body))
+	logger.Sugar().Infoln("raw body")
+	logger.Sugar().Infof("%s", string(body))
 	o, err := goap.UnmarshalJSON(body)
 	if err != nil {
-		l.Error(err.Error())
+		logger.Error(err.Error())
 		return
 	}
 	var activity *goap.Activity
@@ -135,11 +135,11 @@ func (s *service) handleInbox(c *gin.Context) {
 		return nil
 	})
 	if err != nil {
-		l.Error(err.Error())
+		logger.Error(err.Error())
 		c.String(http.StatusBadRequest, "invalid json")
 		return
 	}
-	l.Sugar().Infof("%#v", activity)
+	logger.Sugar().Infof("%#v", activity)
 	from := activity.Actor
 
 	switch activity.Type {
@@ -149,7 +149,7 @@ func (s *service) handleInbox(c *gin.Context) {
 			id: string(from.GetID()),
 		})
 		if err != nil {
-			l.Error(err.Error())
+			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "internal server error")
 			return
 		}
@@ -163,12 +163,12 @@ func (s *service) handleInbox(c *gin.Context) {
 
 		actor, err := ap.GetActor(c.Request.Context(), string(from.GetID()))
 		if err != nil {
-			l.Error(err.Error())
+			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "invalid actor")
 			return
 		}
 		if err := ap.PostActivity(c.Request.Context(), id, actor, res); err != nil {
-			l.Error(err.Error())
+			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "internal server error")
 			return
 		}
@@ -183,7 +183,7 @@ func (s *service) handleInbox(c *gin.Context) {
 		// 	}
 	}
 
-	l.Error("invalid activity type")
+	logger.Error("invalid activity type")
 	c.String(http.StatusBadRequest, "invalid activity type")
 }
 
@@ -194,14 +194,14 @@ func errorHandler() gin.HandlerFunc {
 		if err == nil {
 			return
 		}
-		logger.FromContext(c.Request.Context()).Error(err.Error())
+		logging.FromContext(c.Request.Context()).Error(err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, err.JSON())
 	}
 }
 
 func requestLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		logger.FromContext(c.Request.Context()).Debug("request.start",
+		logging.FromContext(c.Request.Context()).Debug("request.start",
 			zap.String("method", c.Request.Method),
 			zap.String("host", c.Request.Host),
 			zap.String("url", c.Request.URL.String()),
@@ -209,7 +209,7 @@ func requestLogger() gin.HandlerFunc {
 			zap.String("referer", c.Request.Referer()),
 		)
 		c.Next()
-		logger.FromContext(c.Request.Context()).Debug("request.end",
+		logging.FromContext(c.Request.Context()).Debug("request.end",
 			zap.Int("status", c.Writer.Status()),
 			zap.Int("size", c.Writer.Size()),
 		)

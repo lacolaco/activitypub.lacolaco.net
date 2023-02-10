@@ -1,4 +1,4 @@
-package logger
+package logging
 
 import (
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
