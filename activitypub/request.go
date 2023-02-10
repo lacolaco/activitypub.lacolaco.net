@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	goap "github.com/go-ap/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
@@ -12,8 +13,11 @@ import (
 )
 
 func GetActor(ctx context.Context, id string) (*Actor, error) {
-	addr := fmt.Sprintf("https://%s", id)
-	req, err := http.NewRequestWithContext(ctx, "GET", addr, nil)
+	addr, _ := url.Parse(id)
+	if addr.Scheme == "" {
+		addr.Scheme = "https"
+	}
+	req, err := http.NewRequestWithContext(ctx, "GET", addr.String(), nil)
 	if err != nil {
 		return nil, err
 	}
