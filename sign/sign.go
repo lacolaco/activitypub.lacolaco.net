@@ -31,7 +31,7 @@ func NewHeaderSigner() (httpsig.Signer, error) {
 	return signer, nil
 }
 
-func SignHeaders(payload []byte, inbox string, privateKey *rsa.PrivateKey, publicKeyID string) (map[string]string, error) {
+func SignedHeaders(payload []byte, inbox string, privateKey *rsa.PrivateKey, publicKeyID string) (map[string]string, error) {
 	u, err := url.Parse(inbox)
 	if err != nil {
 		return nil, err

@@ -1,6 +1,7 @@
 package activitypub
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -53,26 +54,26 @@ func GetActor(ctx context.Context, id string) (*goap.Actor, error) {
 }
 
 func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *goap.Activity) error {
+	conf := config.FromContext(ctx)
 	logger := logging.FromContext(ctx)
 	addr := string(to.Inbox.GetLink())
-	req, err := http.NewRequestWithContext(ctx, "POST", addr, nil)
-	if err != nil {
-		return err
-	}
 	payload, err := activity.MarshalJSON()
 	if err != nil {
 		return err
 	}
 	logger.Info("raw payload", zap.Any("payload", string(payload)))
 
-	conf := config.FromContext(ctx)
-	keyId := fmt.Sprintf("%s#%s", from, sign.DefaultPublicKeyID)
-	req.Header.Set("Content-Type", "application/activity+json")
-	signHeaders, err := sign.SignHeaders(payload, addr, conf.RsaPrivateKey, keyId)
+	req, err := http.NewRequestWithContext(ctx, "POST", addr, bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}
-	for k, v := range signHeaders {
+
+	keyId := fmt.Sprintf("%s#%s", from, sign.DefaultPublicKeyID)
+	signedHeaders, err := sign.SignedHeaders(payload, addr, conf.RsaPrivateKey, keyId)
+	if err != nil {
+		return err
+	}
+	for k, v := range signedHeaders {
 		req.Header.Set(k, v)
 	}
 	resp, err := http.DefaultClient.Do(req)
