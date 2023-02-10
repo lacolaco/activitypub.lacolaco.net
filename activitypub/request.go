@@ -47,19 +47,21 @@ func PostActivity(ctx context.Context, from string, to *Actor, activity *goap.Ac
 	if err != nil {
 		return err
 	}
-	signer, err := sign.NewHeaderSigner()
-	if err != nil {
-		return err
-	}
 	payload, err := activity.MarshalJSON()
 	if err != nil {
 		return err
 	}
 
 	conf := config.FromContext(ctx)
-	req.Header.Set("Content-Type", "application/activity+json")
 	keyId := fmt.Sprintf("%s#%s", from, sign.DefaultPublicKeyID)
-	signer.SignRequest(conf.RsaPrivateKey, keyId, req, payload)
+	req.Header.Set("Content-Type", "application/activity+json")
+	signHeaders, err := sign.SignHeaders(payload, to.Inbox, conf.RsaPrivateKey, keyId)
+	if err != nil {
+		return err
+	}
+	for k, v := range signHeaders {
+		req.Header.Set(k, v)
+	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return err
