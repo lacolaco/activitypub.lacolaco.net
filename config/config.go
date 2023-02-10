@@ -1,8 +1,11 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"os"
+
+	"golang.org/x/oauth2/google"
 )
 
 type Config struct {
@@ -11,6 +14,15 @@ type Config struct {
 		PrivateKey string
 		PublicKey  string
 	}
+
+	googleCredentials *google.Credentials
+}
+
+func (c *Config) ProjectID() string {
+	if c.googleCredentials != nil {
+		return c.googleCredentials.ProjectID
+	}
+	return ""
 }
 
 func Load() (*Config, error) {
@@ -24,5 +36,11 @@ func Load() (*Config, error) {
 	if config.RsaKeys.PrivateKey == "" || config.RsaKeys.PublicKey == "" {
 		return nil, fmt.Errorf("RSA keys are not set")
 	}
+	config.googleCredentials = findGoogleCredentials()
 	return &config, nil
+}
+
+func findGoogleCredentials() *google.Credentials {
+	cred, _ := google.FindDefaultCredentials(context.Background())
+	return cred
 }

@@ -12,8 +12,11 @@ import (
 	ap "github.com/lacolaco/activitypub.lacolaco.net/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	firestore "github.com/lacolaco/activitypub.lacolaco.net/firestore"
+	"github.com/lacolaco/activitypub.lacolaco.net/logger"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
+	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
+	"go.uber.org/zap"
 )
 
 type service struct {
@@ -28,6 +31,11 @@ func Start(conf *config.Config) error {
 
 	r := gin.Default()
 	r.Use(config.Middleware(conf))
+	r.Use(config.Middleware(conf))
+	r.Use(tracing.Middleware(conf))
+	r.Use(logger.Middleware(conf))
+	r.Use(errorHandler())
+	r.Use(requestLogger())
 	r.Use(func(ctx *gin.Context) {
 		// set default cache-control header
 		ctx.Header("Cache-Control", "no-store")
@@ -100,20 +108,22 @@ func (s *service) handlePerson(c *gin.Context) {
 }
 
 func (s *service) handleInbox(c *gin.Context) {
+	l := logger.FromContext(c.Request.Context())
 	username := c.Param("username")
 	if c.Request.Header.Get("Content-Type") != "application/activity+json" {
-		fmt.Println("invalid content type", c.Request.Header.Get("Content-Type"))
+		l.Sugar().Errorln("invalid content type", c.Request.Header.Get("Content-Type"))
 		c.String(http.StatusBadRequest, "invalid content type")
 		return
 	}
 	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
 
 	body, _ := io.ReadAll(c.Request.Body)
-	fmt.Println("raw body")
-	fmt.Printf("%s", string(body))
+	l.Sugar().Infoln("raw body")
+	l.Sugar().Infof("%s", string(body))
 	o, err := goap.UnmarshalJSON(body)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 	var activity *goap.Activity
 	// log body json
@@ -122,10 +132,11 @@ func (s *service) handleInbox(c *gin.Context) {
 		return nil
 	})
 	if err != nil {
-		fmt.Println(err)
+		l.Sugar().Errorln(err)
 		c.String(http.StatusBadRequest, "invalid json")
+		return
 	}
-	fmt.Printf("%#v", activity)
+	l.Sugar().Infof("%#v", activity)
 	from := activity.Actor.GetID()
 
 	switch activity.Type {
@@ -169,4 +180,33 @@ func (s *service) handleInbox(c *gin.Context) {
 
 	fmt.Println("invalid activity type", activity.Type)
 	c.String(http.StatusBadRequest, "invalid activity type")
+}
+
+func errorHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Next()
+		err := c.Errors.Last()
+		if err == nil {
+			return
+		}
+		logger.FromContext(c.Request.Context()).Error(err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, err.JSON())
+	}
+}
+
+func requestLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		logger.FromContext(c.Request.Context()).Debug("request.start",
+			zap.String("method", c.Request.Method),
+			zap.String("host", c.Request.Host),
+			zap.String("url", c.Request.URL.String()),
+			zap.String("userAgent", c.Request.UserAgent()),
+			zap.String("referer", c.Request.Referer()),
+		)
+		c.Next()
+		logger.FromContext(c.Request.Context()).Debug("request.end",
+			zap.Int("status", c.Writer.Status()),
+			zap.Int("size", c.Writer.Size()),
+		)
+	}
 }
