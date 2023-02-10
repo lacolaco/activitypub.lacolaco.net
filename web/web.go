@@ -118,7 +118,7 @@ func (s *service) handleInbox(c *gin.Context) {
 		c.String(http.StatusBadRequest, "invalid content type")
 		return
 	}
-	id := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
+	self := fmt.Sprintf("https://activitypub.lacolaco.net/users/%s", username)
 
 	body, _ := io.ReadAll(c.Request.Body)
 	logger.Sugar().Infoln("raw body")
@@ -146,7 +146,7 @@ func (s *service) handleInbox(c *gin.Context) {
 	case goap.FollowType:
 		followersCollection := s.firestoreClient.Collection("users").Doc(username).Collection("followers")
 		_, _, err := followersCollection.Add(c.Request.Context(), map[string]interface{}{
-			id: string(from.GetID()),
+			"id": string(from.GetID()),
 		})
 		if err != nil {
 			logger.Error(err.Error())
@@ -154,20 +154,24 @@ func (s *service) handleInbox(c *gin.Context) {
 			return
 		}
 
-		res := &goap.Activity{
+		res := &goap.Accept{
 			Context: activity.Context,
 			Type:    goap.AcceptType,
-			Actor:   goap.IRI(id),
-			Object:  activity.Object,
+			Actor:   goap.IRI(self),
+			Object:  activity,
 		}
 
+		logger.Debug("accept follow", zap.String("from", string(from.GetID())))
+		logger.Debug("get actor")
 		actor, err := ap.GetActor(c.Request.Context(), string(from.GetID()))
 		if err != nil {
 			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "invalid actor")
 			return
 		}
-		if err := ap.PostActivity(c.Request.Context(), id, actor, res); err != nil {
+		logger.Debug("actor", zap.String("actor", actor.ID))
+		logger.Debug("post activity")
+		if err := ap.PostActivity(c.Request.Context(), self, actor, res); err != nil {
 			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "internal server error")
 			return
