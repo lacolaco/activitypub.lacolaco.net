@@ -20,7 +20,8 @@ type UserRepository interface {
 	FindByUsername(ctx context.Context, username string) (*model.User, error)
 	AddFollower(ctx context.Context, user *model.User, followerID string) error
 	RemoveFollower(ctx context.Context, user *model.User, followerID string) error
-	ListFollowers(ctx context.Context, user *model.User) ([]*model.Follower, error)
+	ListFollowers(ctx context.Context, user *model.User) ([]*model.RemoteUser, error)
+	ListFollowing(ctx context.Context, user *model.User) ([]*model.RemoteUser, error)
 }
 
 type activitypubEndpoints struct {
@@ -32,6 +33,7 @@ func (e *activitypubEndpoints) RegisterRoutes(r *gin.Engine) {
 	r.GET("/@:username", e.handlePerson)
 	r.POST("/users/:username/inbox", e.handleInbox)
 	r.GET("/users/:username/followers", e.handleFollowers)
+	r.GET("/users/:username/following", e.handleFollowing)
 }
 
 func (s *activitypubEndpoints) handlePerson(c *gin.Context) {
@@ -152,7 +154,7 @@ func (s *activitypubEndpoints) handleFollowers(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	followers, err := s.userRepo.ListFollowers(c.Request.Context(), user)
+	users, err := s.userRepo.ListFollowers(c.Request.Context(), user)
 	if err != nil {
 		logger.Error("failed to get followers", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
@@ -162,11 +164,44 @@ func (s *activitypubEndpoints) handleFollowers(c *gin.Context) {
 		Context:    goap.ActivityBaseURI,
 		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/followers"),
 		Type:       goap.OrderedCollectionType,
-		TotalItems: uint(len(followers)),
+		TotalItems: uint(len(users)),
 		OrderedItems: func() []goap.Item {
-			items := make([]goap.Item, len(followers))
-			for i, follower := range followers {
-				items[i] = goap.IRI(follower.ID)
+			items := make([]goap.Item, len(users))
+			for i, item := range users {
+				items[i] = goap.IRI(item.ID)
+			}
+			return items
+		}(),
+	}
+	sendActivityJSON(c, http.StatusOK, res)
+}
+
+func (s *activitypubEndpoints) handleFollowing(c *gin.Context) {
+	logger := logging.FromContext(c.Request.Context())
+	baseURI := getBaseURI(c)
+
+	username := c.Param("username")
+	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	if err != nil {
+		logger.Error("failed to get user", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	users, err := s.userRepo.ListFollowing(c.Request.Context(), user)
+	if err != nil {
+		logger.Error("failed to get followers", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	res := &goap.OrderedCollection{
+		Context:    goap.ActivityBaseURI,
+		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/following"),
+		Type:       goap.OrderedCollectionType,
+		TotalItems: uint(len(users)),
+		OrderedItems: func() []goap.Item {
+			items := make([]goap.Item, len(users))
+			for i, item := range users {
+				items[i] = goap.IRI(item.ID)
 			}
 			return items
 		}(),

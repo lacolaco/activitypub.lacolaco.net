@@ -12,6 +12,7 @@ import (
 const (
 	UsersCollectionName     = "users"
 	FollowersCollectionName = "followers"
+	FollowingCollectionName = "following"
 )
 
 type userRepository struct {
@@ -44,7 +45,7 @@ func (r *userRepository) AddFollower(ctx context.Context, user *model.User, foll
 		return nil
 	}
 	// add
-	data := &model.Follower{ID: followerID, CreatedAt: time.Now()}
+	data := &model.RemoteUser{ID: followerID, CreatedAt: time.Now()}
 	serialized, err := data.ToMap()
 	if err != nil {
 		return err
@@ -76,11 +77,11 @@ func (r *userRepository) RemoveFollower(ctx context.Context, user *model.User, f
 	return nil
 }
 
-func (r *userRepository) ListFollowers(ctx context.Context, user *model.User) ([]*model.Follower, error) {
-	followers := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowersCollectionName)
-	iter := followers.OrderBy("created_at", firestore.Asc).Documents(ctx)
+func (r *userRepository) ListFollowers(ctx context.Context, user *model.User) ([]*model.RemoteUser, error) {
+	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowersCollectionName)
+	iter := users.OrderBy("created_at", firestore.Desc).Documents(ctx)
 	defer iter.Stop()
-	var result []*model.Follower
+	var result []*model.RemoteUser
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -89,11 +90,33 @@ func (r *userRepository) ListFollowers(ctx context.Context, user *model.User) ([
 		if err != nil {
 			return nil, err
 		}
-		follower, err := model.NewFollowerFromMap(doc.Data())
+		ru, err := model.NewRemoteUserFromMap(doc.Data())
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, follower)
+		result = append(result, ru)
+	}
+	return result, nil
+}
+
+func (r *userRepository) ListFollowing(ctx context.Context, user *model.User) ([]*model.RemoteUser, error) {
+	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowingCollectionName)
+	iter := users.OrderBy("created_at", firestore.Desc).Documents(ctx)
+	defer iter.Stop()
+	var result []*model.RemoteUser
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		ru, err := model.NewRemoteUserFromMap(doc.Data())
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, ru)
 	}
 	return result, nil
 }

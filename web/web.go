@@ -95,5 +95,5 @@ func sendActivityJSON(c *gin.Context, code int, item goap.Item) error {
 }
 
 func getBaseURI(c *gin.Context) string {
-	return fmt.Sprintf("%s://%s", c.Request.URL.Scheme, c.Request.URL.Host)
+	return fmt.Sprintf("https://%s", c.Request.Host)
 }

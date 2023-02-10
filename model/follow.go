@@ -5,13 +5,13 @@ import (
 	"time"
 )
 
-type Follower struct {
+type RemoteUser struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func (f *Follower) ToMap() (map[string]interface{}, error) {
-	b, err := json.Marshal(f)
+func (u *RemoteUser) ToMap() (map[string]interface{}, error) {
+	b, err := json.Marshal(u)
 	if err != nil {
 		return nil, err
 	}
@@ -22,14 +22,14 @@ func (f *Follower) ToMap() (map[string]interface{}, error) {
 	return h, nil
 }
 
-func NewFollowerFromMap(v map[string]interface{}) (*Follower, error) {
+func NewRemoteUserFromMap(v map[string]interface{}) (*RemoteUser, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return nil, err
 	}
-	var follower *Follower
-	if err := json.Unmarshal(b, &follower); err != nil {
+	var u *RemoteUser
+	if err := json.Unmarshal(b, &u); err != nil {
 		return nil, err
 	}
-	return follower, nil
+	return u, nil
 }
