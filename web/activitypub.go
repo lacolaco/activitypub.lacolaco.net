@@ -32,6 +32,7 @@ func (e *activitypubEndpoints) RegisterRoutes(r *gin.Engine) {
 	r.GET("/users/:username", e.handlePerson)
 	r.GET("/@:username", e.handlePerson)
 	r.POST("/users/:username/inbox", e.handleInbox)
+	r.GET("/users/:username/outbox", e.handleOutbox)
 	r.GET("/users/:username/followers", e.handleFollowers)
 	r.GET("/users/:username/following", e.handleFollowing)
 }
@@ -110,7 +111,7 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 			c.String(http.StatusInternalServerError, "post activity failed")
 			return
 		}
-		c.JSON(http.StatusOK, res)
+		sendActivityJSON(c, http.StatusOK, res)
 	case goap.UndoType:
 		switch activity.Object.GetType() {
 		case goap.FollowType:
@@ -134,13 +135,31 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 				c.String(http.StatusInternalServerError, "internal server error")
 				return
 			}
-
-			c.JSON(http.StatusOK, res)
+			sendActivityJSON(c, http.StatusOK, res)
 		}
 	default:
 		logger.Error("unsuppoted activity type")
 		c.String(http.StatusBadRequest, "invalid activity type")
 	}
+}
+
+func (s *activitypubEndpoints) handleOutbox(c *gin.Context) {
+	logger := logging.FromContext(c.Request.Context())
+	baseURI := getBaseURI(c)
+
+	username := c.Param("username")
+	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	if err != nil {
+		logger.Error("failed to get user", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	res := &goap.OrderedCollection{
+		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/outbox"),
+		Type:       goap.OrderedCollectionType,
+		TotalItems: 0,
+	}
+	sendActivityJSON(c, http.StatusOK, res)
 }
 
 func (s *activitypubEndpoints) handleFollowers(c *gin.Context) {
@@ -161,7 +180,6 @@ func (s *activitypubEndpoints) handleFollowers(c *gin.Context) {
 		return
 	}
 	res := &goap.OrderedCollection{
-		Context:    goap.ActivityBaseURI,
 		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/followers"),
 		Type:       goap.OrderedCollectionType,
 		TotalItems: uint(len(users)),
