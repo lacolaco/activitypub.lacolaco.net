@@ -2,12 +2,18 @@ package web
 
 import (
 	"bytes"
+	"embed"
 	"net/http"
 	"net/url"
 	"strings"
 	"text/template"
 
 	"github.com/gin-gonic/gin"
+)
+
+var (
+	//go:embed template
+	templates embed.FS
 )
 
 type wellKnownEndpoints struct{}
@@ -22,7 +28,7 @@ func (e *wellKnownEndpoints) RegisterRoutes(r *gin.Engine) {
 }
 
 func (e *wellKnownEndpoints) handleHostMeta(c *gin.Context) {
-	tmpl, err := template.ParseFiles("./template/host-meta.xml.template")
+	tmpl, err := template.ParseFS(templates, "template/host-meta.xml.template")
 	if err != nil {
 		panic(err)
 	}
