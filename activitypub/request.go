@@ -11,6 +11,7 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
+	"go.uber.org/zap"
 )
 
 func GetActor(ctx context.Context, id string) (*goap.Actor, error) {
@@ -62,6 +63,7 @@ func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *go
 	if err != nil {
 		return err
 	}
+	logger.Info("raw payload", zap.String("payload", string(payload)))
 
 	conf := config.FromContext(ctx)
 	keyId := fmt.Sprintf("%s#%s", from, sign.DefaultPublicKeyID)
@@ -82,7 +84,6 @@ func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *go
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	logger.Sugar().Infoln("raw body")
-	logger.Sugar().Infof("%s", string(body))
+	logger.Sugar().Infoln("raw response", string(body))
 	return nil
 }
