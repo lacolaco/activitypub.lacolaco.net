@@ -50,7 +50,7 @@ func (u *User) ToPerson(baseUri string, publicKey *rsa.PublicKey) *goap.Person {
 		Inbox:             goap.IRI(fmt.Sprintf("%s/inbox", apID)),
 		Outbox:            goap.IRI(fmt.Sprintf("%s/outbox", apID)),
 		Followers:         goap.IRI(fmt.Sprintf("%s/followers", apID)),
-		URL:               goap.IRI(apID),
+		URL:               goap.IRI(fmt.Sprintf("%s/@%s", baseUri, u.ID)),
 		Icon: &goap.Object{
 			Type:      goap.ImageType,
 			MediaType: goap.MimeType(u.Icon.MediaType),
