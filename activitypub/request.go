@@ -2,7 +2,6 @@ package activitypub
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,7 +13,7 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 )
 
-func GetActor(ctx context.Context, id string) (*Actor, error) {
+func GetActor(ctx context.Context, id string) (*goap.Actor, error) {
 	addr, _ := url.Parse(id)
 	if addr.Scheme == "" {
 		addr.Scheme = "https"
@@ -33,16 +32,28 @@ func GetActor(ctx context.Context, id string) (*Actor, error) {
 		return nil, err
 	}
 	// read actor from body
-	actor := &Actor{}
-	if err := json.NewDecoder(resp.Body).Decode(actor); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	item, err := goap.UnmarshalJSON(body)
+	if err != nil {
+		return nil, err
+	}
+	var actor *goap.Actor
+	err = goap.OnActor(item, func(a *goap.Actor) error {
+		actor = a
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 	return actor, nil
 }
 
-func PostActivity(ctx context.Context, from string, to *Actor, activity *goap.Activity) error {
+func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *goap.Activity) error {
 	logger := logging.FromContext(ctx)
-	addr := to.Inbox
+	addr := string(to.Inbox.GetLink())
 	req, err := http.NewRequestWithContext(ctx, "POST", addr, nil)
 	if err != nil {
 		return err
@@ -55,7 +66,7 @@ func PostActivity(ctx context.Context, from string, to *Actor, activity *goap.Ac
 	conf := config.FromContext(ctx)
 	keyId := fmt.Sprintf("%s#%s", from, sign.DefaultPublicKeyID)
 	req.Header.Set("Content-Type", "application/activity+json")
-	signHeaders, err := sign.SignHeaders(payload, to.Inbox, conf.RsaPrivateKey, keyId)
+	signHeaders, err := sign.SignHeaders(payload, addr, conf.RsaPrivateKey, keyId)
 	if err != nil {
 		return err
 	}

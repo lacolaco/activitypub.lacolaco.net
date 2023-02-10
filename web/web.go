@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	goap "github.com/go-ap/activitypub"
@@ -157,13 +158,6 @@ func (s *service) handleInbox(c *gin.Context) {
 			return
 		}
 
-		res := &goap.Accept{
-			Context: activity.Context,
-			Type:    goap.AcceptType,
-			Actor:   goap.IRI(self),
-			Object:  activity,
-		}
-
 		logger.Debug("accept follow", zap.String("from", string(from.GetID())))
 		logger.Debug("get actor")
 		actor, err := ap.GetActor(c.Request.Context(), string(from.GetID()))
@@ -172,8 +166,16 @@ func (s *service) handleInbox(c *gin.Context) {
 			c.String(http.StatusInternalServerError, "invalid actor")
 			return
 		}
-		logger.Debug("actor", zap.String("actor", actor.ID))
+		logger.Debug("actor", zap.Any("actor", actor))
 		logger.Debug("post activity")
+		numID := time.Now().Unix()
+		res := &goap.Accept{
+			Context: activity.Context,
+			ID:      goap.IRI(fmt.Sprintf("%s/%d", self, numID)),
+			Type:    goap.AcceptType,
+			Actor:   goap.IRI(self),
+			Object:  activity,
+		}
 		if err := ap.PostActivity(c.Request.Context(), self, actor, res); err != nil {
 			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "internal server error")
