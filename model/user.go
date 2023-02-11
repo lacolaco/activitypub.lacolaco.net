@@ -1,12 +1,8 @@
 package model
 
 import (
-	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-
-	goap "github.com/go-ap/activitypub"
-	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 )
 
 type UserIcon struct {
@@ -36,34 +32,4 @@ func NewUserFromMap(v interface{}) (*User, error) {
 
 func (u *User) GetActivityPubID(baseURI string) string {
 	return fmt.Sprintf("%s/users/%s", baseURI, u.ID)
-}
-
-func (u *User) ToPerson(baseUri string, publicKey *rsa.PublicKey) *goap.Person {
-	apID := u.GetActivityPubID(baseUri)
-
-	return &goap.Person{
-		Type:              goap.PersonType,
-		ID:                goap.IRI(apID),
-		Name:              goap.DefaultNaturalLanguageValue(u.Name),
-		PreferredUsername: goap.DefaultNaturalLanguageValue(u.PrefName),
-		Summary:           goap.DefaultNaturalLanguageValue(u.Description),
-		Inbox:             goap.IRI(fmt.Sprintf("%s/inbox", apID)),
-		Outbox:            goap.IRI(fmt.Sprintf("%s/outbox", apID)),
-		Followers:         goap.IRI(fmt.Sprintf("%s/followers", apID)),
-		Following:         goap.IRI(fmt.Sprintf("%s/following", apID)),
-		Endpoints: &goap.Endpoints{
-			
-		},
-		URL:               goap.IRI(fmt.Sprintf("%s/@%s", baseUri, u.ID)),
-		Icon: &goap.Object{
-			Type:      goap.ImageType,
-			MediaType: goap.MimeType(u.Icon.MediaType),
-			URL:       goap.IRI(u.Icon.URL),
-		},
-		PublicKey: goap.PublicKey{
-			ID:           goap.ID(fmt.Sprintf("%s#%s", apID, sign.DefaultPublicKeyID)),
-			Owner:        goap.IRI(apID),
-			PublicKeyPem: sign.ExportPublicKey(publicKey),
-		},
-	}
 }

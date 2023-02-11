@@ -49,8 +49,9 @@ func (s *activitypubEndpoints) handlePerson(c *gin.Context) {
 		return
 	}
 	logger.Debug("user found", zap.Any("user", user))
-	p := user.ToPerson(getBaseURI(c), &conf.RsaPrivateKey.PublicKey)
-	sendActivityJSON(c, http.StatusOK, p)
+	p := ap.NewPersonJSON(user, getBaseURI(c), &conf.RsaPrivateKey.PublicKey)
+	c.Header("Content-Type", "application/activity+json")
+	c.PureJSON(http.StatusOK, p)
 }
 
 func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
