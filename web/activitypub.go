@@ -37,7 +37,7 @@ func (e *apEndpoints) RegisterRoutes(r *gin.Engine) {
 	r.GET("/users/:username/followers", e.handleFollowers)
 	r.GET("/users/:username/following", e.handleFollowing)
 	r.GET("/users/:username/collections/featured", e.handleFeatured)
-	r.POST("/inbox", e.handleServerInbox)
+	// r.POST("/inbox", e.handleServerInbox)
 }
 
 func (s *apEndpoints) handlePerson(c *gin.Context) {
