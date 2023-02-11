@@ -45,7 +45,7 @@ func Start(conf *config.Config) error {
 	wkService.RegisterRoutes(r)
 
 	firestoreClient := firestore.NewFirestoreClient()
-	apService := &activitypubEndpoints{
+	apService := &apEndpoints{
 		userRepo: repository.NewUserRepository(firestoreClient),
 	}
 	apService.RegisterRoutes(r)

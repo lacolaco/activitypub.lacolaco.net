@@ -23,11 +23,11 @@ type UserRepository interface {
 	ListFollowing(ctx context.Context, user *model.User) ([]*model.RemoteUser, error)
 }
 
-type activitypubEndpoints struct {
+type apEndpoints struct {
 	userRepo UserRepository
 }
 
-func (e *activitypubEndpoints) RegisterRoutes(r *gin.Engine) {
+func (e *apEndpoints) RegisterRoutes(r *gin.Engine) {
 	r.GET("/users/:username", e.handlePerson)
 	r.GET("/@:username", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/users/"+ctx.Param("username"))
@@ -37,9 +37,10 @@ func (e *activitypubEndpoints) RegisterRoutes(r *gin.Engine) {
 	r.GET("/users/:username/followers", e.handleFollowers)
 	r.GET("/users/:username/following", e.handleFollowing)
 	r.GET("/users/:username/collections/featured", e.handleFeatured)
+	r.POST("/inbox", e.handleServerInbox)
 }
 
-func (s *activitypubEndpoints) handlePerson(c *gin.Context) {
+func (s *apEndpoints) handlePerson(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	conf := config.FromContext(c.Request.Context())
 	username := c.Param("username")
@@ -55,7 +56,7 @@ func (s *activitypubEndpoints) handlePerson(c *gin.Context) {
 	c.JSON(http.StatusOK, p)
 }
 
-func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
+func (s *apEndpoints) handleInbox(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 
 	if c.Request.Header.Get("Content-Type") != "application/activity+json" {
@@ -146,7 +147,7 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 	}
 }
 
-func (s *activitypubEndpoints) handleOutbox(c *gin.Context) {
+func (s *apEndpoints) handleOutbox(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	baseURI := getBaseURI(c)
 
@@ -177,7 +178,7 @@ func (s *activitypubEndpoints) handleOutbox(c *gin.Context) {
 	sendActivityJSON(c, http.StatusOK, res)
 }
 
-func (s *activitypubEndpoints) handleFeatured(c *gin.Context) {
+func (s *apEndpoints) handleFeatured(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	baseURI := getBaseURI(c)
 
@@ -208,7 +209,7 @@ func (s *activitypubEndpoints) handleFeatured(c *gin.Context) {
 	sendActivityJSON(c, http.StatusOK, res)
 }
 
-func (s *activitypubEndpoints) handleFollowers(c *gin.Context) {
+func (s *apEndpoints) handleFollowers(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	baseURI := getBaseURI(c)
 
@@ -251,7 +252,7 @@ func (s *activitypubEndpoints) handleFollowers(c *gin.Context) {
 	sendActivityJSON(c, http.StatusOK, res)
 }
 
-func (s *activitypubEndpoints) handleFollowing(c *gin.Context) {
+func (s *apEndpoints) handleFollowing(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	baseURI := getBaseURI(c)
 
@@ -292,4 +293,19 @@ func (s *activitypubEndpoints) handleFollowing(c *gin.Context) {
 		}
 	}
 	sendActivityJSON(c, http.StatusOK, res)
+}
+
+func (s *apEndpoints) handleServerInbox(c *gin.Context) {
+	logger := logging.FromContext(c.Request.Context())
+
+	payload, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		logger.Error("failed to read request body", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	logger.Debug("payload", zap.String("payload", string(payload)))
+
+	// TODO: implement
+	c.String(http.StatusNotFound, "not found")
 }
