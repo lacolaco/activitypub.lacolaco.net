@@ -2,10 +2,7 @@ package web
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	goap "github.com/go-ap/activitypub"
@@ -14,6 +11,7 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"go.uber.org/zap"
+	"humungus.tedunangst.com/r/webs/httpsig"
 )
 
 type UserRepository interface {
@@ -70,10 +68,18 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	selfID := user.GetActivityPubID(baseURI)
-
-	body, _ := io.ReadAll(c.Request.Body)
-	o, err := goap.UnmarshalJSON(body)
+	payload, err := c.GetRawData()
+	if err != nil {
+		logger.Error("failed to get data", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	if _, err := httpsig.VerifyRequest(c.Request, payload, httpsig.ActivityPubKeyGetter); err != nil {
+		logger.Error("failed to verify request", zap.Error(err))
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	o, err := goap.UnmarshalJSON(payload)
 	if err != nil {
 		logger.Error(err.Error())
 		return
@@ -88,56 +94,40 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 		c.String(http.StatusBadRequest, "invalid json")
 		return
 	}
-	logger.Info("activity", zap.Any("activity", activity))
-	from := activity.Actor
+	actor := activity.Actor
+	logger.Info("activity", zap.Any("type", activity.GetType()), zap.Any("actor", actor))
 
 	switch activity.GetType() {
 	case goap.FollowType:
-		err := s.userRepo.AddFollower(c.Request.Context(), user, string(from.GetID()))
+		logger.Debug("accept follow", zap.String("from", string(actor.GetID())))
+		err := s.userRepo.AddFollower(c.Request.Context(), user, string(actor.GetID()))
 		if err != nil {
 			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "add follower failed")
 			return
 		}
-		logger.Debug("accept follow")
-		actor, err := ap.GetActor(c.Request.Context(), string(from.GetID()))
-		if err != nil {
-			logger.Error(err.Error())
-			c.String(http.StatusInternalServerError, "get actor failed")
-			return
-		}
-		logger.Debug("post activity")
-		res := ap.NewAccept(fmt.Sprintf("%s/%d", selfID, time.Now().Unix()), selfID, activity)
-		if err := ap.PostActivity(c.Request.Context(), selfID, actor, res); err != nil {
+		if err := ap.Accept(c.Request.Context(), baseURI, user, activity); err != nil {
 			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "post activity failed")
 			return
 		}
-		sendActivityJSON(c, http.StatusOK, res)
+		c.Status(http.StatusOK)
 	case goap.UndoType:
 		switch activity.Object.GetType() {
 		case goap.FollowType:
-			err := s.userRepo.RemoveFollower(c.Request.Context(), user, string(from.GetID()))
+			logger.Debug("accept unfollow", zap.String("from", string(actor.GetID())))
+			err := s.userRepo.RemoveFollower(c.Request.Context(), user, string(actor.GetID()))
 			if err != nil {
 				logger.Error(err.Error())
 				c.String(http.StatusInternalServerError, "internal server error")
 				return
 			}
-			logger.Debug("accept follow", zap.String("from", string(from.GetID())))
-			actor, err := ap.GetActor(c.Request.Context(), string(from.GetID()))
-			if err != nil {
-				logger.Error(err.Error())
-				c.String(http.StatusInternalServerError, "invalid actor")
-				return
-			}
-			logger.Debug("post activity to", zap.Any("actor", actor))
-			res := ap.NewAccept(fmt.Sprintf("%s/%d", selfID, time.Now().Unix()), selfID, activity)
-			if err := ap.PostActivity(c.Request.Context(), selfID, actor, res); err != nil {
+			if err := ap.Accept(c.Request.Context(), baseURI, user, activity); err != nil {
 				logger.Error(err.Error())
 				c.String(http.StatusInternalServerError, "internal server error")
 				return
 			}
-			sendActivityJSON(c, http.StatusOK, res)
+			c.Status(http.StatusOK)
 		}
 	default:
 		logger.Error("unsuppoted activity type")
@@ -187,11 +177,22 @@ func (s *activitypubEndpoints) handleFeatured(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	res := &goap.OrderedCollection{
-		ID:           goap.IRI(user.GetActivityPubID(baseURI) + "/collections/featured"),
-		Type:         goap.OrderedCollectionType,
-		TotalItems:   0,
-		OrderedItems: []goap.Item{},
+	var res goap.Item
+	isPage := c.Query("page") != ""
+	if isPage {
+		res = &goap.OrderedCollectionPage{
+			ID:           goap.IRI(user.GetActivityPubID(baseURI) + "/collections/featured?page=true"),
+			Type:         goap.OrderedCollectionPageType,
+			TotalItems:   0,
+			OrderedItems: []goap.Item{},
+		}
+	} else {
+		res = &goap.OrderedCollection{
+			ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/collections/featured"),
+			Type:       goap.OrderedCollectionType,
+			TotalItems: 0,
+			First:      goap.IRI(user.GetActivityPubID(baseURI) + "/collections/featured?page=true"),
+		}
 	}
 	sendActivityJSON(c, http.StatusOK, res)
 }

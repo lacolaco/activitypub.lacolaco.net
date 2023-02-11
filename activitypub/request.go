@@ -3,38 +3,35 @@ package activitypub
 import (
 	"bytes"
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	goap "github.com/go-ap/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
-	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 	"go.uber.org/zap"
+	"humungus.tedunangst.com/r/webs/httpsig"
 )
 
-func GetActor(ctx context.Context, id string) (*goap.Actor, error) {
+var (
+	HTTPClient = http.DefaultClient
+)
+
+const (
+	userAgent            = "activitypub.lacolaco.net/1.0"
+	mimeTypeActivityJSON = "application/activity+json"
+)
+
+func getActor(ctx context.Context, publicKeyID string, id string) (*goap.Actor, error) {
 	addr, _ := url.Parse(id)
 	if addr.Scheme == "" {
 		addr.Scheme = "https"
 	}
-	req, err := http.NewRequestWithContext(ctx, "GET", addr.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/activity+json")
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, err
-	}
-	// read actor from body
-	body, err := io.ReadAll(resp.Body)
+	body, err := getActivityJSON(ctx, "", addr.String())
 	if err != nil {
 		return nil, err
 	}
@@ -53,39 +50,70 @@ func GetActor(ctx context.Context, id string) (*goap.Actor, error) {
 	return actor, nil
 }
 
-func PostActivity(ctx context.Context, from string, to *goap.Actor, activity *goap.Activity) error {
+func getActivityJSON(ctx context.Context, publicKeyID string, url string) ([]byte, error) {
 	conf := config.FromContext(ctx)
 	logger := logging.FromContext(ctx)
-
-	addr := string(to.Inbox.GetLink())
-	payload, err := MarshalActivityJSON(activity)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	logger.Debug("raw payload", zap.Any("payload", string(payload)))
-
-	req, err := http.NewRequestWithContext(ctx, "POST", addr, bytes.NewBuffer(payload))
+	req.Header.Set("Accept", mimeTypeActivityJSON)
+	req.Header.Set("User-Agent", userAgent)
+	httpsig.SignRequest(publicKeyID, convertPrivateKey(conf.RsaPrivateKey), req, nil)
+	c, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	req = req.WithContext(c)
+	logger.Debug("getActivityJSON.request", zap.String("url", req.URL.String()), zap.Any("headers", req.Header))
+	resp, err := HTTPClient.Do(req)
 	if err != nil {
-		return err
-	}
-
-	keyId := fmt.Sprintf("%s#%s", from, sign.DefaultPublicKeyID)
-	signedHeaders, err := sign.SignedHeaders(payload, addr, conf.RsaPrivateKey, keyId)
-	if err != nil {
-		return err
-	}
-	for k, v := range signedHeaders {
-		req.Header.Set(k, v)
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	logger.Debug("raw response", zap.Any("response", string(body)))
-	return nil
+	if resp.StatusCode != http.StatusOK {
+		return nil, err
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	logger.Debug("getActivityJSON.response", zap.Any("response", string(body)))
+	return body, nil
+}
+
+func postActivityJSON(ctx context.Context, publicKeyID string, url string, body []byte) ([]byte, error) {
+	conf := config.FromContext(ctx)
+	logger := logging.FromContext(ctx)
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("Content-Type", mimeTypeActivityJSON)
+	httpsig.SignRequest(publicKeyID, convertPrivateKey(conf.RsaPrivateKey), req, body)
+	logger.Debug("postActivityJSON.request", zap.Any("headers", req.Header))
+	c, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	req = req.WithContext(c)
+	resp, err := HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
+	logger.Debug("postActivityJSON.response", zap.Any("response", string(respBody)))
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusAccepted:
+	case http.StatusCreated:
+	default:
+		return nil, fmt.Errorf("http post status: %d", resp.StatusCode)
+	}
+	return respBody, nil
+}
+
+func convertPrivateKey(key *rsa.PrivateKey) httpsig.PrivateKey {
+	return httpsig.PrivateKey{
+		Key:  key,
+		Type: httpsig.RSA,
+	}
 }

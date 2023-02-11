@@ -3,6 +3,8 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 )
 
 type UserIcon struct {
@@ -32,4 +34,8 @@ func NewUserFromMap(v interface{}) (*User, error) {
 
 func (u *User) GetActivityPubID(baseURI string) string {
 	return fmt.Sprintf("%s/users/%s", baseURI, u.ID)
+}
+
+func (u *User) GetPubkeyID(baseURI string) string {
+	return fmt.Sprintf("%s#%s", u.GetActivityPubID(baseURI), sign.DefaultPublicKeyID)
 }
