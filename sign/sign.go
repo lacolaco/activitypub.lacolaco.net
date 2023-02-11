@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultPublicKeyID = "main-key"
+	DefaultPublicKeyID = "key_1"
 )
 
 func DecodePrivateKey(s string) (*rsa.PrivateKey, error) {
