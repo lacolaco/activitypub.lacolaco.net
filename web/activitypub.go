@@ -28,7 +28,9 @@ type activitypubEndpoints struct {
 
 func (e *activitypubEndpoints) RegisterRoutes(r *gin.Engine) {
 	r.GET("/users/:username", e.handlePerson)
-	r.GET("/@:username", e.handlePerson)
+	r.GET("/@:username", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusMovedPermanently, "/users/"+ctx.Param("username"))
+	})
 	r.POST("/users/:username/inbox", e.handleInbox)
 	r.GET("/users/:username/outbox", e.handleOutbox)
 	r.GET("/users/:username/followers", e.handleFollowers)
@@ -214,17 +216,28 @@ func (s *activitypubEndpoints) handleFollowers(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	res := &goap.OrderedCollection{
-		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/followers"),
-		Type:       goap.OrderedCollectionType,
-		TotalItems: uint(len(users)),
-		OrderedItems: func() []goap.Item {
-			items := make([]goap.Item, len(users))
-			for i, item := range users {
-				items[i] = goap.IRI(item.ID)
-			}
-			return items
-		}(),
+	var res goap.Item
+	isPage := c.Query("page") != ""
+	if isPage {
+		res = &goap.OrderedCollectionPage{
+			ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/followers?page=true"),
+			Type:       goap.OrderedCollectionPageType,
+			TotalItems: uint(len(users)),
+			OrderedItems: func() []goap.Item {
+				items := make([]goap.Item, len(users))
+				for i, item := range users {
+					items[i] = goap.IRI(item.ID)
+				}
+				return items
+			}(),
+		}
+	} else {
+		res = &goap.OrderedCollection{
+			ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/followers"),
+			Type:       goap.OrderedCollectionType,
+			TotalItems: uint(len(users)),
+			First:      goap.IRI(user.GetActivityPubID(baseURI) + "/followers?page=true"),
+		}
 	}
 	sendActivityJSON(c, http.StatusOK, res)
 }
@@ -246,18 +259,28 @@ func (s *activitypubEndpoints) handleFollowing(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	res := &goap.OrderedCollection{
-		Context:    goap.ActivityBaseURI,
-		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/following"),
-		Type:       goap.OrderedCollectionType,
-		TotalItems: uint(len(users)),
-		OrderedItems: func() []goap.Item {
-			items := make([]goap.Item, len(users))
-			for i, item := range users {
-				items[i] = goap.IRI(item.ID)
-			}
-			return items
-		}(),
+	var res goap.Item
+	isPage := c.Query("page") != ""
+	if isPage {
+		res = &goap.OrderedCollectionPage{
+			ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/following?page=true"),
+			Type:       goap.OrderedCollectionPageType,
+			TotalItems: uint(len(users)),
+			OrderedItems: func() []goap.Item {
+				items := make([]goap.Item, len(users))
+				for i, item := range users {
+					items[i] = goap.IRI(item.ID)
+				}
+				return items
+			}(),
+		}
+	} else {
+		res = &goap.OrderedCollection{
+			ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/following"),
+			Type:       goap.OrderedCollectionType,
+			TotalItems: uint(len(users)),
+			First:      goap.IRI(user.GetActivityPubID(baseURI) + "/following?page=true"),
+		}
 	}
 	sendActivityJSON(c, http.StatusOK, res)
 }
