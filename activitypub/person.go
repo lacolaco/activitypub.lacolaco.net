@@ -37,7 +37,7 @@ func NewPersonJSON(u *model.User, baseUri string, publicKey *httpsig.PublicKey) 
 		"icon": map[string]interface{}{
 			"type":      "Image",
 			"mediaType": u.Icon.MediaType,
-			"uRL":       u.Icon.URL,
+			"url":       u.Icon.URL,
 		},
 		"publicKey": map[string]interface{}{
 			"id":           fmt.Sprintf("%s#%s", apID, sign.DefaultPublicKeyID),
