@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -70,7 +71,8 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	payload, err := c.GetRawData()
+	defer c.Request.Body.Close()
+	payload, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		logger.Error("failed to get data", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())

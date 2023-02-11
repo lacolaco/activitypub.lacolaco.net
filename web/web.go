@@ -84,6 +84,7 @@ func requestLogger() gin.HandlerFunc {
 			zap.String("userAgent", c.Request.UserAgent()),
 			zap.String("referer", c.Request.Referer()),
 			zap.String("accept", c.Request.Header.Get("Accept")),
+			zap.Any("headers", c.Request.Header),
 		)
 		if c.Request.Method == "POST" {
 			var body map[string]interface{}
