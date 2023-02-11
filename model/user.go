@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 )
@@ -13,11 +14,13 @@ type UserIcon struct {
 }
 
 type User struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	PrefName    string   `json:"preferred_username"`
-	Description string   `json:"description"`
-	Icon        UserIcon `json:"icon"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	PrefName    string    `json:"preferred_username"`
+	Description string    `json:"description"`
+	Icon        UserIcon  `json:"icon"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 func NewUserFromMap(v interface{}) (*User, error) {

@@ -39,7 +39,6 @@ func Load() (*Config, error) {
 	rsaPrivateKey := os.Getenv("RSA_PRIVATE_KEY")
 	if rsaPrivateKey == "" {
 		return nil, fmt.Errorf("RSA keys are not set")
-		
 	}
 	privateKey, err := sign.DecodePrivateKey(rsaPrivateKey)
 	if err != nil {

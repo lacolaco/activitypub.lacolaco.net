@@ -2,6 +2,7 @@ package activitypub
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
@@ -26,14 +27,12 @@ func NewPersonJSON(u *model.User, baseUri string, publicKey *httpsig.PublicKey) 
 		"outbox":                    fmt.Sprintf("%s/outbox", apID),
 		"followers":                 fmt.Sprintf("%s/followers", apID),
 		"following":                 fmt.Sprintf("%s/following", apID),
+		"url":                       fmt.Sprintf("%s/@%s", baseUri, u.ID),
 		"featured":                  fmt.Sprintf("%s/collections/featured", apID),
+		"published":                 u.CreatedAt.Format(time.RFC3339),
+		"updated":                   u.UpdatedAt.Format(time.RFC3339),
 		"discoverable":              true,
 		"manuallyApprovesFollowers": false,
-		// "sharedInbox":               fmt.Sprintf("%s/inbox", baseUri),
-		// "endpoints": map[string]interface{}{
-		// 	"sharedInbox": fmt.Sprintf("%s/inbox", baseUri),
-		// },
-		"url": fmt.Sprintf("%s/@%s", baseUri, u.ID),
 		"icon": map[string]interface{}{
 			"type":      "Image",
 			"mediaType": u.Icon.MediaType,
