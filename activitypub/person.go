@@ -22,6 +22,8 @@ func NewPersonJSON(u *model.User, baseUri string, publicKey *rsa.PublicKey) map[
 		"outbox":            fmt.Sprintf("%s/outbox", apID),
 		"followers":         fmt.Sprintf("%s/followers", apID),
 		"following":         fmt.Sprintf("%s/following", apID),
+		"featured":          fmt.Sprintf("%s/collections/featured", apID),
+		"discoverable":      true,
 		"url":               fmt.Sprintf("%s/@%s", baseUri, u.ID),
 		"icon": map[string]interface{}{
 			"type":      "Image",
