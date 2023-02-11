@@ -51,7 +51,7 @@ func (s *activitypubEndpoints) handlePerson(c *gin.Context) {
 	logger.Debug("user found", zap.Any("user", user))
 	p := ap.NewPersonJSON(user, getBaseURI(c), &conf.RsaPrivateKey.PublicKey)
 	c.Header("Content-Type", "application/activity+json")
-	c.PureJSON(http.StatusOK, p)
+	c.JSON(http.StatusOK, p)
 }
 
 func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
@@ -156,11 +156,22 @@ func (s *activitypubEndpoints) handleOutbox(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	res := &goap.OrderedCollection{
-		ID:           goap.IRI(user.GetActivityPubID(baseURI) + "/outbox"),
-		Type:         goap.OrderedCollectionType,
-		TotalItems:   0,
-		OrderedItems: []goap.Item{},
+	var res goap.Item
+	isPage := c.Query("page") != ""
+	if isPage {
+		res = &goap.OrderedCollectionPage{
+			ID:           goap.IRI(user.GetActivityPubID(baseURI) + "/outbox?page=true"),
+			Type:         goap.OrderedCollectionPageType,
+			TotalItems:   0,
+			OrderedItems: []goap.Item{},
+		}
+	} else {
+		res = &goap.OrderedCollection{
+			ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/outbox"),
+			Type:       goap.OrderedCollectionType,
+			TotalItems: 0,
+			First:      goap.IRI(user.GetActivityPubID(baseURI) + "/outbox?page=true"),
+		}
 	}
 	sendActivityJSON(c, http.StatusOK, res)
 }
