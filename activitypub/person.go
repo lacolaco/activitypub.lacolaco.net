@@ -24,7 +24,11 @@ func NewPersonJSON(u *model.User, baseUri string, publicKey *rsa.PublicKey) map[
 		"following":         fmt.Sprintf("%s/following", apID),
 		"featured":          fmt.Sprintf("%s/collections/featured", apID),
 		"discoverable":      true,
-		"url":               fmt.Sprintf("%s/@%s", baseUri, u.ID),
+		"sharedInbox":       fmt.Sprintf("%s/inbox", baseUri),
+		"endpoints": map[string]interface{}{
+			"sharedInbox": fmt.Sprintf("%s/inbox", baseUri),
+		},
+		"url": fmt.Sprintf("%s/@%s", baseUri, u.ID),
 		"icon": map[string]interface{}{
 			"type":      "Image",
 			"mediaType": u.Icon.MediaType,

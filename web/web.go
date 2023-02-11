@@ -23,7 +23,8 @@ func Start(conf *config.Config) error {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
 	r.Use(config.Middleware(conf))
 	r.Use(config.Middleware(conf))
 	r.Use(tracing.Middleware(conf))
@@ -67,7 +68,15 @@ func errorHandler() gin.HandlerFunc {
 }
 
 func requestLogger() gin.HandlerFunc {
+	ignoredUserAgents := map[string]bool{
+		"GoogleStackdriverMonitoring-UptimeChecks(https://cloud.google.com/monitoring)": true,
+	}
+
 	return func(c *gin.Context) {
+		if ignoredUserAgents[c.Request.UserAgent()] {
+			c.Next()
+			return
+		}
 		logging.FromContext(c.Request.Context()).Debug("request.start",
 			zap.String("method", c.Request.Method),
 			zap.String("host", c.Request.Host),
