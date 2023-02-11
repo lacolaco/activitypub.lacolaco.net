@@ -134,6 +134,12 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 			}
 			c.Status(http.StatusOK)
 		}
+	case goap.CreateType, goap.UpdateType, goap.DeleteType:
+		logger.Debug("create, update, delete", zap.Any("object", activity.Object))
+		c.Status(200)
+	case goap.AcceptType, goap.RejectType:
+		logger.Debug("accept, reject", zap.Any("object", activity.Object))
+		c.Status(200)
 	default:
 		logger.Error("unsuppoted activity type")
 		c.String(http.StatusBadRequest, "invalid activity type")
