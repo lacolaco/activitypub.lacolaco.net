@@ -32,6 +32,7 @@ func (e *wellKnownEndpoints) RegisterRoutes(r *gin.Engine) {
 
 func (e *wellKnownEndpoints) handleHostMeta(c *gin.Context) {
 	accept := c.GetHeader("Accept")
+	c.Header("Cache-Control", "max-age=3600, public")
 	switch accept {
 	case "application/json":
 		tmpl := template.New("host-meta.json.template")
@@ -95,5 +96,6 @@ func (e *wellKnownEndpoints) handleWebfinger(c *gin.Context) {
 		},
 	}
 	c.Header("Content-Type", "application/jrd+json")
+	c.Header("Cache-Control", "max-age=3600, public")
 	c.JSON(http.StatusOK, res)
 }
