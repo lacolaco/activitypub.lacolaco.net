@@ -28,7 +28,6 @@ func NewPersonJSON(u *model.User, baseUri string, publicKey *httpsig.PublicKey) 
 		"followers":                 fmt.Sprintf("%s/followers", apID),
 		"following":                 fmt.Sprintf("%s/following", apID),
 		"url":                       fmt.Sprintf("%s/@%s", baseUri, u.ID),
-		"featured":                  fmt.Sprintf("%s/collections/featured", apID),
 		"published":                 u.CreatedAt.Format(time.RFC3339),
 		"updated":                   u.UpdatedAt.Format(time.RFC3339),
 		"discoverable":              true,
