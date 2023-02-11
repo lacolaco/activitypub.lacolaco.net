@@ -157,9 +157,10 @@ func (s *activitypubEndpoints) handleOutbox(c *gin.Context) {
 		return
 	}
 	res := &goap.OrderedCollection{
-		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/outbox"),
-		Type:       goap.OrderedCollectionType,
-		TotalItems: 0,
+		ID:           goap.IRI(user.GetActivityPubID(baseURI) + "/outbox"),
+		Type:         goap.OrderedCollectionType,
+		TotalItems:   0,
+		OrderedItems: []goap.Item{},
 	}
 	sendActivityJSON(c, http.StatusOK, res)
 }
@@ -176,9 +177,10 @@ func (s *activitypubEndpoints) handleFeatured(c *gin.Context) {
 		return
 	}
 	res := &goap.OrderedCollection{
-		ID:         goap.IRI(user.GetActivityPubID(baseURI) + "/collections/featured"),
-		Type:       goap.OrderedCollectionType,
-		TotalItems: 0,
+		ID:           goap.IRI(user.GetActivityPubID(baseURI) + "/collections/featured"),
+		Type:         goap.OrderedCollectionType,
+		TotalItems:   0,
+		OrderedItems: []goap.Item{},
 	}
 	sendActivityJSON(c, http.StatusOK, res)
 }
