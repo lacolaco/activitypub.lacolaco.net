@@ -74,11 +74,13 @@ func requestLogger() gin.HandlerFunc {
 			zap.String("url", c.Request.URL.String()),
 			zap.String("userAgent", c.Request.UserAgent()),
 			zap.String("referer", c.Request.Referer()),
+			zap.String("accept", c.Request.Header.Get("Accept")),
 		)
 		c.Next()
 		logging.FromContext(c.Request.Context()).Debug("request.end",
 			zap.Int("status", c.Writer.Status()),
 			zap.Int("size", c.Writer.Size()),
+			zap.String("response.contentType", c.Writer.Header().Get("Content-Type")),
 		)
 	}
 }
