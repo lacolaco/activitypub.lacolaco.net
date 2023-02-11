@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"os"
 
@@ -38,13 +39,15 @@ func Load() (*Config, error) {
 	rsaPrivateKey := os.Getenv("RSA_PRIVATE_KEY")
 	if rsaPrivateKey == "" {
 		return nil, fmt.Errorf("RSA keys are not set")
+		
 	}
 	privateKey, err := sign.DecodePrivateKey(rsaPrivateKey)
 	if err != nil {
 		return nil, err
 	}
+	publicKey := privateKey.Public().(*rsa.PublicKey)
 	config.PrivateKey = &httpsig.PrivateKey{Type: httpsig.RSA, Key: privateKey}
-	config.PublicKey = &httpsig.PublicKey{Type: httpsig.RSA, Key: privateKey.PublicKey}
+	config.PublicKey = &httpsig.PublicKey{Type: httpsig.RSA, Key: publicKey}
 
 	config.googleCredentials = findGoogleCredentials()
 	config.isRunningOnCloud = os.Getenv("K_SERVICE") != ""
