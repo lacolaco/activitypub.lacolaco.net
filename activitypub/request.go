@@ -3,7 +3,6 @@ package activitypub
 import (
 	"bytes"
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"io"
 	"net/http"
@@ -59,7 +58,7 @@ func getActivityJSON(ctx context.Context, publicKeyID string, url string) ([]byt
 	}
 	req.Header.Set("Accept", mimeTypeActivityJSON)
 	req.Header.Set("User-Agent", userAgent)
-	httpsig.SignRequest(publicKeyID, convertPrivateKey(conf.RsaPrivateKey), req, nil)
+	httpsig.SignRequest(publicKeyID, *conf.PrivateKey, req, nil)
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	req = req.WithContext(c)
@@ -89,7 +88,7 @@ func postActivityJSON(ctx context.Context, publicKeyID string, url string, body 
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", mimeTypeActivityJSON)
-	httpsig.SignRequest(publicKeyID, convertPrivateKey(conf.RsaPrivateKey), req, body)
+	httpsig.SignRequest(publicKeyID, *conf.PrivateKey, req, body)
 	logger.Debug("postActivityJSON.request", zap.Any("headers", req.Header))
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -109,11 +108,4 @@ func postActivityJSON(ctx context.Context, publicKeyID string, url string, body 
 		return nil, fmt.Errorf("http post status: %d", resp.StatusCode)
 	}
 	return respBody, nil
-}
-
-func convertPrivateKey(key *rsa.PrivateKey) httpsig.PrivateKey {
-	return httpsig.PrivateKey{
-		Key:  key,
-		Type: httpsig.RSA,
-	}
 }

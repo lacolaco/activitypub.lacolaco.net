@@ -2,17 +2,18 @@ package config
 
 import (
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"os"
 
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 	"golang.org/x/oauth2/google"
+	"humungus.tedunangst.com/r/webs/httpsig"
 )
 
 type Config struct {
 	Port              string
-	RsaPrivateKey     *rsa.PrivateKey
+	PrivateKey        *httpsig.PrivateKey
+	PublicKey         *httpsig.PublicKey
 	googleCredentials *google.Credentials
 	isRunningOnCloud  bool
 }
@@ -38,11 +39,12 @@ func Load() (*Config, error) {
 	if rsaPrivateKey == "" {
 		return nil, fmt.Errorf("RSA keys are not set")
 	}
-	privateKey, err := sign.ImportPrivateKey(rsaPrivateKey)
+	privateKey, err := sign.DecodePrivateKey(rsaPrivateKey)
 	if err != nil {
 		return nil, err
 	}
-	config.RsaPrivateKey = privateKey
+	config.PrivateKey = &httpsig.PrivateKey{Type: httpsig.RSA, Key: privateKey}
+	config.PublicKey = &httpsig.PublicKey{Type: httpsig.RSA, Key: privateKey.PublicKey}
 
 	config.googleCredentials = findGoogleCredentials()
 	config.isRunningOnCloud = os.Getenv("K_SERVICE") != ""

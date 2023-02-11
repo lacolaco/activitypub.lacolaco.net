@@ -86,11 +86,6 @@ func requestLogger() gin.HandlerFunc {
 			zap.String("accept", c.Request.Header.Get("Accept")),
 			zap.Any("headers", c.Request.Header),
 		)
-		if c.Request.Method == "POST" {
-			var body map[string]interface{}
-			c.ShouldBindJSON(&body)
-			logging.FromContext(c.Request.Context()).Debug("request.body", zap.Any("body", body))
-		}
 		c.Next()
 		logging.FromContext(c.Request.Context()).Debug("request.end",
 			zap.Int("status", c.Writer.Status()),

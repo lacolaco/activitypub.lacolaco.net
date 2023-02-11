@@ -50,7 +50,7 @@ func (s *activitypubEndpoints) handlePerson(c *gin.Context) {
 		return
 	}
 	logger.Debug("user found", zap.Any("user", user))
-	p := ap.NewPersonJSON(user, getBaseURI(c), &conf.RsaPrivateKey.PublicKey)
+	p := ap.NewPersonJSON(user, getBaseURI(c), conf.PublicKey)
 	c.Header("Content-Type", "application/activity+json")
 	c.JSON(http.StatusOK, p)
 }
@@ -78,6 +78,7 @@ func (s *activitypubEndpoints) handleInbox(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
+	logger.Debug("payload", zap.String("payload", string(payload)))
 	if _, err := httpsig.VerifyRequest(c.Request, payload, httpsig.ActivityPubKeyGetter); err != nil {
 		logger.Error("failed to verify request", zap.Error(err))
 		c.String(http.StatusBadRequest, err.Error())

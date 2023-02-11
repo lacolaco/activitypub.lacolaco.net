@@ -56,7 +56,6 @@ require (
 	github.com/gin-gonic/gin v1.8.2
 	github.com/go-ap/activitypub v0.0.0-20230204125704-b4f1d45500ae
 	github.com/go-ap/jsonld v0.0.0-20221030091449-f2a191312c73
-	github.com/go-fed/httpsig v1.1.0
 	github.com/joho/godotenv v1.5.1
 	go.ajitem.com/zapdriver v1.4.1
 	go.opencensus.io v0.24.0

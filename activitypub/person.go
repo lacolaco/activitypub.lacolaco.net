@@ -1,15 +1,19 @@
 package activitypub
 
 import (
-	"crypto/rsa"
 	"fmt"
 
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"github.com/lacolaco/activitypub.lacolaco.net/sign"
+	"humungus.tedunangst.com/r/webs/httpsig"
 )
 
-func NewPersonJSON(u *model.User, baseUri string, publicKey *rsa.PublicKey) map[string]interface{} {
+func NewPersonJSON(u *model.User, baseUri string, publicKey *httpsig.PublicKey) map[string]interface{} {
 	apID := u.GetActivityPubID(baseUri)
+	publicKeyPem, err := httpsig.EncodeKey(publicKey.Key)
+	if err != nil {
+		panic(err)
+	}
 
 	return map[string]interface{}{
 		"@context":                  contextURIs,
@@ -38,7 +42,7 @@ func NewPersonJSON(u *model.User, baseUri string, publicKey *rsa.PublicKey) map[
 		"publicKey": map[string]interface{}{
 			"id":           fmt.Sprintf("%s#%s", apID, sign.DefaultPublicKeyID),
 			"owner":        apID,
-			"publicKeyPem": sign.ExportPublicKey(publicKey),
+			"publicKeyPem": publicKeyPem,
 		},
 	}
 }
