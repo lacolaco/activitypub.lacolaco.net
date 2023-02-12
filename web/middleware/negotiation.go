@@ -10,9 +10,6 @@ import (
 func AssertAccept(expected []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accept := c.Request.Header.Get("Accept")
-		if strings.Contains(accept, "*/*") {
-			return
-		}
 		for _, e := range expected {
 			if strings.Contains(accept, e) {
 				return

@@ -12,6 +12,7 @@ func Static(prefix, dir string) gin.HandlerFunc {
 		staticFS := static.LocalFile(dir, false)
 		url := c.Request.URL.Path
 		if staticFS.Exists(prefix, url) {
+			c.Header("Cache-Control", "public, must-revalidate, max-age=0")
 			c.FileFromFS(url, staticFS)
 			return
 		}

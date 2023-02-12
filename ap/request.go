@@ -58,7 +58,7 @@ func getActivityJSON(ctx context.Context, publicKeyID string, url string) ([]byt
 	}
 	req.Header.Set("Accept", mimeTypeActivityJSON)
 	req.Header.Set("User-Agent", userAgent)
-	key := httpsig.PrivateKey{Key: *conf.PrivateKey, Type: httpsig.RSA}
+	key := httpsig.PrivateKey{Key: conf.PrivateKey, Type: httpsig.RSA}
 	httpsig.SignRequest(publicKeyID, key, req, nil)
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -89,7 +89,7 @@ func postActivityJSON(ctx context.Context, publicKeyID string, url string, body 
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", mimeTypeActivityJSON)
-	key := httpsig.PrivateKey{Key: *conf.PrivateKey, Type: httpsig.RSA}
+	key := httpsig.PrivateKey{Key: conf.PrivateKey, Type: httpsig.RSA}
 	httpsig.SignRequest(publicKeyID, key, req, body)
 	logger.Debug("postActivityJSON.request", zap.Any("headers", req.Header))
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
