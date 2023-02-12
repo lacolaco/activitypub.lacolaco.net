@@ -82,15 +82,19 @@ func (s *service) searchUser(c *gin.Context) {
 	c.JSON(200, person)
 }
 
+type followUserRequest struct {
+	ID string `json:"id"`
+}
+
 func (s *service) followUser(c *gin.Context) {
-	id := c.Query("id")
-	if id == "" {
-		c.AbortWithStatusJSON(400, gin.H{"error": "id is required"})
+	req := followUserRequest{}
+	if err := c.BindJSON(&req); err != nil {
+		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
 	currentUser := auth.FromContext(c.Request.Context())
 	actor := ap.NewPerson(currentUser, utils.GetBaseURI(c))
-	job, err := ap.FollowPerson(c.Request.Context(), actor, id)
+	job, err := ap.FollowPerson(c.Request.Context(), actor, req.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
