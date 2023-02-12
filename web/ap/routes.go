@@ -30,23 +30,23 @@ type apService struct {
 }
 
 func New(userRepo UserRepository) *apService {
-	return &apService{
-		userRepo: userRepo,
-	}
+	return &apService{userRepo: userRepo}
 }
 
 func (s *apService) Register(r *gin.Engine) {
-	userRoutes := r.Group("/users/:username", middleware.AssertAccept([]string{
+	assertJSONGet := middleware.AssertAccept([]string{
 		"application/activity+json",
 		"application/ld+json",
 		"application/json",
-	}))
+	})
+	assertJSONPost := middleware.AssertContentType([]string{"application/activity+json"})
 
-	userRoutes.GET("", s.handlePerson)
-	userRoutes.POST("/inbox", middleware.AssertContentType([]string{"application/activity+json"}), s.handleInbox)
-	userRoutes.GET("/outbox", s.handleOutbox)
-	userRoutes.GET("/followers", s.handleFollowers)
-	userRoutes.GET("/following", s.handleFollowing)
+	userRoutes := r.Group("/users/:username")
+	userRoutes.GET("", assertJSONGet, s.handlePerson)
+	userRoutes.POST("/inbox", assertJSONPost, s.handleInbox)
+	userRoutes.GET("/outbox", assertJSONGet, s.handleOutbox)
+	userRoutes.GET("/followers", assertJSONGet, s.handleFollowers)
+	userRoutes.GET("/following", assertJSONGet, s.handleFollowing)
 	r.GET("/@:username", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/users/"+ctx.Param("username"))
 	})
