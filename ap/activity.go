@@ -43,7 +43,7 @@ func FollowPerson(ctx context.Context, actor Actor, target string) (*model.Job, 
 	if err != nil {
 		return nil, err
 	}
-	id := fmt.Sprintf("%s/%d", actor.GetID(), now.Unix())
+	id := fmt.Sprintf("%s/follow/%d", actor.GetID(), now.Unix())
 
 	j := junk.New()
 	j["@context"] = contextURIs
@@ -64,18 +64,18 @@ func UnfollowPerson(ctx context.Context, actor Actor, target string) (*model.Job
 	if err != nil {
 		return nil, err
 	}
-	id := fmt.Sprintf("%s/%d", actor.GetID(), now.Unix())
-
+	undoID := fmt.Sprintf("%s/follow/undo/%d", actor.GetID(), now.Unix())
+	followID := fmt.Sprintf("%s/follow/%d", actor.GetID(), now.Unix())
 	obj := junk.New()
 	obj["@context"] = contextURIs
-	obj["id"] = id
+	obj["id"] = followID
 	obj["type"] = "Follow"
 	obj["actor"] = actor.GetID()
 	obj["object"] = to.GetID().String()
 
 	j := junk.New()
 	j["@context"] = contextURIs
-	j["id"] = id
+	j["id"] = undoID
 	j["type"] = "Undo"
 	j["actor"] = actor.GetID()
 	j["object"] = obj
@@ -83,5 +83,5 @@ func UnfollowPerson(ctx context.Context, actor Actor, target string) (*model.Job
 	if _, err := postActivityJSON(ctx, actor, string(to.Inbox.GetLink()), j.ToBytes()); err != nil {
 		return nil, err
 	}
-	return model.NewJob(id, model.JobTypeUnfollowUser, actor.GetID(), target), nil
+	return model.NewJob(undoID, model.JobTypeUnfollowUser, actor.GetID(), target), nil
 }
