@@ -1,4 +1,4 @@
-package activitypub
+package ap
 
 import (
 	"context"
@@ -6,14 +6,13 @@ import (
 	"time"
 
 	goap "github.com/go-ap/activitypub"
-	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"humungus.tedunangst.com/r/webs/junk"
 )
 
-func Accept(ctx context.Context, baseURI string, user *model.User, req *goap.Activity) error {
+func Accept(ctx context.Context, user *Person, req *goap.Activity) error {
 	now := time.Now()
-	userID := user.GetActivityPubID(baseURI)
-	actor, err := getActor(ctx, user.GetPubkeyID(baseURI), req.Actor.GetID().String())
+	userID := user.ID()
+	actor, err := getActor(ctx, user.PubkeyID(), req.Actor.GetID().String())
 	if err != nil {
 		return err
 	}

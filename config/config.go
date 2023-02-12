@@ -3,18 +3,19 @@ package config
 import (
 	"context"
 	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"os"
+	"strings"
 
-	"github.com/lacolaco/activitypub.lacolaco.net/sign"
 	"golang.org/x/oauth2/google"
-	"humungus.tedunangst.com/r/webs/httpsig"
 )
 
 type Config struct {
 	Port              string
-	PrivateKey        *httpsig.PrivateKey
-	PublicKey         *httpsig.PublicKey
+	PrivateKey        *rsa.PrivateKey
+	PublicKey         *rsa.PublicKey
 	googleCredentials *google.Credentials
 	isRunningOnCloud  bool
 }
@@ -40,13 +41,13 @@ func Load() (*Config, error) {
 	if rsaPrivateKey == "" {
 		return nil, fmt.Errorf("RSA keys are not set")
 	}
-	privateKey, err := sign.DecodePrivateKey(rsaPrivateKey)
+	privateKey, err := decodePrivateKey(rsaPrivateKey)
 	if err != nil {
 		return nil, err
 	}
 	publicKey := privateKey.Public().(*rsa.PublicKey)
-	config.PrivateKey = &httpsig.PrivateKey{Type: httpsig.RSA, Key: privateKey}
-	config.PublicKey = &httpsig.PublicKey{Type: httpsig.RSA, Key: publicKey}
+	config.PrivateKey = privateKey
+	config.PublicKey = publicKey
 
 	config.googleCredentials = findGoogleCredentials()
 	config.isRunningOnCloud = os.Getenv("K_SERVICE") != ""
@@ -56,4 +57,24 @@ func Load() (*Config, error) {
 func findGoogleCredentials() *google.Credentials {
 	cred, _ := google.FindDefaultCredentials(context.Background())
 	return cred
+}
+
+func decodePrivateKey(s string) (*rsa.PrivateKey, error) {
+	s = strings.TrimPrefix(s, "\"")
+	s = strings.TrimSuffix(s, "\"")
+	s = strings.Join(strings.Split(s, "\\n"), "\n")
+
+	block, _ := pem.Decode([]byte(s))
+	if block == nil {
+		return nil, fmt.Errorf("failed to parse PEM block containing the key: %s", block.Type)
+	}
+
+	if block == nil {
+		return nil, nil
+	}
+	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	return key.(*rsa.PrivateKey), nil
 }

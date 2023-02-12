@@ -1,4 +1,4 @@
-package activitypub
+package ap
 
 import (
 	"bytes"
@@ -58,7 +58,8 @@ func getActivityJSON(ctx context.Context, publicKeyID string, url string) ([]byt
 	}
 	req.Header.Set("Accept", mimeTypeActivityJSON)
 	req.Header.Set("User-Agent", userAgent)
-	httpsig.SignRequest(publicKeyID, *conf.PrivateKey, req, nil)
+	key := httpsig.PrivateKey{Key: *conf.PrivateKey, Type: httpsig.RSA}
+	httpsig.SignRequest(publicKeyID, key, req, nil)
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	req = req.WithContext(c)
@@ -88,7 +89,8 @@ func postActivityJSON(ctx context.Context, publicKeyID string, url string, body 
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", mimeTypeActivityJSON)
-	httpsig.SignRequest(publicKeyID, *conf.PrivateKey, req, body)
+	key := httpsig.PrivateKey{Key: *conf.PrivateKey, Type: httpsig.RSA}
+	httpsig.SignRequest(publicKeyID, key, req, body)
 	logger.Debug("postActivityJSON.request", zap.Any("headers", req.Header))
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()

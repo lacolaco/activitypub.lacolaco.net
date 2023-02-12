@@ -21,10 +21,7 @@ func TestLoad(t *testing.T) {
 		if conf.PrivateKey == nil {
 			tt.Errorf("PrivateKey is nil")
 		}
-		if conf.PrivateKey.Type != httpsig.RSA {
-			tt.Errorf("PrivateKey type is not rsa")
-		}
-		_, err := httpsig.EncodeKey(conf.PrivateKey.Key)
+		_, err := httpsig.EncodeKey(conf.PrivateKey)
 		if err != nil {
 			tt.Errorf("PrivateKey key is not valid: %v", err)
 		}
@@ -34,10 +31,7 @@ func TestLoad(t *testing.T) {
 		if conf.PublicKey == nil {
 			tt.Errorf("PublicKey is nil")
 		}
-		if conf.PublicKey.Type != httpsig.RSA {
-			tt.Errorf("PublicKey type is not rsa")
-		}
-		_, err := httpsig.EncodeKey(conf.PublicKey.Key)
+		_, err := httpsig.EncodeKey(conf.PublicKey)
 		if err != nil {
 			tt.Errorf("PublicKey key is not valid: %v", err)
 		}
