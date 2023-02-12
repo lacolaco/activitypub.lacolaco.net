@@ -12,6 +12,9 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/repository"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/ap"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware"
+	well_known "github.com/lacolaco/activitypub.lacolaco.net/web/well-known"
 	"go.uber.org/zap"
 )
 
@@ -35,18 +38,11 @@ func Start(conf *config.Config) error {
 		ctx.Next()
 	})
 
-	r.StaticFile("/", "./static/index.html")
-	r.StaticFile("/index.html", "./static/index.html")
-	r.StaticFile("/robots.txt", "./static/robots.txt")
-
-	wkService := &wellKnownEndpoints{}
-	wkService.RegisterRoutes(r)
+	r.Use(middleware.Static("/", "./public"))
 
 	firestoreClient := firestore.NewFirestoreClient()
-	apService := &apEndpoints{
-		userRepo: repository.NewUserRepository(firestoreClient),
-	}
-	apService.RegisterRoutes(r)
+	well_known.New().Register(r)
+	ap.New(repository.NewUserRepository(firestoreClient)).Register(r)
 
 	// Start HTTP server.
 	log.Printf("listening on http://localhost:%s", conf.Port)

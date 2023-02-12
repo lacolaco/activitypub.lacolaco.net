@@ -1,7 +1,8 @@
-package web
+package ap
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware"
 	"go.uber.org/zap"
 	"humungus.tedunangst.com/r/webs/httpsig"
 )
@@ -23,22 +25,34 @@ type UserRepository interface {
 	ListFollowing(ctx context.Context, user *model.User) ([]*model.RemoteUser, error)
 }
 
-type apEndpoints struct {
+type apService struct {
 	userRepo UserRepository
 }
 
-func (e *apEndpoints) RegisterRoutes(r *gin.Engine) {
-	r.GET("/users/:username", e.handlePerson)
+func New(userRepo UserRepository) *apService {
+	return &apService{
+		userRepo: userRepo,
+	}
+}
+
+func (s *apService) Register(r *gin.Engine) {
+	userRoutes := r.Group("/users/:username", middleware.AssertAccept([]string{
+		"application/activity+json",
+		"application/ld+json",
+		"application/json",
+	}))
+
+	userRoutes.GET("", s.handlePerson)
+	userRoutes.POST("/inbox", middleware.AssertContentType([]string{"application/activity+json"}), s.handleInbox)
+	userRoutes.GET("/outbox", s.handleOutbox)
+	userRoutes.GET("/followers", s.handleFollowers)
+	userRoutes.GET("/following", s.handleFollowing)
 	r.GET("/@:username", func(ctx *gin.Context) {
 		ctx.Redirect(http.StatusMovedPermanently, "/users/"+ctx.Param("username"))
 	})
-	r.POST("/users/:username/inbox", e.handleInbox)
-	r.GET("/users/:username/outbox", e.handleOutbox)
-	r.GET("/users/:username/followers", e.handleFollowers)
-	r.GET("/users/:username/following", e.handleFollowing)
 }
 
-func (s *apEndpoints) handlePerson(c *gin.Context) {
+func (s *apService) handlePerson(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	conf := config.FromContext(c.Request.Context())
 	username := c.Param("username")
@@ -55,15 +69,9 @@ func (s *apEndpoints) handlePerson(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func (s *apEndpoints) handleInbox(c *gin.Context) {
+func (s *apService) handleInbox(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	conf := config.FromContext(c.Request.Context())
-
-	if c.Request.Header.Get("Content-Type") != "application/activity+json" {
-		logger.Error("invalid content-type", zap.String("content-type", c.Request.Header.Get("Content-Type")))
-		c.String(http.StatusBadRequest, "invalid content type")
-		return
-	}
 	defer c.Request.Body.Close()
 	payload, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -147,7 +155,7 @@ func (s *apEndpoints) handleInbox(c *gin.Context) {
 	}
 }
 
-func (s *apEndpoints) handleOutbox(c *gin.Context) {
+func (s *apService) handleOutbox(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	conf := config.FromContext(c.Request.Context())
 	baseURI := getBaseURI(c)
@@ -168,7 +176,7 @@ func (s *apEndpoints) handleOutbox(c *gin.Context) {
 	sendActivityJSON(c, http.StatusOK, res)
 }
 
-func (s *apEndpoints) handleFollowers(c *gin.Context) {
+func (s *apService) handleFollowers(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	conf := config.FromContext(c.Request.Context())
 	baseURI := getBaseURI(c)
@@ -203,7 +211,7 @@ func (s *apEndpoints) handleFollowers(c *gin.Context) {
 	sendActivityJSON(c, http.StatusOK, res)
 }
 
-func (s *apEndpoints) handleFollowing(c *gin.Context) {
+func (s *apService) handleFollowing(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	conf := config.FromContext(c.Request.Context())
 	baseURI := getBaseURI(c)
@@ -245,4 +253,8 @@ func sendActivityJSON(c *gin.Context, code int, item goap.Item) error {
 	c.Header("Content-Type", "application/activity+json")
 	c.String(code, string(body))
 	return nil
+}
+
+func getBaseURI(c *gin.Context) string {
+	return fmt.Sprintf("https://%s", c.Request.Host)
 }

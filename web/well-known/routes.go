@@ -1,4 +1,4 @@
-package web
+package well_known
 
 import (
 	"bytes"
@@ -18,19 +18,20 @@ var (
 	hostMetaJSONTemplate string
 )
 
-type wellKnownEndpoints struct{}
+type service struct{}
 
-func NewWellKnownEndpoints() *wellKnownEndpoints {
-	return &wellKnownEndpoints{}
+func New() *service {
+	return &service{}
 }
 
-func (e *wellKnownEndpoints) RegisterRoutes(r *gin.Engine) {
-	r.GET("/.well-known/host-meta", e.handleHostMeta)
-	r.GET("/.well-known/host-meta.json", e.handleHostMeta)
-	r.GET("/.well-known/webfinger", e.handleWebfinger)
+func (e *service) Register(r *gin.Engine) {
+	wellKnownRoutes := r.Group("/.well-known")
+	wellKnownRoutes.GET("/host-meta", e.handleHostMeta)
+	wellKnownRoutes.GET("/host-meta.json", e.handleHostMeta)
+	wellKnownRoutes.GET("/webfinger", e.handleWebfinger)
 }
 
-func (e *wellKnownEndpoints) handleHostMeta(c *gin.Context) {
+func (e *service) handleHostMeta(c *gin.Context) {
 	accept := c.GetHeader("Accept")
 	c.Header("Cache-Control", "max-age=3600, public")
 	switch accept {
@@ -63,7 +64,7 @@ func (e *wellKnownEndpoints) handleHostMeta(c *gin.Context) {
 	}
 }
 
-func (e *wellKnownEndpoints) handleWebfinger(c *gin.Context) {
+func (e *service) handleWebfinger(c *gin.Context) {
 	host := c.Request.Host
 	resource := c.Query("resource")
 	if resource == "" {

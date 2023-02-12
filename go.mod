@@ -53,6 +53,7 @@ require (
 	cloud.google.com/go/firestore v1.9.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.1
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1
+	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.8.2
 	github.com/go-ap/activitypub v0.0.0-20230204125704-b4f1d45500ae
 	github.com/go-ap/jsonld v0.0.0-20221030091449-f2a191312c73

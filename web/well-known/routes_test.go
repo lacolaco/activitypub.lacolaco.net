@@ -1,6 +1,4 @@
-package web_test
-
-// well-known.go の各エンドポイントのテスト
+package well_known_test
 
 import (
 	"encoding/json"
@@ -10,13 +8,13 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lacolaco/activitypub.lacolaco.net/web"
+	well_known "github.com/lacolaco/activitypub.lacolaco.net/web/well-known"
 )
 
 func TestWellKnown(t *testing.T) {
 	router := gin.Default()
-	ep := web.NewWellKnownEndpoints()
-	ep.RegisterRoutes(router)
+	ep := well_known.New()
+	ep.Register(router)
 
 	t.Run("GET /.well-known/host-meta", func(tt *testing.T) {
 		req, err := http.NewRequest("GET", "https://lacolaco.example/.well-known/host-meta", nil)
