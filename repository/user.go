@@ -24,10 +24,11 @@ func NewUserRepository(firestoreClient *firestore.Client) *userRepo {
 
 func (r *userRepo) FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error) {
 	collection := r.firestoreClient.Collection(UsersCollectionName)
-	user, err := findItem[model.LocalUser](ctx, collection.Where("id", "==", localID))
+	user, doc, err := findItem[model.LocalUser](ctx, collection.Where("id", "==", localID))
 	if err != nil {
 		return nil, err
 	}
+	user.UID = doc.Ref.ID
 	return user, nil
 }
 
@@ -47,7 +48,7 @@ func (r *userRepo) FindByUID(ctx context.Context, uid string) (*model.LocalUser,
 
 func (r *userRepo) UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error {
 	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowingCollectionName)
-	old, err := findItem[model.Following](ctx, col.Where("user_id", "==", following.UserID))
+	old, _, err := findItem[model.Following](ctx, col.Where("user_id", "==", following.UserID))
 	if err != nil && err != ErrNotFound {
 		return err
 	}
@@ -79,7 +80,7 @@ func (r *userRepo) ListFollowing(ctx context.Context, user *model.LocalUser) ([]
 
 func (r *userRepo) FindFollowing(ctx context.Context, user *model.LocalUser, whom string) (*model.Following, error) {
 	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowingCollectionName)
-	following, err := findItem[model.Following](ctx, col.Where("user_id", "==", whom))
+	following, _, err := findItem[model.Following](ctx, col.Where("user_id", "==", whom))
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +99,7 @@ func (r *userRepo) DeleteFollowing(ctx context.Context, user *model.LocalUser, w
 
 func (r *userRepo) UpsertFollower(ctx context.Context, user *model.LocalUser, follower *model.Follower) error {
 	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
-	old, err := findItem[model.Follower](ctx, col.Where("user_id", "==", follower.UserID))
+	old, _, err := findItem[model.Follower](ctx, col.Where("user_id", "==", follower.UserID))
 	if err != nil && err != ErrNotFound {
 		return err
 	}
@@ -119,7 +120,7 @@ func (r *userRepo) UpsertFollower(ctx context.Context, user *model.LocalUser, fo
 }
 
 func (r *userRepo) ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.Follower, error) {
-	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowersCollectionName)
+	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
 	q := users.OrderBy("created_at", firestore.Desc)
 	items, err := getAllItems[model.Follower](ctx, q)
 	if err != nil {
@@ -130,7 +131,7 @@ func (r *userRepo) ListFollowers(ctx context.Context, user *model.LocalUser) ([]
 
 func (r *userRepo) FindFollower(ctx context.Context, user *model.LocalUser, whom string) (*model.Follower, error) {
 	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
-	follower, err := findItem[model.Follower](ctx, col.Where("user_id", "==", whom))
+	follower, _, err := findItem[model.Follower](ctx, col.Where("user_id", "==", whom))
 	if err != nil {
 		return nil, err
 	}
