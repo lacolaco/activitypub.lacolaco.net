@@ -146,6 +146,9 @@ func (s *apService) handleInbox(c *gin.Context) {
 	case goap.CreateType, goap.UpdateType, goap.DeleteType:
 		logger.Debug("create, update, delete", zap.Any("object", activity.Object))
 		c.Status(200)
+	case goap.AnnounceType:
+		logger.Debug("announce", zap.Any("object", activity.Object))
+		c.Status(200)
 	case goap.AcceptType, goap.RejectType:
 		logger.Debug("accept, reject", zap.Any("object", activity.Object))
 		c.Status(200)
