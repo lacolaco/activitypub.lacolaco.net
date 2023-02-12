@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"cloud.google.com/go/firestore"
 	"google.golang.org/api/iterator"
@@ -43,10 +44,9 @@ func removeIfExists(ctx context.Context, collection *firestore.CollectionRef, id
 }
 
 // get items from collection
-func getAllItems[T interface{}](ctx context.Context, collection *firestore.CollectionRef, q firestore.Query) ([]T, error) {
-	iter := collection.Documents(ctx)
+func findItem[T interface{}](ctx context.Context, q firestore.Query) (*T, error) {
+	iter := q.Documents(ctx)
 	defer iter.Stop()
-	var result []T
 	for {
 		doc, err := iter.Next()
 		if err == iterator.Done {
@@ -59,7 +59,29 @@ func getAllItems[T interface{}](ctx context.Context, collection *firestore.Colle
 		if err := doc.DataTo(&item); err != nil {
 			return nil, err
 		}
-		result = append(result, item)
+		return &item, nil
+	}
+	return nil, fmt.Errorf("item not found")
+}
+
+// get items from collection
+func getAllItems[T interface{}](ctx context.Context, q firestore.Query) ([]*T, error) {
+	iter := q.Documents(ctx)
+	defer iter.Stop()
+	var result []*T
+	for {
+		doc, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		var item T
+		if err := doc.DataTo(&item); err != nil {
+			return nil, err
+		}
+		result = append(result, &item)
 	}
 	return result, nil
 }

@@ -20,12 +20,9 @@ func NewJobRepository(firestoreClient *firestore.Client) *jobRepo {
 }
 
 func (r *jobRepo) FindByID(ctx context.Context, jobID string) (*model.Job, error) {
-	doc, err := r.firestoreClient.Collection(JobsCollectionName).Doc(jobID).Get(ctx)
+	collection := r.firestoreClient.Collection(JobsCollectionName)
+	job, err := findItem[model.Job](ctx, collection.Where("id", "==", jobID))
 	if err != nil {
-		return nil, err
-	}
-	var job *model.Job
-	if err := doc.DataTo(&job); err != nil {
 		return nil, err
 	}
 	return job, nil

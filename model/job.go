@@ -5,7 +5,8 @@ import "time"
 type JobType = string
 
 const (
-	JobTypeFollowUser JobType = "follow_user"
+	JobTypeFollowUser   JobType = "follow_user"
+	JobTypeUnfollowUser JobType = "unfollow_user"
 )
 
 type Job struct {

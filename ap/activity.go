@@ -57,3 +57,24 @@ func FollowPerson(ctx context.Context, actor Actor, target string) (*model.Job, 
 	}
 	return model.NewJob(id, model.JobTypeFollowUser, actor.GetID(), target), nil
 }
+
+func UnfollowPerson(ctx context.Context, actor Actor, target string) (*model.Job, error) {
+	now := time.Now()
+	to, err := getPerson(ctx, target)
+	if err != nil {
+		return nil, err
+	}
+	id := fmt.Sprintf("%s/%d", actor.GetID(), now.Unix())
+
+	j := junk.New()
+	j["@context"] = contextURIs
+	j["id"] = id
+	j["type"] = "Undo"
+	j["actor"] = actor.GetID()
+	j["object"] = to.GetID().String()
+
+	if _, err := postActivityJSON(ctx, actor, string(to.Inbox.GetLink()), j.ToBytes()); err != nil {
+		return nil, err
+	}
+	return model.NewJob(id, model.JobTypeUnfollowUser, actor.GetID(), target), nil
+}

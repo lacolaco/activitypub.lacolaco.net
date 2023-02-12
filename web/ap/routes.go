@@ -165,12 +165,26 @@ func (s *apService) handleInbox(c *gin.Context) {
 			return
 		}
 		switch job.Type {
-		case "follow_user":
+		case model.JobTypeFollowUser:
 			if activity.GetType() == goap.AcceptType {
 				err := s.userRepo.AddFollowing(c.Request.Context(), user, actor.GetID().String())
 				if err != nil {
 					logger.Error(err.Error())
-					c.String(http.StatusInternalServerError, "add follower failed")
+					c.String(http.StatusInternalServerError, "add following failed")
+					return
+				}
+			}
+			if err := s.jobRepo.DeleteByID(c.Request.Context(), job.ID); err != nil {
+				logger.Error("failed to delete job", zap.Error(err))
+				c.String(http.StatusInternalServerError, err.Error())
+				return
+			}
+		case model.JobTypeUnfollowUser:
+			if activity.GetType() == goap.AcceptType {
+				err := s.userRepo.RemoveFollowing(c.Request.Context(), user, actor.GetID().String())
+				if err != nil {
+					logger.Error(err.Error())
+					c.String(http.StatusInternalServerError, "remove following failed")
 					return
 				}
 			}

@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -25,14 +24,11 @@ func NewUserRepository(firestoreClient *firestore.Client) *userRepo {
 
 func (r *userRepo) FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error) {
 	collection := r.firestoreClient.Collection(UsersCollectionName)
-	users, err := getAllItems[*model.LocalUser](ctx, collection, collection.Where("id", "==", localID))
+	user, err := findItem[model.LocalUser](ctx, collection.Where("id", "==", localID))
 	if err != nil {
 		return nil, err
 	}
-	if len(users) == 0 {
-		return nil, fmt.Errorf("user not found: %s", localID)
-	}
-	return users[0], nil
+	return user, nil
 }
 
 func (r *userRepo) FindByUID(ctx context.Context, uid string) (*model.LocalUser, error) {
@@ -88,7 +84,7 @@ func (r *userRepo) RemoveFollowing(ctx context.Context, user *model.LocalUser, f
 func (r *userRepo) ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.RemoteUser, error) {
 	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowersCollectionName)
 	q := users.OrderBy("created_at", firestore.Desc)
-	items, err := getAllItems[*model.RemoteUser](ctx, users, q)
+	items, err := getAllItems[model.RemoteUser](ctx, q)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +94,7 @@ func (r *userRepo) ListFollowers(ctx context.Context, user *model.LocalUser) ([]
 func (r *userRepo) ListFollowing(ctx context.Context, user *model.LocalUser) ([]*model.RemoteUser, error) {
 	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowingCollectionName)
 	q := users.OrderBy("created_at", firestore.Desc)
-	items, err := getAllItems[*model.RemoteUser](ctx, users, q)
+	items, err := getAllItems[model.RemoteUser](ctx, q)
 	if err != nil {
 		return nil, err
 	}

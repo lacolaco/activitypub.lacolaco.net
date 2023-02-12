@@ -103,9 +103,29 @@ func (s *service) followUser(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, gin.H{})
+	c.JSON(http.StatusAccepted, gin.H{})
+}
+
+type unfollowUserRequest struct {
+	ID string `json:"id"`
 }
 
 func (s *service) unfollowUser(c *gin.Context) {
-	c.AbortWithStatus(501)
+	req := unfollowUserRequest{}
+	if err := c.BindJSON(&req); err != nil {
+		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	currentUser := auth.FromContext(c.Request.Context())
+	actor := ap.NewPerson(currentUser, utils.GetBaseURI(c))
+	job, err := ap.UnfollowPerson(c.Request.Context(), actor, req.ID)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if err := s.jobRepo.Add(c.Request.Context(), job); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusAccepted, gin.H{})
 }
