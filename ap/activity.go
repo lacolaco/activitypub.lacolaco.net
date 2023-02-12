@@ -6,7 +6,6 @@ import (
 	"time"
 
 	goap "github.com/go-ap/activitypub"
-	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"humungus.tedunangst.com/r/webs/junk"
 )
 
@@ -37,51 +36,38 @@ func GetPerson(ctx context.Context, id string) (*goap.Person, error) {
 	return getPerson(ctx, id)
 }
 
-func FollowPerson(ctx context.Context, actor Actor, target string) (*model.Job, error) {
-	now := time.Now()
-	to, err := getPerson(ctx, target)
-	if err != nil {
-		return nil, err
-	}
-	id := fmt.Sprintf("%s/follow/%d", actor.GetID(), now.Unix())
-
+func newFollowJunk(actor Actor, whom *goap.Person) junk.Junk {
 	j := junk.New()
 	j["@context"] = contextURIs
-	j["id"] = id
+	j["id"] = fmt.Sprintf("%s/follow/%s", actor.GetID(), whom.GetID())
 	j["type"] = "Follow"
 	j["actor"] = actor.GetID()
-	j["object"] = to.GetID().String()
-
-	if _, err := postActivityJSON(ctx, actor, string(to.Inbox.GetLink()), j.ToBytes()); err != nil {
-		return nil, err
-	}
-	return model.NewJob(id, model.JobTypeFollowUser, actor.GetID(), target), nil
+	j["object"] = whom.GetID().String()
+	return j
 }
 
-func UnfollowPerson(ctx context.Context, actor Actor, target string) (*model.Job, error) {
-	now := time.Now()
-	to, err := getPerson(ctx, target)
-	if err != nil {
-		return nil, err
+func FollowPerson(ctx context.Context, actor Actor, whom *goap.Person) error {
+	j := newFollowJunk(actor, whom)
+
+	if _, err := postActivityJSON(ctx, actor, string(whom.Inbox.GetLink()), j.ToBytes()); err != nil {
+		return err
 	}
-	undoID := fmt.Sprintf("%s/follow/undo/%d", actor.GetID(), now.Unix())
-	followID := fmt.Sprintf("%s/follow/%d", actor.GetID(), now.Unix())
-	obj := junk.New()
-	obj["@context"] = contextURIs
-	obj["id"] = followID
-	obj["type"] = "Follow"
-	obj["actor"] = actor.GetID()
-	obj["object"] = to.GetID().String()
+	return nil
+}
+
+func UnfollowPerson(ctx context.Context, actor Actor, whom *goap.Person) error {
+	now := time.Now()
+	undoID := fmt.Sprintf("%s/follow/%s/undo/%d", actor.GetID(), whom.GetID(), now.Unix())
 
 	j := junk.New()
 	j["@context"] = contextURIs
 	j["id"] = undoID
 	j["type"] = "Undo"
 	j["actor"] = actor.GetID()
-	j["object"] = obj
+	j["object"] = newFollowJunk(actor, whom)
 
-	if _, err := postActivityJSON(ctx, actor, string(to.Inbox.GetLink()), j.ToBytes()); err != nil {
-		return nil, err
+	if _, err := postActivityJSON(ctx, actor, string(whom.Inbox.GetLink()), j.ToBytes()); err != nil {
+		return err
 	}
-	return model.NewJob(undoID, model.JobTypeUnfollowUser, actor.GetID(), target), nil
+	return nil
 }

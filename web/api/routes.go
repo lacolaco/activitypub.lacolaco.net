@@ -16,6 +16,7 @@ import (
 
 type UserRepository interface {
 	FindByUID(ctx context.Context, id string) (*model.LocalUser, error)
+	UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error
 }
 
 type JobRepository interface {
@@ -25,15 +26,13 @@ type JobRepository interface {
 type service struct {
 	authClient *fbauth.Client
 	userRepo   UserRepository
-	jobRepo    JobRepository
 }
 
-func New(authClient *fbauth.Client, userRepo UserRepository, jobRepo JobRepository) *service {
-	return &service{authClient: authClient, userRepo: userRepo, jobRepo: jobRepo}
+func New(authClient *fbauth.Client, userRepo UserRepository) *service {
+	return &service{authClient: authClient, userRepo: userRepo}
 }
 
 func (s *service) Register(r *gin.Engine) {
-
 	apiRoutes := r.Group("/api", auth.Authenticate(s.authClient, s.userRepo.FindByUID))
 	apiRoutes.GET("/ping", auth.AssertAuthenticated(), s.ping)
 	apiRoutes.GET("/users/search", auth.AssertAuthenticated(), s.searchUser)
@@ -94,12 +93,17 @@ func (s *service) followUser(c *gin.Context) {
 	}
 	currentUser := auth.FromContext(c.Request.Context())
 	actor := ap.NewPerson(currentUser, utils.GetBaseURI(c))
-	job, err := ap.FollowPerson(c.Request.Context(), actor, req.ID)
+	whom, err := ap.GetPerson(c.Request.Context(), req.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if err := s.jobRepo.Add(c.Request.Context(), job); err != nil {
+	if err := ap.FollowPerson(c.Request.Context(), actor, whom); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	following := model.NewFollowing(whom.GetID().String(), model.AttemptStatusPending)
+	if err := s.userRepo.UpsertFollowing(c.Request.Context(), currentUser, following); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -118,12 +122,12 @@ func (s *service) unfollowUser(c *gin.Context) {
 	}
 	currentUser := auth.FromContext(c.Request.Context())
 	actor := ap.NewPerson(currentUser, utils.GetBaseURI(c))
-	job, err := ap.UnfollowPerson(c.Request.Context(), actor, req.ID)
+	whom, err := ap.GetPerson(c.Request.Context(), req.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if err := s.jobRepo.Add(c.Request.Context(), job); err != nil {
+	if err := ap.UnfollowPerson(c.Request.Context(), actor, whom); err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

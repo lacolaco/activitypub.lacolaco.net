@@ -36,67 +36,111 @@ func (r *userRepo) FindByUID(ctx context.Context, uid string) (*model.LocalUser,
 	if err != nil {
 		return nil, err
 	}
-	var user *model.LocalUser
+	user := &model.LocalUser{UID: userDoc.Ref.ID}
 	if err := userDoc.DataTo(&user); err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-// Add follorwer to user
-func (r *userRepo) AddFollower(ctx context.Context, user *model.LocalUser, followerID string) error {
-	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowersCollectionName)
-	data := &model.RemoteUser{ID: followerID, CreatedAt: time.Now()}
-	if err := addIfNotExists(ctx, col, data); err != nil {
+// ===== Following =====
+
+func (r *userRepo) UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error {
+	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowingCollectionName)
+	old, err := findItem[model.Following](ctx, col.Where("user_id", "==", following.UserID))
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+	var doc *firestore.DocumentRef
+	if old != nil {
+		doc = col.Doc(old.ID)
+		following.ID = old.ID
+		following.CreatedAt = old.CreatedAt
+	} else {
+		doc = col.NewDoc()
+		following.ID = doc.ID
+		following.CreatedAt = time.Now()
+	}
+	if _, err := doc.Set(ctx, following); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Add following to user
-func (r *userRepo) AddFollowing(ctx context.Context, user *model.LocalUser, followingID string) error {
-	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowingCollectionName)
-	data := &model.RemoteUser{ID: followingID, CreatedAt: time.Now()}
-	if err := addIfNotExists(ctx, col, data); err != nil {
+func (r *userRepo) ListFollowing(ctx context.Context, user *model.LocalUser) ([]*model.Following, error) {
+	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowingCollectionName)
+	q := users.OrderBy("created_at", firestore.Desc)
+	items, err := getAllItems[model.Following](ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (r *userRepo) FindFollowing(ctx context.Context, user *model.LocalUser, whom string) (*model.Following, error) {
+	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowingCollectionName)
+	following, err := findItem[model.Following](ctx, col.Where("user_id", "==", whom))
+	if err != nil {
+		return nil, err
+	}
+	return following, nil
+}
+
+func (r *userRepo) DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error {
+	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowingCollectionName)
+	if err := deleteItems(ctx, col.Where("user_id", "==", whom)); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Remove follower from user
-func (r *userRepo) RemoveFollower(ctx context.Context, user *model.LocalUser, followerID string) error {
-	collection := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowersCollectionName)
-	if err := removeIfExists(ctx, collection, followerID); err != nil {
+// ===== Followers =====
+
+func (r *userRepo) UpsertFollower(ctx context.Context, user *model.LocalUser, follower *model.Follower) error {
+	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
+	old, err := findItem[model.Follower](ctx, col.Where("user_id", "==", follower.UserID))
+	if err != nil && err != ErrNotFound {
+		return err
+	}
+	var doc *firestore.DocumentRef
+	if old != nil {
+		doc = col.Doc(old.ID)
+		follower.ID = old.ID
+		follower.CreatedAt = old.CreatedAt
+	} else {
+		doc = col.NewDoc()
+		follower.ID = doc.ID
+		follower.CreatedAt = time.Now()
+	}
+	if _, err := doc.Set(ctx, follower); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Remove following from user
-func (r *userRepo) RemoveFollowing(ctx context.Context, user *model.LocalUser, followingID string) error {
-	collection := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowingCollectionName)
-	if err := removeIfExists(ctx, collection, followingID); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *userRepo) ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.RemoteUser, error) {
+func (r *userRepo) ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.Follower, error) {
 	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowersCollectionName)
 	q := users.OrderBy("created_at", firestore.Desc)
-	items, err := getAllItems[model.RemoteUser](ctx, q)
+	items, err := getAllItems[model.Follower](ctx, q)
 	if err != nil {
 		return nil, err
 	}
 	return items, nil
 }
 
-func (r *userRepo) ListFollowing(ctx context.Context, user *model.LocalUser) ([]*model.RemoteUser, error) {
-	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.ID).Collection(FollowingCollectionName)
-	q := users.OrderBy("created_at", firestore.Desc)
-	items, err := getAllItems[model.RemoteUser](ctx, q)
+func (r *userRepo) FindFollower(ctx context.Context, user *model.LocalUser, whom string) (*model.Follower, error) {
+	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
+	follower, err := findItem[model.Follower](ctx, col.Where("user_id", "==", whom))
 	if err != nil {
 		return nil, err
 	}
-	return items, nil
+	return follower, nil
+}
+
+func (r *userRepo) DeleteFollower(ctx context.Context, user *model.LocalUser, whom string) error {
+	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
+	if err := deleteItems(ctx, col.Where("user_id", "==", whom)); err != nil {
+		return err
+	}
+	return nil
 }

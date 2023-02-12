@@ -12,7 +12,7 @@ type ActivityPubPerson = {
   name: string;
   inbox: string;
   summary: string;
-  icon: { url: string };
+  icon?: { url: string };
 };
 
 @Component({
@@ -30,16 +30,16 @@ type ActivityPubPerson = {
         </form>
 
         <div *ngIf="state.searched">
-          <div *ngIf="state.person">
+          <div *ngIf="state.person as person">
             <p>User Found</p>
-            <img [src]="state.person.icon.url" class="w-16 h-16" />
-            <p>ID: {{ state.person.id }}</p>
-            <p>Name: {{ state.person.name }}</p>
-            <p>Summary: {{ state.person.summary }}</p>
+            <img *ngIf="person.icon" [src]="person.icon.url" class="w-16 h-16" />
+            <p>ID: {{ person.id }}</p>
+            <p>Name: {{ person.name }}</p>
+            <p>Summary: {{ person.summary }}</p>
 
             <div class="flex flex-row gap-x-2">
-              <button app-stroked-button (click)="requestFollow(state.person)">Follow</button>
-              <button app-stroked-button (click)="requestUnfollow(state.person)">Unfollow</button>
+              <button app-stroked-button (click)="requestFollow(person)">Follow</button>
+              <button app-stroked-button (click)="requestUnfollow(person)">Unfollow</button>
             </div>
           </div>
 

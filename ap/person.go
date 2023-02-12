@@ -62,7 +62,6 @@ func (p *Person) ToMap(publicKey *rsa.PublicKey) map[string]interface{} {
 		"following":                 p.FollowingURI(),
 		"url":                       id,
 		"published":                 p.CreatedAt.Format(time.RFC3339),
-		"updated":                   p.UpdatedAt.Format(time.RFC3339),
 		"discoverable":              true,
 		"manuallyApprovesFollowers": false,
 		"icon": map[string]interface{}{

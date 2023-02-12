@@ -19,26 +19,20 @@ import (
 
 type UserRepository interface {
 	FindByLocalID(ctx context.Context, username string) (*model.LocalUser, error)
-	AddFollower(ctx context.Context, user *model.LocalUser, followerID string) error
-	RemoveFollower(ctx context.Context, user *model.LocalUser, followerID string) error
-	AddFollowing(ctx context.Context, user *model.LocalUser, followingID string) error
-	RemoveFollowing(ctx context.Context, user *model.LocalUser, followingID string) error
-	ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.RemoteUser, error)
-	ListFollowing(ctx context.Context, user *model.LocalUser) ([]*model.RemoteUser, error)
-}
-
-type JobRepository interface {
-	FindByID(ctx context.Context, id string) (*model.Job, error)
-	DeleteByID(ctx context.Context, id string) error
+	UpsertFollower(ctx context.Context, user *model.LocalUser, follower *model.Follower) error
+	ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.Follower, error)
+	DeleteFollower(ctx context.Context, user *model.LocalUser, whom string) error
+	UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error
+	ListFollowing(ctx context.Context, user *model.LocalUser) ([]*model.Following, error)
+	DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error
 }
 
 type apService struct {
 	userRepo UserRepository
-	jobRepo  JobRepository
 }
 
-func New(userRepo UserRepository, jobRepo JobRepository) *apService {
-	return &apService{userRepo: userRepo, jobRepo: jobRepo}
+func New(userRepo UserRepository) *apService {
+	return &apService{userRepo: userRepo}
 }
 
 func (s *apService) Register(r *gin.Engine) {
@@ -120,9 +114,8 @@ func (s *apService) handleInbox(c *gin.Context) {
 
 	switch activity.GetType() {
 	case goap.FollowType:
-		logger.Debug("accept follow", zap.String("from", string(actor.GetID())))
-		err := s.userRepo.AddFollower(c.Request.Context(), user, string(actor.GetID()))
-		if err != nil {
+		follower := model.NewFollower(actor.GetID().String(), model.AttemptStatusCompleted)
+		if err := s.userRepo.UpsertFollower(c.Request.Context(), user, follower); err != nil {
 			logger.Error(err.Error())
 			c.String(http.StatusInternalServerError, "add follower failed")
 			return
@@ -136,8 +129,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 	case goap.UndoType:
 		switch activity.Object.GetType() {
 		case goap.FollowType:
-			logger.Debug("accept unfollow", zap.String("from", string(actor.GetID())))
-			err := s.userRepo.RemoveFollower(c.Request.Context(), user, string(actor.GetID()))
+			err := s.userRepo.DeleteFollower(c.Request.Context(), user, actor.GetID().String())
 			if err != nil {
 				logger.Error(err.Error())
 				c.String(http.StatusInternalServerError, "internal server error")
@@ -157,42 +149,37 @@ func (s *apService) handleInbox(c *gin.Context) {
 		logger.Debug("not implemented: announce", zap.Any("object", activity.Object))
 		c.Status(200)
 	case goap.AcceptType, goap.RejectType:
-		id := activity.Object.GetID()
-		job, err := s.jobRepo.FindByID(c.Request.Context(), string(id))
-		if err != nil {
-			logger.Error("failed to get job", zap.Error(err))
-			c.String(http.StatusInternalServerError, err.Error())
-			return
-		}
-		switch job.Type {
-		case model.JobTypeFollowUser:
-			if activity.GetType() == goap.AcceptType {
-				err := s.userRepo.AddFollowing(c.Request.Context(), user, actor.GetID().String())
-				if err != nil {
-					logger.Error(err.Error())
-					c.String(http.StatusInternalServerError, "add following failed")
-					return
-				}
-			}
-			if err := s.jobRepo.DeleteByID(c.Request.Context(), job.ID); err != nil {
-				logger.Error("failed to delete job", zap.Error(err))
-				c.String(http.StatusInternalServerError, err.Error())
+		switch {
+		// follow request is accepted
+		case activity.Object.GetType() == goap.FollowType && activity.GetType() == goap.AcceptType:
+			following := model.NewFollowing(actor.GetID().String(), model.AttemptStatusCompleted)
+			if err := s.userRepo.UpsertFollowing(c.Request.Context(), user, following); err != nil {
+				logger.Error(err.Error())
+				c.String(http.StatusInternalServerError, "complete following failed")
 				return
 			}
-		case model.JobTypeUnfollowUser:
-			if activity.GetType() == goap.AcceptType {
-				err := s.userRepo.RemoveFollowing(c.Request.Context(), user, actor.GetID().String())
-				if err != nil {
-					logger.Error(err.Error())
-					c.String(http.StatusInternalServerError, "remove following failed")
-					return
-				}
-			}
-			if err := s.jobRepo.DeleteByID(c.Request.Context(), job.ID); err != nil {
-				logger.Error("failed to delete job", zap.Error(err))
-				c.String(http.StatusInternalServerError, err.Error())
+			c.Status(200)
+		// follow request is rejected
+		case activity.Object.GetType() == goap.FollowType && activity.GetType() == goap.RejectType:
+			if err := s.userRepo.DeleteFollowing(c.Request.Context(), user, actor.GetID().String()); err != nil {
+				logger.Error(err.Error())
+				c.String(http.StatusInternalServerError, "cancel following failed")
 				return
 			}
+			c.Status(200)
+		// unfollow request is accepted
+		case activity.Object.GetType() == goap.UndoType && activity.GetType() == goap.AcceptType:
+			err := s.userRepo.DeleteFollowing(c.Request.Context(), user, actor.GetID().String())
+			if err != nil {
+				logger.Error(err.Error())
+				c.String(http.StatusInternalServerError, "remove following failed")
+				return
+			}
+			c.Status(200)
+		// unfollow request is rejected
+		case activity.Object.GetType() == goap.UndoType && activity.GetType() == goap.RejectType:
+			logger.Info("unfollow request is rejected")
+			c.Status(200)
 		default:
 			logger.Debug("not implemented: accept, reject", zap.Any("object", activity.Object))
 			c.Status(200)
@@ -235,8 +222,7 @@ func (s *apService) handleFollowers(c *gin.Context) {
 		return
 	}
 	userPerson := ap.NewPerson(user, baseURI)
-
-	users, err := s.userRepo.ListFollowers(c.Request.Context(), user)
+	followers, err := s.userRepo.ListFollowers(c.Request.Context(), user)
 	if err != nil {
 		logger.Error("failed to get followers", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
@@ -245,10 +231,10 @@ func (s *apService) handleFollowers(c *gin.Context) {
 	res := &goap.OrderedCollection{
 		ID:         goap.IRI(userPerson.FollowersURI()),
 		Type:       goap.OrderedCollectionType,
-		TotalItems: uint(len(users)),
+		TotalItems: uint(len(followers)),
 		OrderedItems: func() []goap.Item {
-			items := make([]goap.Item, len(users))
-			for i, item := range users {
+			items := make([]goap.Item, len(followers))
+			for i, item := range followers {
 				items[i] = goap.IRI(item.ID)
 			}
 			return items
@@ -269,7 +255,7 @@ func (s *apService) handleFollowing(c *gin.Context) {
 		return
 	}
 	userPerson := ap.NewPerson(user, baseURI)
-	users, err := s.userRepo.ListFollowing(c.Request.Context(), user)
+	following, err := s.userRepo.ListFollowing(c.Request.Context(), user)
 	if err != nil {
 		logger.Error("failed to get followers", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
@@ -278,10 +264,10 @@ func (s *apService) handleFollowing(c *gin.Context) {
 	res := &goap.OrderedCollection{
 		ID:         goap.IRI(userPerson.FollowingURI()),
 		Type:       goap.OrderedCollectionType,
-		TotalItems: uint(len(users)),
+		TotalItems: uint(len(following)),
 		OrderedItems: func() []goap.Item {
-			items := make([]goap.Item, len(users))
-			for i, item := range users {
+			items := make([]goap.Item, len(following))
+			for i, item := range following {
 				items[i] = goap.IRI(item.ID)
 			}
 			return items

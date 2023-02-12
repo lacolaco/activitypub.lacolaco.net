@@ -10,6 +10,7 @@ type UserIcon struct {
 }
 
 type LocalUser struct {
+	UID         string    `firestore:"-"`
 	ID          string    `firestore:"id"`
 	Name        string    `firestore:"name"`
 	PrefName    string    `firestore:"preferred_username"`
@@ -17,6 +18,10 @@ type LocalUser struct {
 	Icon        *UserIcon `firestore:"icon"`
 	CreatedAt   time.Time `firestore:"created_at"`
 	UpdatedAt   time.Time `firestore:"updated_at"`
+}
+
+func (u *LocalUser) GetDocID() string {
+	return u.UID
 }
 
 type RemoteUser struct {

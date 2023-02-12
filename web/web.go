@@ -44,10 +44,9 @@ func Start(conf *config.Config) error {
 	auth := gcp.NewAuthClient()
 	defer firestore.Close()
 	userRepo := repository.NewUserRepository(firestore)
-	jobRepo := repository.NewJobRepository(firestore)
 	well_known.New().Register(r)
-	ap.New(userRepo, jobRepo).Register(r)
-	api.New(auth, userRepo, jobRepo).Register(r)
+	ap.New(userRepo).Register(r)
+	api.New(auth, userRepo).Register(r)
 
 	// Start HTTP server.
 	log.Printf("listening on http://localhost:%s", conf.Port)
