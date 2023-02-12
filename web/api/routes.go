@@ -15,7 +15,7 @@ import (
 )
 
 type UserRepository interface {
-	FindByID(ctx context.Context, id string) (*model.LocalUser, error)
+	FindByUID(ctx context.Context, id string) (*model.LocalUser, error)
 }
 
 type JobRepository interface {
@@ -34,7 +34,7 @@ func New(authClient *fbauth.Client, userRepo UserRepository, jobRepo JobReposito
 
 func (s *service) Register(r *gin.Engine) {
 
-	apiRoutes := r.Group("/api", auth.Authenticate(s.authClient, s.userRepo))
+	apiRoutes := r.Group("/api", auth.Authenticate(s.authClient, s.userRepo.FindByUID))
 	apiRoutes.GET("/ping", auth.AssertAuthenticated(), s.ping)
 	apiRoutes.GET("/users/search", auth.AssertAuthenticated(), s.searchUser)
 	apiRoutes.POST("/users/follow", auth.AssertAuthenticated(), s.followUser)

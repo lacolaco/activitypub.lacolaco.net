@@ -15,11 +15,9 @@ const (
 	currentUserContextKey contextKey = iota
 )
 
-type UserRepository interface {
-	FindByID(ctx context.Context, id string) (*model.LocalUser, error)
-}
+type ResolveLocalUserFunc func(ctx context.Context, uid string) (*model.LocalUser, error)
 
-func Authenticate(authClient *auth.Client, userRepo UserRepository) gin.HandlerFunc {
+func Authenticate(authClient *auth.Client, resolveLocalUser ResolveLocalUserFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !strings.HasPrefix(c.Request.Header.Get("Authorization"), "Bearer ") {
 			return
@@ -29,7 +27,7 @@ func Authenticate(authClient *auth.Client, userRepo UserRepository) gin.HandlerF
 		if err != nil {
 			return
 		}
-		user, err := userRepo.FindByID(c.Request.Context(), token.UID)
+		user, err := resolveLocalUser(c.Request.Context(), token.UID)
 		if err != nil {
 			c.AbortWithStatus(500)
 			return

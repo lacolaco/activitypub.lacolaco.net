@@ -23,19 +23,19 @@ func NewUserRepository(firestoreClient *firestore.Client) *userRepo {
 	return &userRepo{firestoreClient: firestoreClient}
 }
 
-func (r *userRepo) FindByUsername(ctx context.Context, username string) (*model.LocalUser, error) {
+func (r *userRepo) FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error) {
 	collection := r.firestoreClient.Collection(UsersCollectionName)
-	users, err := getAllItems[*model.LocalUser](ctx, collection, collection.Where("preferred_username", "==", username))
+	users, err := getAllItems[*model.LocalUser](ctx, collection, collection.Where("id", "==", localID))
 	if err != nil {
 		return nil, err
 	}
 	if len(users) == 0 {
-		return nil, fmt.Errorf("user not found: %s", username)
+		return nil, fmt.Errorf("user not found: %s", localID)
 	}
 	return users[0], nil
 }
 
-func (r *userRepo) FindByID(ctx context.Context, uid string) (*model.LocalUser, error) {
+func (r *userRepo) FindByUID(ctx context.Context, uid string) (*model.LocalUser, error) {
 	userDoc, err := r.firestoreClient.Collection(UsersCollectionName).Doc(uid).Get(ctx)
 	if err != nil {
 		return nil, err

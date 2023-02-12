@@ -18,7 +18,7 @@ import (
 )
 
 type UserRepository interface {
-	FindByUsername(ctx context.Context, username string) (*model.LocalUser, error)
+	FindByLocalID(ctx context.Context, username string) (*model.LocalUser, error)
 	AddFollower(ctx context.Context, user *model.LocalUser, followerID string) error
 	RemoveFollower(ctx context.Context, user *model.LocalUser, followerID string) error
 	AddFollowing(ctx context.Context, user *model.LocalUser, followingID string) error
@@ -64,7 +64,7 @@ func (s *apService) handlePerson(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	conf := config.FromContext(c.Request.Context())
 	username := c.Param("username")
-	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
 	if err != nil {
 		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
@@ -110,7 +110,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 	actor := activity.Actor
 	logger.Debug("activity", zap.Any("type", activity.GetType()), zap.Any("actor", actor))
 	username := c.Param("username")
-	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
 	if err != nil {
 		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
@@ -193,7 +193,7 @@ func (s *apService) handleOutbox(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
 	baseURI := utils.GetBaseURI(c)
 	username := c.Param("username")
-	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
 	if err != nil {
 		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
@@ -214,7 +214,7 @@ func (s *apService) handleFollowers(c *gin.Context) {
 	baseURI := utils.GetBaseURI(c)
 
 	username := c.Param("username")
-	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
 	if err != nil {
 		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
@@ -248,7 +248,7 @@ func (s *apService) handleFollowing(c *gin.Context) {
 	baseURI := utils.GetBaseURI(c)
 
 	username := c.Param("username")
-	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
+	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
 	if err != nil {
 		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())

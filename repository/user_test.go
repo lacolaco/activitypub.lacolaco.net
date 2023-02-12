@@ -17,7 +17,7 @@ func TestFindByUsername(t *testing.T) {
 	repo := repository.NewUserRepository(client)
 
 	t.Run("can find user", func(tt *testing.T) {
-		user, err := repo.FindByUsername(context.Background(), "lacolaco")
+		user, err := repo.FindByLocalID(context.Background(), "lacolaco")
 		if err != nil {
 			tt.Fatal(err)
 		}
