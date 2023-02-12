@@ -4,13 +4,13 @@ import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 
 @Component({
-  selector: 'app-foo',
+  selector: 'app-user',
   standalone: true,
   imports: [CommonModule],
   template: ` <p>Username: {{ username$ | async }}</p> `,
   styles: [],
 })
-export class FooComponent {
+export class UserComponent {
   private readonly route = inject(ActivatedRoute);
 
   readonly username$ = this.route.params.pipe(map((params) => params['username']));

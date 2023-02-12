@@ -10,42 +10,41 @@ import (
 )
 
 type Person struct {
-	*model.User
+	*model.LocalUser
 	baseURI string
-	key     *rsa.PublicKey
 }
 
-func NewPerson(u *model.User, baseURI string, publicKey *rsa.PublicKey) *Person {
-	return &Person{User: u, baseURI: baseURI, key: publicKey}
+func NewPerson(u *model.LocalUser, baseURI string) *Person {
+	return &Person{LocalUser: u, baseURI: baseURI}
 }
 
-func (p *Person) ID() string {
-	return fmt.Sprintf("%s/users/%s", p.baseURI, p.User.ID)
+func (p *Person) GetID() string {
+	return fmt.Sprintf("%s/users/%s", p.baseURI, p.LocalUser.ID)
 }
 
 func (p *Person) PubkeyID() string {
-	return fmt.Sprintf("%s#%s", p.ID(), DefaultPublicKeyID)
+	return fmt.Sprintf("%s#%s", p.GetID(), publicKeyIDSuffix)
 }
 
 func (p *Person) InboxURI() string {
-	return fmt.Sprintf("%s/inbox", p.ID())
+	return fmt.Sprintf("%s/inbox", p.GetID())
 }
 
 func (p *Person) OutboxURI() string {
-	return fmt.Sprintf("%s/outbox", p.ID())
+	return fmt.Sprintf("%s/outbox", p.GetID())
 }
 
 func (p *Person) FollowersURI() string {
-	return fmt.Sprintf("%s/followers", p.ID())
+	return fmt.Sprintf("%s/followers", p.GetID())
 }
 
 func (p *Person) FollowingURI() string {
-	return fmt.Sprintf("%s/following", p.ID())
+	return fmt.Sprintf("%s/following", p.GetID())
 }
 
-func (p *Person) AsMap() map[string]interface{} {
-	id := p.ID()
-	publicKeyPem, err := httpsig.EncodeKey(p.key)
+func (p *Person) ToMap(publicKey *rsa.PublicKey) map[string]interface{} {
+	id := p.GetID()
+	publicKeyPem, err := httpsig.EncodeKey(publicKey)
 	if err != nil {
 		panic(err)
 	}

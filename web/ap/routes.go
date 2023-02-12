@@ -2,7 +2,6 @@ package ap
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -13,24 +12,33 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/utils"
 	"go.uber.org/zap"
 	"humungus.tedunangst.com/r/webs/httpsig"
 )
 
 type UserRepository interface {
-	FindByUsername(ctx context.Context, username string) (*model.User, error)
-	AddFollower(ctx context.Context, user *model.User, followerID string) error
-	RemoveFollower(ctx context.Context, user *model.User, followerID string) error
-	ListFollowers(ctx context.Context, user *model.User) ([]*model.RemoteUser, error)
-	ListFollowing(ctx context.Context, user *model.User) ([]*model.RemoteUser, error)
+	FindByUsername(ctx context.Context, username string) (*model.LocalUser, error)
+	AddFollower(ctx context.Context, user *model.LocalUser, followerID string) error
+	RemoveFollower(ctx context.Context, user *model.LocalUser, followerID string) error
+	AddFollowing(ctx context.Context, user *model.LocalUser, followingID string) error
+	RemoveFollowing(ctx context.Context, user *model.LocalUser, followingID string) error
+	ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.RemoteUser, error)
+	ListFollowing(ctx context.Context, user *model.LocalUser) ([]*model.RemoteUser, error)
+}
+
+type JobRepository interface {
+	FindByID(ctx context.Context, id string) (*model.Job, error)
+	DeleteByID(ctx context.Context, id string) error
 }
 
 type apService struct {
 	userRepo UserRepository
+	jobRepo  JobRepository
 }
 
-func New(userRepo UserRepository) *apService {
-	return &apService{userRepo: userRepo}
+func New(userRepo UserRepository, jobRepo JobRepository) *apService {
+	return &apService{userRepo: userRepo, jobRepo: jobRepo}
 }
 
 func (s *apService) Register(r *gin.Engine) {
@@ -63,15 +71,14 @@ func (s *apService) handlePerson(c *gin.Context) {
 		return
 	}
 	logger.Debug("user found", zap.Any("user", user))
-	userPerson := ap.NewPerson(user, getBaseURI(c), conf.PublicKey)
-	res := userPerson.AsMap()
+	userPerson := ap.NewPerson(user, utils.GetBaseURI(c))
+	res := userPerson.ToMap(conf.PublicKey)
 	c.Header("Content-Type", "application/activity+json")
 	c.JSON(http.StatusOK, res)
 }
 
 func (s *apService) handleInbox(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
-	conf := config.FromContext(c.Request.Context())
 	defer c.Request.Body.Close()
 	payload, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -109,7 +116,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	userPerson := ap.NewPerson(user, getBaseURI(c), conf.PublicKey)
+	userPerson := ap.NewPerson(user, utils.GetBaseURI(c))
 
 	switch activity.GetType() {
 	case goap.FollowType:
@@ -144,14 +151,38 @@ func (s *apService) handleInbox(c *gin.Context) {
 			c.Status(http.StatusOK)
 		}
 	case goap.CreateType, goap.UpdateType, goap.DeleteType:
-		logger.Debug("create, update, delete", zap.Any("object", activity.Object))
+		logger.Debug("not implemented: create, update, delete", zap.Any("object", activity.Object))
 		c.Status(200)
 	case goap.AnnounceType:
-		logger.Debug("announce", zap.Any("object", activity.Object))
+		logger.Debug("not implemented: announce", zap.Any("object", activity.Object))
 		c.Status(200)
 	case goap.AcceptType, goap.RejectType:
-		logger.Debug("accept, reject", zap.Any("object", activity.Object))
-		c.Status(200)
+		id := activity.Object.GetID()
+		job, err := s.jobRepo.FindByID(c.Request.Context(), string(id))
+		if err != nil {
+			logger.Error("failed to get job", zap.Error(err))
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+		switch job.Type {
+		case "follow_user":
+			if activity.GetType() == goap.AcceptType {
+				err := s.userRepo.AddFollowing(c.Request.Context(), user, actor.GetID().String())
+				if err != nil {
+					logger.Error(err.Error())
+					c.String(http.StatusInternalServerError, "add follower failed")
+					return
+				}
+			}
+			if err := s.jobRepo.DeleteByID(c.Request.Context(), job.ID); err != nil {
+				logger.Error("failed to delete job", zap.Error(err))
+				c.String(http.StatusInternalServerError, err.Error())
+				return
+			}
+		default:
+			logger.Debug("not implemented: accept, reject", zap.Any("object", activity.Object))
+			c.Status(200)
+		}
 	default:
 		logger.Error("unsuppoted activity type")
 		c.String(http.StatusBadRequest, "invalid activity type")
@@ -160,8 +191,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 
 func (s *apService) handleOutbox(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
-	conf := config.FromContext(c.Request.Context())
-	baseURI := getBaseURI(c)
+	baseURI := utils.GetBaseURI(c)
 	username := c.Param("username")
 	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
 	if err != nil {
@@ -169,7 +199,7 @@ func (s *apService) handleOutbox(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	userPerson := ap.NewPerson(user, baseURI, conf.PublicKey)
+	userPerson := ap.NewPerson(user, baseURI)
 	res := &goap.OrderedCollection{
 		ID:           goap.IRI(userPerson.OutboxURI()),
 		Type:         goap.OrderedCollectionType,
@@ -181,8 +211,7 @@ func (s *apService) handleOutbox(c *gin.Context) {
 
 func (s *apService) handleFollowers(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
-	conf := config.FromContext(c.Request.Context())
-	baseURI := getBaseURI(c)
+	baseURI := utils.GetBaseURI(c)
 
 	username := c.Param("username")
 	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
@@ -191,7 +220,7 @@ func (s *apService) handleFollowers(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	userPerson := ap.NewPerson(user, baseURI, conf.PublicKey)
+	userPerson := ap.NewPerson(user, baseURI)
 
 	users, err := s.userRepo.ListFollowers(c.Request.Context(), user)
 	if err != nil {
@@ -216,8 +245,7 @@ func (s *apService) handleFollowers(c *gin.Context) {
 
 func (s *apService) handleFollowing(c *gin.Context) {
 	logger := logging.FromContext(c.Request.Context())
-	conf := config.FromContext(c.Request.Context())
-	baseURI := getBaseURI(c)
+	baseURI := utils.GetBaseURI(c)
 
 	username := c.Param("username")
 	user, err := s.userRepo.FindByUsername(c.Request.Context(), username)
@@ -226,7 +254,7 @@ func (s *apService) handleFollowing(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	userPerson := ap.NewPerson(user, baseURI, conf.PublicKey)
+	userPerson := ap.NewPerson(user, baseURI)
 	users, err := s.userRepo.ListFollowing(c.Request.Context(), user)
 	if err != nil {
 		logger.Error("failed to get followers", zap.Error(err))
@@ -256,8 +284,4 @@ func sendActivityJSON(c *gin.Context, code int, item goap.Item) error {
 	c.Header("Content-Type", "application/activity+json")
 	c.String(code, string(body))
 	return nil
-}
-
-func getBaseURI(c *gin.Context) string {
-	return fmt.Sprintf("https://%s", c.Request.Host)
 }

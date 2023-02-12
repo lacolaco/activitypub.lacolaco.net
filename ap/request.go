@@ -22,14 +22,15 @@ var (
 const (
 	userAgent            = "activitypub.lacolaco.net/1.0"
 	mimeTypeActivityJSON = "application/activity+json"
+	systemActorID        = "https://activitypub.lacolaco.net/users/system"
 )
 
-func getActor(ctx context.Context, publicKeyID string, id string) (*goap.Actor, error) {
+func getPerson(ctx context.Context, id string) (*goap.Actor, error) {
 	addr, _ := url.Parse(id)
 	if addr.Scheme == "" {
 		addr.Scheme = "https"
 	}
-	body, err := getActivityJSON(ctx, "", addr.String())
+	body, err := getActivityJSON(ctx, systemActor, addr.String())
 	if err != nil {
 		return nil, err
 	}
@@ -37,18 +38,18 @@ func getActor(ctx context.Context, publicKeyID string, id string) (*goap.Actor, 
 	if err != nil {
 		return nil, err
 	}
-	var actor *goap.Actor
+	var p *goap.Person
 	err = goap.OnActor(item, func(a *goap.Actor) error {
-		actor = a
+		p = a
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
-	return actor, nil
+	return p, nil
 }
 
-func getActivityJSON(ctx context.Context, publicKeyID string, url string) ([]byte, error) {
+func getActivityJSON(ctx context.Context, actor Actor, url string) ([]byte, error) {
 	conf := config.FromContext(ctx)
 	logger := logging.FromContext(ctx)
 	req, err := http.NewRequest("GET", url, nil)
@@ -57,11 +58,11 @@ func getActivityJSON(ctx context.Context, publicKeyID string, url string) ([]byt
 	}
 	req.Header.Set("Accept", mimeTypeActivityJSON)
 	req.Header.Set("User-Agent", userAgent)
+	publicKeyID := GetPublicKeyID(actor)
 	SignRequest(publicKeyID, conf.PrivateKey, req, nil)
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	req = req.WithContext(c)
-	logger.Debug("getActivityJSON.request", zap.String("url", req.URL.String()), zap.Any("headers", req.Header))
 	resp, err := HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -78,7 +79,7 @@ func getActivityJSON(ctx context.Context, publicKeyID string, url string) ([]byt
 	return body, nil
 }
 
-func postActivityJSON(ctx context.Context, publicKeyID string, url string, body []byte) ([]byte, error) {
+func postActivityJSON(ctx context.Context, actor Actor, url string, body []byte) ([]byte, error) {
 	conf := config.FromContext(ctx)
 	logger := logging.FromContext(ctx)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
@@ -87,6 +88,7 @@ func postActivityJSON(ctx context.Context, publicKeyID string, url string, body 
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", mimeTypeActivityJSON)
+	publicKeyID := GetPublicKeyID(actor)
 	SignRequest(publicKeyID, conf.PrivateKey, req, body)
 	logger.Debug("postActivityJSON.request", zap.Any("headers", req.Header))
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)

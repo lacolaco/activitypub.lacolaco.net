@@ -1,18 +1,18 @@
 package web
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
-	firestore "github.com/lacolaco/activitypub.lacolaco.net/firestore"
+	"github.com/lacolaco/activitypub.lacolaco.net/gcp"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/repository"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/ap"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/api"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware"
 	well_known "github.com/lacolaco/activitypub.lacolaco.net/web/well-known"
 	"go.uber.org/zap"
@@ -40,9 +40,14 @@ func Start(conf *config.Config) error {
 
 	r.Use(middleware.Static("/", "./public"))
 
-	firestoreClient := firestore.NewFirestoreClient()
+	firestore := gcp.NewFirestoreClient()
+	auth := gcp.NewAuthClient()
+	defer firestore.Close()
+	userRepo := repository.NewUserRepository(firestore)
+	jobRepo := repository.NewJobRepository(firestore)
 	well_known.New().Register(r)
-	ap.New(repository.NewUserRepository(firestoreClient)).Register(r)
+	ap.New(userRepo, jobRepo).Register(r)
+	api.New(auth, userRepo, jobRepo).Register(r)
 
 	// Start HTTP server.
 	log.Printf("listening on http://localhost:%s", conf.Port)
@@ -87,8 +92,4 @@ func requestLogger() gin.HandlerFunc {
 			zap.String("response.contentType", c.Writer.Header().Get("Content-Type")),
 		)
 	}
-}
-
-func getBaseURI(c *gin.Context) string {
-	return fmt.Sprintf("https://%s", c.Request.Host)
 }

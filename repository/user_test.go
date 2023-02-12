@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"github.com/joho/godotenv"
-	"github.com/lacolaco/activitypub.lacolaco.net/firestore"
+	"github.com/lacolaco/activitypub.lacolaco.net/gcp"
 	"github.com/lacolaco/activitypub.lacolaco.net/repository"
 )
 
 func TestFindByUsername(t *testing.T) {
 	os.Clearenv()
 	godotenv.Load("../.env")
-	client := firestore.NewFirestoreClient()
+	client := gcp.NewFirestoreClient()
 	repo := repository.NewUserRepository(client)
 
 	t.Run("can find user", func(tt *testing.T) {

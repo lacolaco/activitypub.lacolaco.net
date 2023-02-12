@@ -6,13 +6,14 @@ import (
 	"time"
 
 	goap "github.com/go-ap/activitypub"
+	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"humungus.tedunangst.com/r/webs/junk"
 )
 
-func Accept(ctx context.Context, user *Person, req *goap.Activity) error {
+func Accept(ctx context.Context, actor Actor, req *goap.Activity) error {
 	now := time.Now()
-	userID := user.ID()
-	actor, err := getActor(ctx, user.PubkeyID(), req.Actor.GetID().String())
+	userID := actor.GetID()
+	to, err := getPerson(ctx, req.Actor.GetID().String())
 	if err != nil {
 		return err
 	}
@@ -21,13 +22,38 @@ func Accept(ctx context.Context, user *Person, req *goap.Activity) error {
 	j["@context"] = contextURIs
 	j["id"] = fmt.Sprintf("%s/%d", userID, now.Unix())
 	j["type"] = "Accept"
-	j["actor"] = userID
-	j["to"] = actor.GetID().String()
+	j["actor"] = actor.GetID()
+	j["to"] = to.GetID().String()
 	j["published"] = now.UTC().Format(time.RFC3339)
 	j["object"] = req
 
-	if _, err := postActivityJSON(ctx, userID, string(actor.Inbox.GetLink()), j.ToBytes()); err != nil {
+	if _, err := postActivityJSON(ctx, actor, string(to.Inbox.GetLink()), j.ToBytes()); err != nil {
 		return err
 	}
 	return nil
+}
+
+func GetPerson(ctx context.Context, id string) (*goap.Person, error) {
+	return getPerson(ctx, id)
+}
+
+func FollowPerson(ctx context.Context, actor Actor, target string) (*model.Job, error) {
+	now := time.Now()
+	to, err := getPerson(ctx, target)
+	if err != nil {
+		return nil, err
+	}
+	id := fmt.Sprintf("%s/%d", actor.GetID(), now.Unix())
+
+	j := junk.New()
+	j["@context"] = contextURIs
+	j["id"] = id
+	j["type"] = "Follow"
+	j["actor"] = actor.GetID()
+	j["object"] = to.GetID().String()
+
+	if _, err := postActivityJSON(ctx, actor, string(to.Inbox.GetLink()), j.ToBytes()); err != nil {
+		return nil, err
+	}
+	return model.NewJob(id, model.JobTypeFollowUser, actor.GetID(), target), nil
 }
