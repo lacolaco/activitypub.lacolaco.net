@@ -4,7 +4,7 @@ runs:
   using: 'composite'
   steps:
     - uses: actions/setup-node@v3
-      working-directory: client
       with:
-        node-version-file: 'package.json'
+        node-version-file: 'client/package.json'
         cache: yarn
+        cache-dependency-path: 'client/yarn.lock'
