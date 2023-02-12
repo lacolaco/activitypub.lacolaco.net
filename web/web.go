@@ -38,11 +38,12 @@ func Start(conf *config.Config) error {
 		ctx.Next()
 	})
 
-	r.Use(middleware.Static("/", "./public"))
-
 	firestoreClient := firestore.NewFirestoreClient()
 	well_known.New().Register(r)
 	ap.New(repository.NewUserRepository(firestoreClient)).Register(r)
+
+	// fallback to static files if no route matched.
+	r.Use(middleware.Static("/", "./public"))
 
 	// Start HTTP server.
 	log.Printf("listening on http://localhost:%s", conf.Port)

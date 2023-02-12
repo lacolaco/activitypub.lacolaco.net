@@ -34,4 +34,22 @@ func TestStatic(t *testing.T) {
 			tt.Errorf("got %s, want %s", w.Result().Header.Get("Content-Type"), "text/html; charset=utf-8")
 		}
 	})
+
+	t.Run("can respect pre-defined routes", func(tt *testing.T) {
+		router := gin.New()
+		router.GET("/test.txt", func(c *gin.Context) {
+			c.String(http.StatusOK, "from handler")
+		})
+		router.Use(middleware.Static("/", "../fixtures/static"))
+		req, _ := http.NewRequest("GET", "/test.txt", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		if w.Code != http.StatusOK {
+			tt.Errorf("got %d, want %d", w.Code, http.StatusOK)
+		}
+		if w.Body.String() != "from handler" {
+			tt.Errorf("got %s, want %s", w.Body.String(), "from handler")
+		}
+	})
+
 }
