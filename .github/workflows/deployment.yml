@@ -22,6 +22,7 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v1
       - uses: ./.github/actions/setup-go
       - uses: ./.github/actions/setup-node
+        working-directory: client
       - name: install client deps
         working-directory: client
         run: yarn install
