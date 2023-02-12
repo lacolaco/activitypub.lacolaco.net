@@ -29,7 +29,7 @@ func deleteItems(ctx context.Context, q firestore.Query) error {
 	return nil
 }
 
-func findItem[T interface{}](ctx context.Context, q firestore.Query) (*T, *firestore.DocumentSnapshot, error) {
+func findItem[T interface{}](ctx context.Context, q firestore.Query) (*T, *firestore.DocumentRef, error) {
 	iter := q.Documents(ctx)
 	defer iter.Stop()
 	doc, err := iter.Next()
@@ -43,7 +43,7 @@ func findItem[T interface{}](ctx context.Context, q firestore.Query) (*T, *fires
 	if err := doc.DataTo(&item); err != nil {
 		return nil, nil, err
 	}
-	return &item, doc, nil
+	return &item, doc.Ref, nil
 
 }
 
