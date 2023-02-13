@@ -60,6 +60,7 @@ require (
 	firebase.google.com/go/v4 v4.10.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.1
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1
+	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.8.2
 	github.com/go-ap/activitypub v0.0.0-20230204125704-b4f1d45500ae

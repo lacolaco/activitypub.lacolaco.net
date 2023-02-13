@@ -1,4 +1,4 @@
-package middleware_test
+package static_test
 
 import (
 	"net/http"
@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware/static"
 )
 
 func TestStatic(t *testing.T) {
 	t.Run("can serve existing static file", func(tt *testing.T) {
 		router := gin.New()
-		router.Use(middleware.Static("/", "../fixtures/static"))
+		router.Use(static.Serve("/", "./fixtures/static"))
 		req, _ := http.NewRequest("GET", "/test.txt", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -26,7 +26,7 @@ func TestStatic(t *testing.T) {
 
 	t.Run("can serve index.html with /", func(tt *testing.T) {
 		router := gin.New()
-		router.Use(middleware.Static("/", "../fixtures/static"))
+		router.Use(static.Serve("/", "./fixtures/static"))
 		req, _ := http.NewRequest("GET", "/", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -43,7 +43,7 @@ func TestStatic(t *testing.T) {
 
 	t.Run("can serve unknown path with /", func(tt *testing.T) {
 		router := gin.New()
-		router.Use(middleware.Static("/", "../fixtures/static"))
+		router.Use(static.Serve("/", "./fixtures/static"))
 		req, _ := http.NewRequest("GET", "/unknown", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -63,7 +63,7 @@ func TestStatic(t *testing.T) {
 		router.GET("/test.txt", func(c *gin.Context) {
 			c.String(http.StatusOK, "from handler")
 		})
-		router.Use(middleware.Static("/", "../fixtures/static"))
+		router.Use(static.Serve("/", "./fixtures/static"))
 		req, _ := http.NewRequest("GET", "/test.txt", nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
@@ -75,4 +75,25 @@ func TestStatic(t *testing.T) {
 		}
 	})
 
+	t.Run("ignore api routes", func(tt *testing.T) {
+		router := gin.New()
+		router.Use(static.Serve("/", "./fixtures/static"))
+		req, _ := http.NewRequest("GET", "/api/foo", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		if w.Code != http.StatusNotFound {
+			tt.Errorf("got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
+
+	t.Run("ignore .well-known routes", func(tt *testing.T) {
+		router := gin.New()
+		router.Use(static.Serve("/", "./fixtures/static"))
+		req, _ := http.NewRequest("GET", "/.well-known/foo", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		if w.Code != http.StatusNotFound {
+			tt.Errorf("got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
 }

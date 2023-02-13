@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
@@ -13,8 +14,8 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/ap"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/api"
-	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware"
-	well_known "github.com/lacolaco/activitypub.lacolaco.net/web/well-known"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware/static"
+	wellknown "github.com/lacolaco/activitypub.lacolaco.net/web/well-known"
 	"go.uber.org/zap"
 )
 
@@ -26,6 +27,7 @@ func Start(conf *config.Config) error {
 
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(config.Middleware(conf))
 	r.Use(config.Middleware(conf))
 	r.Use(tracing.Middleware(conf))
@@ -34,17 +36,17 @@ func Start(conf *config.Config) error {
 	r.Use(requestLogger())
 	r.Use(func(ctx *gin.Context) {
 		// set default cache-control header
-		ctx.Header("Cache-Control", "public, no-cache")
+		ctx.Header("Cache-Control", "no-cache")
 		ctx.Next()
 	})
 
-	r.Use(middleware.Static("/", "./public"))
+	r.Use(static.Serve("/", "./public"))
 
 	firestore := gcp.NewFirestoreClient()
 	auth := gcp.NewAuthClient()
 	defer firestore.Close()
 	userRepo := repository.NewUserRepository(firestore)
-	well_known.New().Register(r)
+	wellknown.New().Register(r)
 	ap.New(userRepo).Register(r)
 	api.New(auth, userRepo).Register(r)
 

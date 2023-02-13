@@ -1,16 +1,29 @@
-package middleware
+package static
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
-func Static(prefix, dir string) gin.HandlerFunc {
+var (
+	ignoredPathPrefixes = []string{
+		"/api",
+		"/.well-known",
+	}
+)
+
+func Serve(prefix, dir string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		staticFS := static.LocalFile(dir, false)
 		url := c.Request.URL.Path
+		for _, ignoredPrefix := range ignoredPathPrefixes {
+			if strings.HasPrefix(url, ignoredPrefix) {
+				return
+			}
+		}
 		if staticFS.Exists(prefix, url) {
 			if url == "/" {
 				// index.html is not cacheable
