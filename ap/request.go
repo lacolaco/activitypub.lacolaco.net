@@ -50,8 +50,8 @@ func getPerson(ctx context.Context, id string) (*goap.Actor, error) {
 }
 
 func getActivityJSON(ctx context.Context, actor Actor, url string) ([]byte, error) {
-	conf := config.FromContext(ctx)
-	logger := logging.FromContext(ctx)
+	conf := config.ConfigFromContext(ctx)
+	logger := logging.LoggerFromContext(ctx)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -80,8 +80,8 @@ func getActivityJSON(ctx context.Context, actor Actor, url string) ([]byte, erro
 }
 
 func postActivityJSON(ctx context.Context, actor Actor, url string, body []byte) ([]byte, error) {
-	conf := config.FromContext(ctx)
-	logger := logging.FromContext(ctx)
+	conf := config.ConfigFromContext(ctx)
+	logger := logging.LoggerFromContext(ctx)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err

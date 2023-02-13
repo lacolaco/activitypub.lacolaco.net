@@ -11,8 +11,7 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
-	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware"
-	"github.com/lacolaco/activitypub.lacolaco.net/web/utils"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/util"
 	"go.uber.org/zap"
 	"humungus.tedunangst.com/r/webs/httpsig"
 )
@@ -36,12 +35,12 @@ func New(userRepo UserRepository) *apService {
 }
 
 func (s *apService) Register(r *gin.Engine) {
-	assertJSONGet := middleware.AssertAccept([]string{
+	assertJSONGet := util.AssertAccept([]string{
 		"application/activity+json",
 		"application/ld+json",
 		"application/json",
 	})
-	assertJSONPost := middleware.AssertContentType([]string{"application/activity+json"})
+	assertJSONPost := util.AssertContentType([]string{"application/activity+json"})
 
 	userRoutes := r.Group("/users/:username")
 	userRoutes.GET("", assertJSONGet, s.handlePerson)
@@ -55,8 +54,8 @@ func (s *apService) Register(r *gin.Engine) {
 }
 
 func (s *apService) handlePerson(c *gin.Context) {
-	logger := logging.FromContext(c.Request.Context())
-	conf := config.FromContext(c.Request.Context())
+	logger := logging.LoggerFromContext(c.Request.Context())
+	conf := config.ConfigFromContext(c.Request.Context())
 	username := c.Param("username")
 	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
 	if err != nil {
@@ -65,14 +64,14 @@ func (s *apService) handlePerson(c *gin.Context) {
 		return
 	}
 	logger.Debug("user found", zap.Any("user", user))
-	userPerson := ap.NewPerson(user, utils.GetBaseURI(c))
+	userPerson := ap.NewPerson(user, util.GetBaseURI(c))
 	res := userPerson.ToMap(conf.PublicKey)
 	c.Header("Content-Type", "application/activity+json")
 	c.JSON(http.StatusOK, res)
 }
 
 func (s *apService) handleInbox(c *gin.Context) {
-	logger := logging.FromContext(c.Request.Context())
+	logger := logging.LoggerFromContext(c.Request.Context())
 	defer c.Request.Body.Close()
 	payload, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -110,7 +109,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	userPerson := ap.NewPerson(user, utils.GetBaseURI(c))
+	userPerson := ap.NewPerson(user, util.GetBaseURI(c))
 
 	switch activity.GetType() {
 	case goap.FollowType:
@@ -178,8 +177,8 @@ func (s *apService) handleInbox(c *gin.Context) {
 }
 
 func (s *apService) handleOutbox(c *gin.Context) {
-	logger := logging.FromContext(c.Request.Context())
-	baseURI := utils.GetBaseURI(c)
+	logger := logging.LoggerFromContext(c.Request.Context())
+	baseURI := util.GetBaseURI(c)
 	username := c.Param("username")
 	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
 	if err != nil {
@@ -198,8 +197,8 @@ func (s *apService) handleOutbox(c *gin.Context) {
 }
 
 func (s *apService) handleFollowers(c *gin.Context) {
-	logger := logging.FromContext(c.Request.Context())
-	baseURI := utils.GetBaseURI(c)
+	logger := logging.LoggerFromContext(c.Request.Context())
+	baseURI := util.GetBaseURI(c)
 
 	username := c.Param("username")
 	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
@@ -231,8 +230,8 @@ func (s *apService) handleFollowers(c *gin.Context) {
 }
 
 func (s *apService) handleFollowing(c *gin.Context) {
-	logger := logging.FromContext(c.Request.Context())
-	baseURI := utils.GetBaseURI(c)
+	logger := logging.LoggerFromContext(c.Request.Context())
+	baseURI := util.GetBaseURI(c)
 
 	username := c.Param("username")
 	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)

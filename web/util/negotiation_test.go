@@ -1,4 +1,4 @@
-package middleware_test
+package util_test
 
 import (
 	"net/http"
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/util"
 )
 
 func TestAssertAccept(t *testing.T) {
@@ -33,7 +33,7 @@ func TestAssertAccept(t *testing.T) {
 	for _, spec := range tests {
 		t.Run(spec.name, func(tt *testing.T) {
 			router := gin.New()
-			router.GET("/test", middleware.AssertAccept(spec.args.expected), func(c *gin.Context) {
+			router.GET("/test", util.AssertAccept(spec.args.expected), func(c *gin.Context) {
 				c.Status(http.StatusOK)
 			})
 			req, _ := http.NewRequest("GET", "/test", nil)
@@ -72,7 +72,7 @@ func TestAssertContentType(t *testing.T) {
 	for _, spec := range tests {
 		t.Run(spec.name, func(tt *testing.T) {
 			router := gin.New()
-			router.POST("/test", middleware.AssertContentType(spec.args.expected), func(c *gin.Context) {
+			router.POST("/test", util.AssertContentType(spec.args.expected), func(c *gin.Context) {
 				c.Status(http.StatusOK)
 			})
 			req, _ := http.NewRequest("POST", "/test", nil)

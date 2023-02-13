@@ -3,14 +3,12 @@ package api
 import (
 	"context"
 	"net/http"
-	"strings"
 
-	fbauth "firebase.google.com/go/v4/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/lacolaco/activitypub.lacolaco.net/ap"
+	"github.com/lacolaco/activitypub.lacolaco.net/auth"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
-	"github.com/lacolaco/activitypub.lacolaco.net/web/middleware/auth"
-	"github.com/lacolaco/activitypub.lacolaco.net/web/utils"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/util"
 	"github.com/lacolaco/activitypub.lacolaco.net/webfinger"
 )
 
@@ -25,16 +23,15 @@ type JobRepository interface {
 }
 
 type service struct {
-	authClient *fbauth.Client
-	userRepo   UserRepository
+	userRepo UserRepository
 }
 
-func New(authClient *fbauth.Client, userRepo UserRepository) *service {
-	return &service{authClient: authClient, userRepo: userRepo}
+func New(userRepo UserRepository) *service {
+	return &service{userRepo: userRepo}
 }
 
 func (s *service) Register(r *gin.Engine) {
-	apiRoutes := r.Group("/api", auth.Authenticate(s.authClient, s.userRepo.FindByUID))
+	apiRoutes := r.Group("/api")
 	apiRoutes.GET("/ping", auth.AssertAuthenticated(), s.ping)
 	apiRoutes.GET("/users/search", auth.AssertAuthenticated(), s.searchUser)
 	apiRoutes.POST("/users/follow", auth.AssertAuthenticated(), s.followUser)
@@ -42,16 +39,6 @@ func (s *service) Register(r *gin.Engine) {
 }
 
 func (s *service) ping(c *gin.Context) {
-	if !strings.HasPrefix(c.Request.Header.Get("Authorization"), "Bearer ") {
-		c.AbortWithStatus(401)
-		return
-	}
-	idToken := strings.Split(c.Request.Header.Get("Authorization"), " ")[1]
-	_, err := s.authClient.VerifyIDToken(c.Request.Context(), idToken)
-	if err != nil {
-		c.AbortWithStatus(401)
-		return
-	}
 	c.JSON(200, gin.H{})
 }
 
@@ -92,8 +79,8 @@ func (s *service) followUser(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	currentUser := auth.FromContext(c.Request.Context())
-	actor := ap.NewPerson(currentUser, utils.GetBaseURI(c))
+	currentUser := auth.CurrentUserFromContext(c.Request.Context())
+	actor := ap.NewPerson(currentUser, util.GetBaseURI(c))
 	whom, err := ap.GetPerson(c.Request.Context(), req.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -121,8 +108,8 @@ func (s *service) unfollowUser(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	currentUser := auth.FromContext(c.Request.Context())
-	actor := ap.NewPerson(currentUser, utils.GetBaseURI(c))
+	currentUser := auth.CurrentUserFromContext(c.Request.Context())
+	actor := ap.NewPerson(currentUser, util.GetBaseURI(c))
 	whom, err := ap.GetPerson(c.Request.Context(), req.ID)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

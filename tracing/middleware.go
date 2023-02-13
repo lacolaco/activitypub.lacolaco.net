@@ -16,7 +16,7 @@ const (
 	traceNameContextKey contextKey = iota
 )
 
-func Middleware(cfg *config.Config) gin.HandlerFunc {
+func WithTracing(cfg *config.Config) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		originalCtx := c.Request.Context()

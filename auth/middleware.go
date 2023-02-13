@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"firebase.google.com/go/v4/auth"
 	"github.com/gin-gonic/gin"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 )
@@ -15,19 +14,20 @@ const (
 	currentUserContextKey contextKey = iota
 )
 
+type VerifyTokenFunc = func(ctx context.Context, token string) (UID, error)
 type ResolveLocalUserFunc func(ctx context.Context, uid string) (*model.LocalUser, error)
 
-func Authenticate(authClient *auth.Client, resolveLocalUser ResolveLocalUserFunc) gin.HandlerFunc {
+func WithAuth(verifyToken VerifyTokenFunc, resolveLocalUser ResolveLocalUserFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !strings.HasPrefix(c.Request.Header.Get("Authorization"), "Bearer ") {
 			return
 		}
 		idToken := strings.Split(c.Request.Header.Get("Authorization"), " ")[1]
-		token, err := authClient.VerifyIDToken(c.Request.Context(), idToken)
+		uid, err := verifyToken(c.Request.Context(), idToken)
 		if err != nil {
 			return
 		}
-		user, err := resolveLocalUser(c.Request.Context(), token.UID)
+		user, err := resolveLocalUser(c.Request.Context(), uid)
 		if err != nil {
 			c.AbortWithStatus(500)
 			return
@@ -38,9 +38,10 @@ func Authenticate(authClient *auth.Client, resolveLocalUser ResolveLocalUserFunc
 	}
 }
 
+// ログイン中でなければ401を返す
 func AssertAuthenticated() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		currentUser := FromContext(c.Request.Context())
+		currentUser := CurrentUserFromContext(c.Request.Context())
 		if currentUser == nil {
 			c.AbortWithStatus(401)
 			return
@@ -48,7 +49,8 @@ func AssertAuthenticated() gin.HandlerFunc {
 	}
 }
 
-func FromContext(c context.Context) *model.LocalUser {
+// ログイン中のユーザーを取得する。ログイン中でなければnilを返す
+func CurrentUserFromContext(c context.Context) *model.LocalUser {
 	if user, ok := c.Value(currentUserContextKey).(*model.LocalUser); ok {
 		return user
 	}

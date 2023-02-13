@@ -5,7 +5,7 @@ import (
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
-	"firebase.google.com/go/v4/auth"
+	firebaseauth "firebase.google.com/go/v4/auth"
 )
 
 func NewFirestoreClient() *firestore.Client {
@@ -16,7 +16,7 @@ func NewFirestoreClient() *firestore.Client {
 	return c
 }
 
-func NewAuthClient() *auth.Client {
+func NewFirebaseAuthClient() *firebaseauth.Client {
 	app, err := firebase.NewApp(context.Background(), nil)
 	if err != nil {
 		panic(err)

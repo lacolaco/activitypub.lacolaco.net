@@ -15,7 +15,12 @@ var (
 	}
 )
 
-func Serve(prefix, dir string) gin.HandlerFunc {
+// 静的ファイルを配信するミドルウェアを生成する
+//
+// パスと一致するファイルが存在する場合は、そのファイルを返す。
+// パスと一致するファイルが存在しない場合は、次のハンドラを呼び出す。
+// 後続のハンドラで404が返された場合は、index.htmlを返す
+func WithStatic(prefix, dir string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		staticFS := static.LocalFile(dir, false)
 		url := c.Request.URL.Path
@@ -34,7 +39,9 @@ func Serve(prefix, dir string) gin.HandlerFunc {
 			c.FileFromFS(url, staticFS)
 			return
 		}
+
 		c.Next()
+
 		if c.Writer.Status() == http.StatusNotFound {
 			c.Header("Cache-Control", "no-cache")
 			c.Status(http.StatusOK)
