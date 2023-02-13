@@ -143,7 +143,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 			c.Status(http.StatusOK)
 		}
 	case goap.CreateType, goap.UpdateType, goap.DeleteType:
-		logger.Debug("not implemented: create, update, delete", zap.Any("object", activity.Object))
+		logger.Debug("not implemented: create, update, delete")
 		c.Status(200)
 	case goap.AnnounceType:
 		logger.Debug("not implemented: announce", zap.Any("object", activity.Object))
@@ -166,19 +166,6 @@ func (s *apService) handleInbox(c *gin.Context) {
 				c.String(http.StatusInternalServerError, "cancel following failed")
 				return
 			}
-			c.Status(200)
-		// unfollow request is accepted
-		case activity.Object.GetType() == goap.UndoType && activity.GetType() == goap.AcceptType:
-			err := s.userRepo.DeleteFollowing(c.Request.Context(), user, actor.GetID().String())
-			if err != nil {
-				logger.Error(err.Error())
-				c.String(http.StatusInternalServerError, "remove following failed")
-				return
-			}
-			c.Status(200)
-		// unfollow request is rejected
-		case activity.Object.GetType() == goap.UndoType && activity.GetType() == goap.RejectType:
-			logger.Info("unfollow request is rejected")
 			c.Status(200)
 		default:
 			logger.Debug("not implemented: accept, reject", zap.Any("object", activity.Object))

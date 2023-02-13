@@ -17,6 +17,7 @@ import (
 type UserRepository interface {
 	FindByUID(ctx context.Context, id string) (*model.LocalUser, error)
 	UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error
+	DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error
 }
 
 type JobRepository interface {
@@ -131,5 +132,10 @@ func (s *service) unfollowUser(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if err := s.userRepo.DeleteFollowing(c.Request.Context(), currentUser, whom.GetID().String()); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(200)
 	c.JSON(http.StatusAccepted, gin.H{})
 }
