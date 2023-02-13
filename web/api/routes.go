@@ -18,10 +18,6 @@ type UserRepository interface {
 	DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error
 }
 
-type JobRepository interface {
-	Add(ctx context.Context, job *model.Job) error
-}
-
 type service struct {
 	userRepo UserRepository
 }
