@@ -75,7 +75,7 @@ func getActivityJSON(ctx context.Context, actor Actor, url string) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("getActivityJSON.response", zap.Any("response", string(body)))
+	logger.Debug("getActivityJSON.response", zap.Int("code", resp.StatusCode), zap.String("body", string(body)))
 	return body, nil
 }
 
@@ -100,7 +100,7 @@ func postActivityJSON(ctx context.Context, actor Actor, url string, body []byte)
 	}
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
-	logger.Debug("postActivityJSON.response", zap.Any("response", string(respBody)))
+	logger.Debug("postActivityJSON.response", zap.Int("code", resp.StatusCode), zap.String("body", string(respBody)))
 	switch resp.StatusCode {
 	case http.StatusOK:
 	case http.StatusAccepted:
