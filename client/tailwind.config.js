@@ -9,6 +9,16 @@ module.exports = {
           DEFAULT: '1rem',
         },
       },
+      fontFamily: {
+        sans: ['"M PLUS 1p"', 'sans-serif'],
+      },
+      textColor: {
+        black: 'rgb(25, 25, 25)',
+      },
+      backgroundColor: {
+        white: 'rgba(255, 255, 255, 0.9)',
+        panel: 'rgb(237, 237, 237)',
+      },
     },
   },
   plugins: [],

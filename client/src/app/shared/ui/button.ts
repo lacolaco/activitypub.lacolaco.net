@@ -19,7 +19,7 @@ export class AppDisabledButton {}
 export class AppIconButton {}
 
 @Directive({
-  selector: 'button[app-stroked-button]',
+  selector: 'button[app-stroked-button],a[app-stroked-button]',
   standalone: true,
   host: {
     class:

@@ -5,19 +5,19 @@ import (
 )
 
 type UserIcon struct {
-	URL       string `firestore:"url"`
-	MediaType string `firestore:"media_type"`
+	URL       string `json:"url" firestore:"url"`
+	MediaType string `json:"media_type" firestore:"media_type"`
 }
 
 type LocalUser struct {
-	UID         string    `firestore:"-"`
-	ID          string    `firestore:"id"`
-	Name        string    `firestore:"name"`
-	PrefName    string    `firestore:"preferred_username"`
-	Description string    `firestore:"description"`
-	Icon        *UserIcon `firestore:"icon"`
-	CreatedAt   time.Time `firestore:"created_at"`
-	UpdatedAt   time.Time `firestore:"updated_at"`
+	UID         string    `json:"-" firestore:"-"`
+	ID          string    `json:"id" firestore:"id"`
+	Name        string    `json:"name" firestore:"name"`
+	PrefName    string    `json:"preferred_username" firestore:"preferred_username"`
+	Description string    `json:"description" firestore:"description"`
+	Icon        *UserIcon `json:"icon" firestore:"icon"`
+	CreatedAt   time.Time `json:"created_at" firestore:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" firestore:"updated_at"`
 }
 
 func (u *LocalUser) GetDocID() string {

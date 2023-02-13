@@ -30,16 +30,19 @@ type ActivityPubPerson = {
         </form>
 
         <div *ngIf="state.searched">
-          <div *ngIf="state.person as person">
-            <p>User Found</p>
-            <img *ngIf="person.icon" [src]="person.icon.url" class="w-16 h-16" />
-            <p>ID: {{ person.id }}</p>
-            <p>Name: {{ person.name }}</p>
-            <p>Summary: {{ person.summary }}</p>
+          <div *ngIf="state.person as person" class="flex flex-col items-start rounded-lg bg-panel p-4 shadow">
+            <div *ngIf="person.icon">
+              <img [src]="person.icon.url" class="w-24 h-24 rounded-lg" />
+            </div>
+            <div class="flex flex-col items-start py-2">
+              <span class="font-bold text-xl">{{ person.name }}</span>
+              <span class="text-xs break-all text-gray-600">{{ person.id }}</span>
+            </div>
+            <div class="py-2" [innerHTML]="person.summary"></div>
 
             <div class="flex flex-row gap-x-2">
-              <button app-stroked-button (click)="requestFollow(person)">Follow</button>
-              <button app-stroked-button (click)="requestUnfollow(person)">Unfollow</button>
+              <button app-stroked-button class="bg-white" (click)="requestFollow(person)">Follow</button>
+              <button app-stroked-button class="bg-white" (click)="requestUnfollow(person)">Unfollow</button>
             </div>
           </div>
 
@@ -71,13 +74,11 @@ export class SearchComponent {
       return;
     }
     try {
-      const person = await lastValueFrom(
-        this.http.get<ActivityPubPerson | null>(`/api/users/search`, {
-          params: { id: userId },
-        }),
+      const resp = await lastValueFrom(
+        this.http.get<{ user: ActivityPubPerson | null }>(`/api/users/search/${userId}`),
       );
-      this.state.set({ person, searched: true });
-      console.log(person);
+      this.state.set({ person: resp.user, searched: true });
+      console.log(resp);
     } catch (e) {
       console.error(e);
     }
@@ -85,7 +86,7 @@ export class SearchComponent {
 
   async requestFollow(person: ActivityPubPerson) {
     try {
-      await lastValueFrom(this.http.post(`/api/users/follow`, { id: person.id }));
+      await lastValueFrom(this.http.post(`/api/following/create`, { id: person.id }));
     } catch (e) {
       console.error(e);
     }
@@ -93,7 +94,7 @@ export class SearchComponent {
 
   async requestUnfollow(person: ActivityPubPerson) {
     try {
-      await lastValueFrom(this.http.post(`/api/users/unfollow`, { id: person.id }));
+      await lastValueFrom(this.http.post(`/api/following/delete`, { id: person.id }));
     } catch (e) {
       console.error(e);
     }

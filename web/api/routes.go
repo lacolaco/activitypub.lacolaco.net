@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	goap "github.com/go-ap/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/ap"
 	"github.com/lacolaco/activitypub.lacolaco.net/auth"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
@@ -13,7 +14,7 @@ import (
 )
 
 type UserRepository interface {
-	FindByUID(ctx context.Context, id string) (*model.LocalUser, error)
+	FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error)
 	UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error
 	DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error
 }
@@ -28,22 +29,41 @@ func New(userRepo UserRepository) *service {
 
 func (s *service) RegisterRoutes(r *gin.Engine) {
 	apiRoutes := r.Group("/api")
-	apiRoutes.GET("/ping", auth.AssertAuthenticated(), s.ping)
-	apiRoutes.GET("/users/search", auth.AssertAuthenticated(), s.searchUser)
-	apiRoutes.POST("/users/follow", auth.AssertAuthenticated(), s.followUser)
-	apiRoutes.POST("/users/unfollow", auth.AssertAuthenticated(), s.unfollowUser)
+	apiRoutes.GET("/ping", s.ping)
+	apiRoutes.GET("/users/show/:id", s.showUser)
+	apiRoutes.GET("/users/search/:id", auth.AssertAuthenticated(), s.searchUser)
+	apiRoutes.POST("/following/create", auth.AssertAuthenticated(), s.followUser)
+	apiRoutes.POST("/following/delete", auth.AssertAuthenticated(), s.unfollowUser)
 }
 
 func (s *service) ping(c *gin.Context) {
 	c.JSON(200, gin.H{})
 }
 
-type searchUserResponse struct {
-	User *ap.Person `json:"user"`
+type showUserResp struct {
+	User *model.LocalUser `json:"user"`
+}
+
+func (s *service) showUser(c *gin.Context) {
+	localID := c.Param("id")
+	if localID == "" {
+		c.AbortWithStatusJSON(400, gin.H{"error": "id is required"})
+		return
+	}
+	user, err := s.userRepo.FindByLocalID(c.Request.Context(), localID)
+	if err != nil {
+		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, showUserResp{User: user})
+}
+
+type searchUserResp struct {
+	User *goap.Person `json:"user"`
 }
 
 func (s *service) searchUser(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Param("id")
 	if id == "" {
 		c.AbortWithStatusJSON(400, gin.H{"error": "id is required"})
 		return
@@ -54,7 +74,7 @@ func (s *service) searchUser(c *gin.Context) {
 		return
 	}
 	if personURI == "" {
-		c.JSON(200, searchUserResponse{User: nil})
+		c.JSON(200, searchUserResp{User: nil})
 		return
 	}
 	person, err := ap.GetPerson(c.Request.Context(), personURI)
@@ -62,7 +82,7 @@ func (s *service) searchUser(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, person)
+	c.JSON(200, searchUserResp{User: person})
 }
 
 type followUserRequest struct {

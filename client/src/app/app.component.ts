@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Auth, authState, GoogleAuthProvider, signInWithPopup, signOut, User } from '@angular/fire/auth';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { RxState, stateful } from '@rx-angular/state';
 import { tap } from 'rxjs';
 import { AppStrokedButton } from './shared/ui/button';
@@ -9,40 +9,31 @@ import { AppStrokedButton } from './shared/ui/button';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, AppStrokedButton],
+  imports: [CommonModule, RouterLink, RouterOutlet, AppStrokedButton],
   template: `
-    <header class="p-4 shadow-gray-500 shadow-sm z-10">
-      <div class="container">
-        <span style="display: block">{{ title }} app is running!</span>
-      </div>
-    </header>
-    <main class="flex-auto container py-4">
-      <ng-container *ngIf="state$ | async as state">
-        <div *ngIf="!state.user" class="w-full py-2">
-          <button app-stroked-button (click)="signIn()">Sign in</button>
+    <ng-container *ngIf="state$ | async as state">
+      <header class="p-4 shadow-gray-500 shadow-sm z-10">
+        <div class="container flex flex-row items-center justify-between">
+          <h1 class="font-bold">activitypub.lacolaco.net</h1>
+          <div *ngIf="!state.user">
+            <button app-stroked-button (click)="signIn()" class="text-sm">Sign in</button>
+          </div>
+          <div *ngIf="state.user">
+            <button app-stroked-button (click)="signOut()" class="text-sm">Sign out</button>
+          </div>
         </div>
-        <div *ngIf="state.user" class="w-full py-2 flex flex-row items-center gap-x-2">
-          <button app-stroked-button (click)="signOut()">Sign out</button>
-          <div>Current User: {{ state.user.displayName }}</div>
+      </header>
+      <main class="flex-auto container py-4 flex flex-col gap-y-2">
+        <div *ngIf="state.user" class="flex flex-col">
+          <a routerLink="/search" app-stroked-button>Search</a>
         </div>
         <router-outlet> </router-outlet>
-      </ng-container>
-    </main>
+      </main>
+    </ng-container>
   `,
-  styles: [
-    `
-      :host {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-        height: 100%;
-      }
-    `,
-  ],
+  host: { class: 'flex flex-col w-full h-full bg-white text-black font-sans' },
 })
 export class AppComponent {
-  title = 'activitypub.lacolaco.net';
-
   private readonly auth = inject(Auth);
 
   private readonly state = new RxState<{ user: User | null }>();
