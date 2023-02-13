@@ -19,7 +19,7 @@ func TestStaticMiddleware(t *testing.T) {
 		if w.Code != http.StatusOK {
 			tt.Errorf("got %d, want %d", w.Code, http.StatusOK)
 		}
-		if w.Result().Header.Get("Cache-Control") != "public, must-revalidate, max-age=0" {
+		if w.Result().Header.Get("Cache-Control") != "no-cache" {
 			tt.Errorf("got %s, want %s", w.Result().Header.Get("Cache-Control"), "no-cache")
 		}
 	})
@@ -58,7 +58,7 @@ func TestStaticMiddleware(t *testing.T) {
 		}
 	})
 
-	t.Run("can respect pre-defined routes", func(tt *testing.T) {
+	t.Run("respect pre-defined handlers", func(tt *testing.T) {
 		router := gin.New()
 		router.GET("/test.txt", func(c *gin.Context) {
 			c.String(http.StatusOK, "from handler")
@@ -72,6 +72,31 @@ func TestStaticMiddleware(t *testing.T) {
 		}
 		if w.Body.String() != "from handler" {
 			tt.Errorf("got %s, want %s", w.Body.String(), "from handler")
+		}
+	})
+
+	t.Run("skip post-defined handler", func(tt *testing.T) {
+		router := gin.New()
+		router.Use(static.WithStatic("/", "./fixtures/static"))
+		router.GET("/test.txt", func(c *gin.Context) {
+			c.Status(http.StatusBadRequest)
+		})
+		req, _ := http.NewRequest("GET", "/test.txt", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		if w.Code != http.StatusOK {
+			tt.Errorf("got %d, want %d", w.Code, http.StatusOK)
+		}
+	})
+
+	t.Run("skip post request", func(tt *testing.T) {
+		router := gin.New()
+		router.Use(static.WithStatic("/", "./fixtures/static"))
+		req, _ := http.NewRequest("POST", "/test.txt", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		if w.Code != http.StatusNotFound {
+			tt.Errorf("got %d, want %d", w.Code, http.StatusOK)
 		}
 	})
 

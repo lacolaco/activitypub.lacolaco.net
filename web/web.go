@@ -15,8 +15,8 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/ap"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/api"
-	wellknown "github.com/lacolaco/activitypub.lacolaco.net/web/well-known"
-	"go.uber.org/zap"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/hostmeta"
+	"github.com/lacolaco/activitypub.lacolaco.net/web/webfinger"
 )
 
 func Start(conf *config.Config) error {
@@ -36,19 +36,14 @@ func Start(conf *config.Config) error {
 	r.Use(config.WithConfig(conf))
 	r.Use(tracing.WithTracing(conf))
 	r.Use(logging.WithLogging(conf))
-	r.Use(auth.WithAuth(auth.FirebaseAuthTokenVerifier(firebaseAuth), userRepo.FindByUID))
 	r.Use(static.WithStatic("/", "./public"))
+	r.Use(auth.WithAuth(auth.FirebaseAuthTokenVerifier(firebaseAuth), userRepo.FindByUID))
 	r.Use(errorHandler())
-	r.Use(requestLogger())
-	r.Use(func(ctx *gin.Context) {
-		// set default cache-control header
-		ctx.Header("Cache-Control", "no-cache")
-		ctx.Next()
-	})
 
-	wellknown.New().Register(r)
-	ap.New(userRepo).Register(r)
-	api.New(userRepo).Register(r)
+	ap.New(userRepo).RegisterRoutes(r)
+	api.New(userRepo).RegisterRoutes(r)
+	hostmeta.RegisterRoutes(r)
+	webfinger.RegisterRoutes(r)
 
 	// Start HTTP server.
 	log.Printf("listening on http://localhost:%s", conf.Port)
@@ -64,33 +59,5 @@ func errorHandler() gin.HandlerFunc {
 		}
 		logging.LoggerFromContext(c.Request.Context()).Error(err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, err.JSON())
-	}
-}
-
-func requestLogger() gin.HandlerFunc {
-	ignoredUserAgents := map[string]bool{
-		"GoogleStackdriverMonitoring-UptimeChecks(https://cloud.google.com/monitoring)": true,
-	}
-
-	return func(c *gin.Context) {
-		if ignoredUserAgents[c.Request.UserAgent()] {
-			c.Next()
-			return
-		}
-		logging.LoggerFromContext(c.Request.Context()).Debug("request.start",
-			zap.String("method", c.Request.Method),
-			zap.String("host", c.Request.Host),
-			zap.String("url", c.Request.URL.String()),
-			zap.String("userAgent", c.Request.UserAgent()),
-			zap.String("referer", c.Request.Referer()),
-			zap.String("accept", c.Request.Header.Get("Accept")),
-			zap.Any("headers", c.Request.Header),
-		)
-		c.Next()
-		logging.LoggerFromContext(c.Request.Context()).Debug("request.end",
-			zap.Int("status", c.Writer.Status()),
-			zap.Int("size", c.Writer.Size()),
-			zap.String("response.contentType", c.Writer.Header().Get("Content-Type")),
-		)
 	}
 }

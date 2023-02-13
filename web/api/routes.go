@@ -30,7 +30,7 @@ func New(userRepo UserRepository) *service {
 	return &service{userRepo: userRepo}
 }
 
-func (s *service) Register(r *gin.Engine) {
+func (s *service) RegisterRoutes(r *gin.Engine) {
 	apiRoutes := r.Group("/api")
 	apiRoutes.GET("/ping", auth.AssertAuthenticated(), s.ping)
 	apiRoutes.GET("/users/search", auth.AssertAuthenticated(), s.searchUser)

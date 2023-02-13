@@ -34,7 +34,7 @@ func New(userRepo UserRepository) *apService {
 	return &apService{userRepo: userRepo}
 }
 
-func (s *apService) Register(r *gin.Engine) {
+func (s *apService) RegisterRoutes(r *gin.Engine) {
 	assertJSONGet := util.AssertAccept([]string{
 		"application/activity+json",
 		"application/ld+json",
