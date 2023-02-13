@@ -17,8 +17,8 @@ const (
 )
 
 // WithLogging returns a gin middleware that sets the logger in the context.
-func WithLogging(cfg *config.Config) gin.HandlerFunc {
-	logger := NewLogger(cfg)
+func WithLogging(conf *config.Config) gin.HandlerFunc {
+	logger := NewLogger(conf)
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		ctx = context.WithValue(ctx, loggerContextKey, logger)
