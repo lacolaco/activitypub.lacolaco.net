@@ -25,9 +25,9 @@ import { AppStrokedButton } from './shared/ui/button';
       </header>
       <main class="flex-auto container py-4 flex flex-col gap-y-2">
         <div *ngIf="state.user" class="flex flex-col">
-          <a routerLink="/search" app-stroked-button>Search</a>
+          <a routerLink="/search" app-stroked-button>Control Room</a>
         </div>
-        <router-outlet> </router-outlet>
+        <router-outlet></router-outlet>
       </main>
     </ng-container>
   `,
@@ -40,6 +40,7 @@ export class AppComponent {
   readonly state$ = this.state.select().pipe(stateful());
 
   ngOnInit() {
+    this.state.set({ user: null });
     this.state.connect(
       'user',
       authState(this.auth).pipe(
