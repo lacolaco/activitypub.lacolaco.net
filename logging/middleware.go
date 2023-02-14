@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
-	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -45,7 +44,7 @@ const (
 
 func traceContext(c context.Context) zap.Option {
 	traceName := tracing.TraceNameFromContext(c)
-	spanContext := trace.SpanContextFromContext(c)
+	spanContext := tracing.SpanContextFromContext(c)
 	if traceName == "" || !spanContext.IsValid() {
 		return zap.Fields()
 	}
