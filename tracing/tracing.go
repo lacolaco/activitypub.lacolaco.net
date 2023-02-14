@@ -31,9 +31,9 @@ func installTraceProvider(cfg *config.Config) *sdktrace.TracerProvider {
 		log.Fatal(err)
 	}
 	tpOpts := []sdktrace.TracerProviderOption{sdktrace.WithBatcher(exporter)}
-	// if cfg.Env == env.EnvDevelopment {
-	tpOpts = append(tpOpts, sdktrace.WithSampler(sdktrace.AlwaysSample()))
-	// }
+	if !cfg.IsRunningOnCloud() {
+		tpOpts = append(tpOpts, sdktrace.WithSampler(sdktrace.AlwaysSample()))
+	}
 	tp := sdktrace.NewTracerProvider(tpOpts...)
 	otel.SetTracerProvider(tp)
 	return tp
@@ -53,8 +53,8 @@ func installOpenCensusBridge() {
 	octrace.DefaultTracer = opencensus.NewTracer(tracer)
 }
 
-func InitTraceProvider(cfg *config.Config) func() {
-	tp := installTraceProvider(cfg)
+func InitTraceProvider(conf *config.Config) func() {
+	tp := installTraceProvider(conf)
 	installPropagators()
 	installOpenCensusBridge()
 	return func() {

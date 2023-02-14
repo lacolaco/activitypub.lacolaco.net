@@ -25,6 +25,9 @@ func Start(conf *config.Config) error {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	closeTracer := tracing.InitTraceProvider(conf)
+	defer closeTracer()
+
 	firestore := gcp.NewFirestoreClient()
 	firebaseAuth := gcp.NewFirebaseAuthClient()
 	defer firestore.Close()
