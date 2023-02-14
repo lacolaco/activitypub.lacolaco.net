@@ -14,7 +14,6 @@ import (
 
 type mockAuth struct {
 	tokenToUID map[string]string
-	uidToUser  map[string]*model.LocalUser
 }
 
 func (m *mockAuth) VerifyToken(ctx context.Context, idToken string) (auth.UID, error) {
@@ -24,23 +23,16 @@ func (m *mockAuth) VerifyToken(ctx context.Context, idToken string) (auth.UID, e
 	return "", fmt.Errorf("invalid token")
 }
 
-func (m *mockAuth) ResolveLocalUser(ctx context.Context, uid auth.UID) (*model.LocalUser, error) {
-	if user, ok := m.uidToUser[uid]; ok {
-		return user, nil
-	}
-	return nil, fmt.Errorf("user not found")
-}
-
 func TestAuthMiddleware(t *testing.T) {
 	t.Run("do nothing if no authorization header", func(tt *testing.T) {
 		mock := &mockAuth{}
 
 		router := gin.New()
-		router.Use(auth.WithAuth(mock.VerifyToken, mock.ResolveLocalUser))
+		router.Use(auth.WithAuth(mock.VerifyToken))
 		router.GET("/test", func(c *gin.Context) {
-			userFromContext := auth.CurrentUserFromContext(c.Request.Context())
-			if userFromContext != nil {
-				tt.Error("userFromContext is not nil")
+			uid := auth.UIDFromContext(c.Request.Context())
+			if uid != "" {
+				tt.Error("uid is not empty")
 			}
 			c.Status(http.StatusOK)
 		})
@@ -59,21 +51,18 @@ func TestAuthMiddleware(t *testing.T) {
 			tokenToUID: map[string]string{
 				"token": user.UID,
 			},
-			uidToUser: map[string]*model.LocalUser{
-				user.UID: user,
-			},
 		}
 
 		router := gin.New()
-		router.Use(auth.WithAuth(mock.VerifyToken, mock.ResolveLocalUser))
+		router.Use(auth.WithAuth(mock.VerifyToken))
 		router.GET("/test", func(c *gin.Context) {
-			userFromContext := auth.CurrentUserFromContext(c.Request.Context())
-			if userFromContext == nil {
-				tt.Error("userFromContext is nil")
+			uid := auth.UIDFromContext(c.Request.Context())
+			if uid == "" {
+				tt.Error("uid is nil")
 				return
 			}
-			if userFromContext.UID != user.UID {
-				tt.Errorf("userFromContext.UID is not %s", user.UID)
+			if uid != user.UID {
+				tt.Errorf("uid is not %s", user.UID)
 			}
 			c.Status(http.StatusOK)
 		})
@@ -93,7 +82,7 @@ func TestAssertAuthenticated(t *testing.T) {
 	t.Run("throw 401 if no authorization header", func(tt *testing.T) {
 		mock := &mockAuth{}
 		router := gin.New()
-		router.Use(auth.WithAuth(mock.VerifyToken, mock.ResolveLocalUser))
+		router.Use(auth.WithAuth(mock.VerifyToken))
 
 		router.GET("/test", auth.AssertAuthenticated(), func(c *gin.Context) {
 			c.Status(http.StatusOK)
@@ -113,13 +102,10 @@ func TestAssertAuthenticated(t *testing.T) {
 			tokenToUID: map[string]string{
 				"token": user.UID,
 			},
-			uidToUser: map[string]*model.LocalUser{
-				user.UID: user,
-			},
 		}
 
 		router := gin.New()
-		router.Use(auth.WithAuth(mock.VerifyToken, mock.ResolveLocalUser))
+		router.Use(auth.WithAuth(mock.VerifyToken))
 		router.GET("/test", auth.AssertAuthenticated(), func(c *gin.Context) {
 			c.Status(http.StatusOK)
 		})

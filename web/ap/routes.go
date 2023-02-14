@@ -11,7 +11,9 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
+	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/util"
+	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 	"humungus.tedunangst.com/r/webs/httpsig"
 )
@@ -71,7 +73,11 @@ func (s *apService) handlePerson(c *gin.Context) {
 }
 
 func (s *apService) handleInbox(c *gin.Context) {
-	logger := logging.LoggerFromContext(c.Request.Context())
+	ctx, span := tracing.StartSpan(c.Request.Context(), "ap.handleInbox")
+	defer span.End()
+	c.Request = c.Request.WithContext(ctx)
+
+	logger := logging.LoggerFromContext(ctx)
 	defer c.Request.Body.Close()
 	payload, err := io.ReadAll(c.Request.Body)
 	if err != nil {
@@ -101,7 +107,9 @@ func (s *apService) handleInbox(c *gin.Context) {
 		return
 	}
 	actor := activity.Actor
-	logger.Debug("activity", zap.Any("type", activity.GetType()), zap.Any("actor", actor))
+	span.SetAttributes(attribute.String("activity.actor", actor.GetID().String()))
+	span.SetAttributes(attribute.String("activity.type", string(activity.GetType())))
+
 	username := c.Param("username")
 	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
 	if err != nil {

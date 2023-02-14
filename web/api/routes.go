@@ -95,7 +95,12 @@ func (s *service) followUser(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	currentUser := auth.CurrentUserFromContext(c.Request.Context())
+	uid := auth.UIDFromContext(c.Request.Context())
+	currentUser, err := s.userRepo.FindByLocalID(c.Request.Context(), uid)
+	if err != nil {
+		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
 	actor := ap.NewPerson(currentUser, util.GetBaseURI(c))
 	whom, err := ap.GetPerson(c.Request.Context(), req.ID)
 	if err != nil {
@@ -124,7 +129,12 @@ func (s *service) unfollowUser(c *gin.Context) {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	currentUser := auth.CurrentUserFromContext(c.Request.Context())
+	uid := auth.UIDFromContext(c.Request.Context())
+	currentUser, err := s.userRepo.FindByLocalID(c.Request.Context(), uid)
+	if err != nil {
+		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+		return
+	}
 	actor := ap.NewPerson(currentUser, util.GetBaseURI(c))
 	whom, err := ap.GetPerson(c.Request.Context(), req.ID)
 	if err != nil {

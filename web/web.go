@@ -40,7 +40,7 @@ func Start(conf *config.Config) error {
 	r.Use(tracing.WithTracing(conf))
 	r.Use(logging.WithLogging(conf))
 	r.Use(static.WithStatic("/", "./public"))
-	r.Use(auth.WithAuth(auth.FirebaseAuthTokenVerifier(firebaseAuth), userRepo.FindByUID))
+	r.Use(auth.WithAuth(auth.FirebaseAuthTokenVerifier(firebaseAuth)))
 	r.Use(errorHandler())
 
 	ap.New(userRepo).RegisterRoutes(r)

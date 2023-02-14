@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"time"
 
-	goap "github.com/go-ap/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
+	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
+	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
 
@@ -25,31 +25,11 @@ const (
 	systemActorID        = "https://activitypub.lacolaco.net/users/system"
 )
 
-func getPerson(ctx context.Context, id string) (*goap.Actor, error) {
-	addr, _ := url.Parse(id)
-	if addr.Scheme == "" {
-		addr.Scheme = "https"
-	}
-	body, err := getActivityJSON(ctx, systemActor, addr.String())
-	if err != nil {
-		return nil, err
-	}
-	item, err := goap.UnmarshalJSON(body)
-	if err != nil {
-		return nil, err
-	}
-	var p *goap.Person
-	err = goap.OnActor(item, func(a *goap.Actor) error {
-		p = a
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return p, nil
-}
+func signedGet(ctx context.Context, actor Actor, url string) ([]byte, error) {
+	ctx, span := tracing.StartSpan(ctx, "ap.signedGet")
+	defer span.End()
+	span.SetAttributes(attribute.String("url", url))
 
-func getActivityJSON(ctx context.Context, actor Actor, url string) ([]byte, error) {
 	conf := config.ConfigFromContext(ctx)
 	logger := logging.LoggerFromContext(ctx)
 	req, err := http.NewRequest("GET", url, nil)
@@ -75,11 +55,15 @@ func getActivityJSON(ctx context.Context, actor Actor, url string) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	logger.Debug("getActivityJSON.response", zap.Int("code", resp.StatusCode), zap.String("body", string(body)))
+	logger.Debug("signedGet.response", zap.Int("code", resp.StatusCode), zap.String("body", string(body)))
 	return body, nil
 }
 
-func postActivityJSON(ctx context.Context, actor Actor, url string, body []byte) ([]byte, error) {
+func signedPost(ctx context.Context, actor Actor, url string, body []byte) ([]byte, error) {
+	ctx, span := tracing.StartSpan(ctx, "ap.signedPost")
+	defer span.End()
+	span.SetAttributes(attribute.String("url", url))
+
 	conf := config.ConfigFromContext(ctx)
 	logger := logging.LoggerFromContext(ctx)
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
@@ -90,7 +74,6 @@ func postActivityJSON(ctx context.Context, actor Actor, url string, body []byte)
 	req.Header.Set("Content-Type", mimeTypeActivityJSON)
 	publicKeyID := GetPublicKeyID(actor)
 	SignRequest(publicKeyID, conf.PrivateKey, req, body)
-	logger.Debug("postActivityJSON.request", zap.Any("headers", req.Header))
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	req = req.WithContext(c)
@@ -100,7 +83,7 @@ func postActivityJSON(ctx context.Context, actor Actor, url string, body []byte)
 	}
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
-	logger.Debug("postActivityJSON.response", zap.Int("code", resp.StatusCode), zap.String("body", string(respBody)))
+	logger.Debug("signedPost.response", zap.Int("code", resp.StatusCode), zap.String("body", string(respBody)))
 	switch resp.StatusCode {
 	case http.StatusOK:
 	case http.StatusAccepted:

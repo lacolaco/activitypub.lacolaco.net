@@ -3,6 +3,7 @@ package ap
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 
 	goap "github.com/go-ap/activitypub"
@@ -12,7 +13,7 @@ import (
 func Accept(ctx context.Context, actor Actor, req *goap.Activity) error {
 	now := time.Now()
 	userID := actor.GetID()
-	to, err := getPerson(ctx, req.Actor.GetID().String())
+	to, err := GetPerson(ctx, req.Actor.GetID().String())
 	if err != nil {
 		return err
 	}
@@ -26,14 +27,34 @@ func Accept(ctx context.Context, actor Actor, req *goap.Activity) error {
 	j["published"] = now.UTC().Format(time.RFC3339)
 	j["object"] = req
 
-	if _, err := postActivityJSON(ctx, actor, string(to.Inbox.GetLink()), j.ToBytes()); err != nil {
+	if _, err := signedPost(ctx, actor, string(to.Inbox.GetLink()), j.ToBytes()); err != nil {
 		return err
 	}
 	return nil
 }
 
 func GetPerson(ctx context.Context, id string) (*goap.Person, error) {
-	return getPerson(ctx, id)
+	addr, _ := url.Parse(id)
+	if addr.Scheme == "" {
+		addr.Scheme = "https"
+	}
+	body, err := signedGet(ctx, systemActor, addr.String())
+	if err != nil {
+		return nil, err
+	}
+	item, err := goap.UnmarshalJSON(body)
+	if err != nil {
+		return nil, err
+	}
+	var p *goap.Person
+	err = goap.OnActor(item, func(a *goap.Actor) error {
+		p = a
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
 }
 
 func newFollowJunk(actor Actor, whom *goap.Person) junk.Junk {
@@ -49,7 +70,7 @@ func newFollowJunk(actor Actor, whom *goap.Person) junk.Junk {
 func FollowPerson(ctx context.Context, actor Actor, whom *goap.Person) error {
 	j := newFollowJunk(actor, whom)
 
-	if _, err := postActivityJSON(ctx, actor, string(whom.Inbox.GetLink()), j.ToBytes()); err != nil {
+	if _, err := signedPost(ctx, actor, string(whom.Inbox.GetLink()), j.ToBytes()); err != nil {
 		return err
 	}
 	return nil
@@ -66,7 +87,7 @@ func UnfollowPerson(ctx context.Context, actor Actor, whom *goap.Person) error {
 	j["actor"] = actor.GetID()
 	j["object"] = newFollowJunk(actor, whom)
 
-	if _, err := postActivityJSON(ctx, actor, string(whom.Inbox.GetLink()), j.ToBytes()); err != nil {
+	if _, err := signedPost(ctx, actor, string(whom.Inbox.GetLink()), j.ToBytes()); err != nil {
 		return err
 	}
 	return nil

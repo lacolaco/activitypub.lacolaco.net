@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { Auth, user } from '@angular/fire/auth';
-import { map, switchMap } from 'rxjs';
+import { Auth, idToken } from '@angular/fire/auth';
+import { switchMap } from 'rxjs';
 
 export function authInterceptor(): HttpInterceptorFn {
   return (req, next) => {
@@ -11,8 +11,7 @@ export function authInterceptor(): HttpInterceptorFn {
       return next(req);
     }
 
-    return user(auth).pipe(
-      map((user) => user?.getIdToken()),
+    return idToken(auth).pipe(
       switchMap((token) => {
         if (!token) {
           return next(req);
