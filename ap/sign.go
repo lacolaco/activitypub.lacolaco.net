@@ -19,3 +19,10 @@ func SignRequest(publicKeyID string, key *rsa.PrivateKey, req *http.Request, bod
 func GetPublicKeyID(actor Actor) string {
 	return fmt.Sprintf("%s#%s", actor.GetID(), publicKeyIDSuffix)
 }
+
+func VerifyRequest(req *http.Request, content []byte) error {
+	if _, err := httpsig.VerifyRequest(req, content, httpsig.ActivityPubKeyGetter); err != nil {
+		return err
+	}
+	return nil
+}

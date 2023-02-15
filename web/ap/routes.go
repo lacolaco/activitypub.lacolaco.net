@@ -12,10 +12,10 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
+	"github.com/lacolaco/activitypub.lacolaco.net/usecase"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/util"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
-	"humungus.tedunangst.com/r/webs/httpsig"
 )
 
 type UserRepository interface {
@@ -28,12 +28,23 @@ type UserRepository interface {
 	DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error
 }
 
+type RelationshipUsecase interface {
+	OnFollow(r *http.Request, username string, activity *goap.Activity) error
+	OnUnfollow(r *http.Request, username string, activity *goap.Activity) error
+	OnAcceptFollow(r *http.Request, username string, activity *goap.Activity) error
+	OnRejectFollow(r *http.Request, username string, activity *goap.Activity) error
+}
+
 type apService struct {
-	userRepo UserRepository
+	userRepo            UserRepository
+	relationshipUsecase RelationshipUsecase
 }
 
 func New(userRepo UserRepository) *apService {
-	return &apService{userRepo: userRepo}
+	return &apService{
+		userRepo:            userRepo,
+		relationshipUsecase: usecase.NewRelationshipUsecase(userRepo),
+	}
 }
 
 func (s *apService) RegisterRoutes(r *gin.Engine) {
@@ -86,7 +97,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 		return
 	}
 	logger.Debug("payload", zap.String("payload", string(payload)))
-	if _, err := httpsig.VerifyRequest(c.Request, payload, httpsig.ActivityPubKeyGetter); err != nil {
+	if err := ap.VerifyRequest(c.Request, payload); err != nil {
 		logger.Error("failed to verify request", zap.Error(err))
 		c.String(http.StatusBadRequest, err.Error())
 		return
@@ -106,45 +117,22 @@ func (s *apService) handleInbox(c *gin.Context) {
 		c.String(http.StatusBadRequest, "invalid json")
 		return
 	}
-	actor := activity.Actor
-	span.SetAttributes(attribute.String("activity.actor", actor.GetID().String()))
+	span.SetAttributes(attribute.String("activity.actor", activity.Actor.GetID().String()))
 	span.SetAttributes(attribute.String("activity.type", string(activity.GetType())))
-
 	username := c.Param("username")
-	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
-	if err != nil {
-		logger.Error("failed to get user", zap.Error(err))
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	userPerson := ap.NewPerson(user, util.GetBaseURI(c))
 
 	switch activity.GetType() {
 	case goap.FollowType:
-		follower := model.NewFollower(actor.GetID().String(), model.AttemptStatusCompleted)
-		if err := s.userRepo.UpsertFollower(c.Request.Context(), user, follower); err != nil {
-			logger.Error(err.Error())
-			c.String(http.StatusInternalServerError, "add follower failed")
-			return
-		}
-		if err := ap.Accept(c.Request.Context(), userPerson, activity); err != nil {
-			logger.Error(err.Error())
-			c.String(http.StatusInternalServerError, "post activity failed")
+		if err := s.relationshipUsecase.OnFollow(c.Request, username, activity); err != nil {
+			c.Error(err)
 			return
 		}
 		c.Status(http.StatusOK)
 	case goap.UndoType:
 		switch activity.Object.GetType() {
 		case goap.FollowType:
-			err := s.userRepo.DeleteFollower(c.Request.Context(), user, actor.GetID().String())
-			if err != nil {
-				logger.Error(err.Error())
-				c.String(http.StatusInternalServerError, "internal server error")
-				return
-			}
-			if err := ap.Accept(c.Request.Context(), userPerson, activity); err != nil {
-				logger.Error(err.Error())
-				c.String(http.StatusInternalServerError, "internal server error")
+			if err := s.relationshipUsecase.OnUnfollow(c.Request, username, activity); err != nil {
+				c.Error(err)
 				return
 			}
 			c.Status(http.StatusOK)
@@ -159,18 +147,15 @@ func (s *apService) handleInbox(c *gin.Context) {
 		switch {
 		// follow request is accepted
 		case activity.Object.GetType() == goap.FollowType && activity.GetType() == goap.AcceptType:
-			following := model.NewFollowing(actor.GetID().String(), model.AttemptStatusCompleted)
-			if err := s.userRepo.UpsertFollowing(c.Request.Context(), user, following); err != nil {
-				logger.Error(err.Error())
-				c.String(http.StatusInternalServerError, "complete following failed")
+			if err := s.relationshipUsecase.OnAcceptFollow(c.Request, username, activity); err != nil {
+				c.Error(err)
 				return
 			}
 			c.Status(200)
 		// follow request is rejected
 		case activity.Object.GetType() == goap.FollowType && activity.GetType() == goap.RejectType:
-			if err := s.userRepo.DeleteFollowing(c.Request.Context(), user, actor.GetID().String()); err != nil {
-				logger.Error(err.Error())
-				c.String(http.StatusInternalServerError, "cancel following failed")
+			if err := s.relationshipUsecase.OnRejectFollow(c.Request, username, activity); err != nil {
+				c.Error(err)
 				return
 			}
 			c.Status(200)
