@@ -33,12 +33,12 @@ jobs:
         run: yarn build
       - name: build and push image
         run: |
-          docker build -t ${{ env.IMAGE_IMAGE }}:${{ github.sha }} .
-          docker push ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker build -t $IMAGE_IMAGE:${{ github.sha }} .
+          docker push $IMAGE_IMAGE:${{ github.sha }}
       - name: deploy to Cloud Run
         run: |
           gcloud --quiet run deploy activitypub-lacolaco-net \
-          --image ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+          --image $IMAGE_IMAGE:${{ github.sha }} \
           --allow-unauthenticated \
           --service-account api-service@lacolaco-activitypub.iam.gserviceaccount.com \
           --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
