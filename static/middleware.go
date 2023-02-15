@@ -14,7 +14,6 @@ var (
 		"/api",
 		"/.well-known",
 	}
-	cacheControl = "no-cache"
 )
 
 // WithStatic は静的ファイルを配信するミドルウェアを生成する
@@ -41,8 +40,7 @@ func WithStatic(prefix, dir string) gin.HandlerFunc {
 		}
 		filepath := path.Join(dir, strings.TrimPrefix(reqPath, prefix))
 		if exists(filepath) {
-			c.Header("Cache-Control", cacheControl)
-			c.File(filepath)
+			writeFile(c, filepath)
 			c.Abort()
 			return
 		}
@@ -50,9 +48,7 @@ func WithStatic(prefix, dir string) gin.HandlerFunc {
 		c.Next()
 
 		if c.Writer.Status() == http.StatusNotFound {
-			c.Header("Cache-Control", cacheControl)
-			c.Status(http.StatusOK)
-			c.File(path.Join(dir, "index.html"))
+			writeFile(c, path.Join(dir, "index.html"))
 		}
 	}
 }
@@ -60,4 +56,10 @@ func WithStatic(prefix, dir string) gin.HandlerFunc {
 func exists(filepath string) bool {
 	_, err := os.Stat(filepath)
 	return err == nil
+}
+
+func writeFile(c *gin.Context, filepath string) {
+	cacheControl := DetectCacheControl(filepath)
+	c.Header("Cache-Control", cacheControl)
+	c.File(filepath)
 }
