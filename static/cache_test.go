@@ -1,6 +1,10 @@
-package static
+package static_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/lacolaco/activitypub.lacolaco.net/static"
+)
 
 func TestDetectCacheControl(t *testing.T) {
 	type args struct {
@@ -23,19 +27,19 @@ func TestDetectCacheControl(t *testing.T) {
 			args: args{
 				filename: "main.0123456789abcdef.css",
 			},
-			want: "max-age=31536000, public",
+			want: "public, max-age=31536000, immutable",
 		},
 		{
 			name: "production build js",
 			args: args{
 				filename: "main.0123456789abcdef.js",
 			},
-			want: "max-age=31536000, public",
+			want: "public, max-age=31536000, immutable",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := DetectCacheControl(tt.args.filename); got != tt.want {
+			if got := static.DetectCacheControl(tt.args.filename); got != tt.want {
 				t.Errorf("DetectCacheControl() = %v, want %v", got, tt.want)
 			}
 		})
