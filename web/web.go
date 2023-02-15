@@ -13,6 +13,7 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/repository"
 	"github.com/lacolaco/activitypub.lacolaco.net/static"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
+	"github.com/lacolaco/activitypub.lacolaco.net/usecase"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/ap"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/api"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/hostmeta"
@@ -32,6 +33,8 @@ func Start(conf *config.Config) error {
 	firebaseAuth := gcp.NewFirebaseAuthClient()
 	defer firestore.Close()
 	userRepo := repository.NewUserRepository(firestore)
+	relationshipUsecase := usecase.NewRelationshipUsecase(userRepo)
+	searchUsecase := usecase.NewSearchUsecase()
 
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -43,10 +46,10 @@ func Start(conf *config.Config) error {
 	r.Use(auth.WithAuth(auth.FirebaseAuthTokenVerifier(firebaseAuth)))
 	r.Use(errorHandler())
 
-	ap.New(userRepo).RegisterRoutes(r)
-	api.New(userRepo).RegisterRoutes(r)
+	ap.New(userRepo, relationshipUsecase).RegisterRoutes(r)
+	api.New(userRepo, relationshipUsecase, searchUsecase).RegisterRoutes(r)
 	hostmeta.RegisterRoutes(r)
-	webfinger.RegisterRoutes(r)
+	webfinger.New(userRepo).RegisterRoutes(r)
 
 	// Start HTTP server.
 	log.Printf("listening on http://localhost:%s", conf.Port)

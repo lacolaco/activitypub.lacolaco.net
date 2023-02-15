@@ -11,7 +11,7 @@ import (
 )
 
 type UserRepository interface {
-	FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error)
+	FindByUID(ctx context.Context, uid model.UID) (*model.LocalUser, error)
 	UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error
 	DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error
 	UpsertFollower(ctx context.Context, user *model.LocalUser, follower *model.Follower) error
@@ -26,11 +26,11 @@ func NewRelationshipUsecase(userRepo UserRepository) *relationshipUsecase {
 	return &relationshipUsecase{userRepo: userRepo}
 }
 
-func (u *relationshipUsecase) OnFollow(r *http.Request, username string, activity *goap.Activity) error {
+func (u *relationshipUsecase) OnFollow(r *http.Request, uid model.UID, activity *goap.Activity) error {
 	ctx, span := tracing.StartSpan(r.Context(), "usecase.relationship.OnFollow")
 	defer span.End()
 
-	user, err := u.userRepo.FindByLocalID(ctx, username)
+	user, err := u.userRepo.FindByUID(ctx, uid)
 	if err != nil {
 		return err
 	}
@@ -46,11 +46,11 @@ func (u *relationshipUsecase) OnFollow(r *http.Request, username string, activit
 	return nil
 }
 
-func (u *relationshipUsecase) OnUnfollow(r *http.Request, username string, activity *goap.Activity) error {
+func (u *relationshipUsecase) OnUnfollow(r *http.Request, uid model.UID, activity *goap.Activity) error {
 	ctx, span := tracing.StartSpan(r.Context(), "usecase.relationship.OnUnfollow")
 	defer span.End()
 
-	user, err := u.userRepo.FindByLocalID(ctx, username)
+	user, err := u.userRepo.FindByUID(ctx, uid)
 	if err != nil {
 		return err
 	}
@@ -65,11 +65,11 @@ func (u *relationshipUsecase) OnUnfollow(r *http.Request, username string, activ
 	return nil
 }
 
-func (u *relationshipUsecase) OnAcceptFollow(r *http.Request, username string, activity *goap.Activity) error {
+func (u *relationshipUsecase) OnAcceptFollow(r *http.Request, uid model.UID, activity *goap.Activity) error {
 	ctx, span := tracing.StartSpan(r.Context(), "usecase.relationship.OnAcceptFollow")
 	defer span.End()
 
-	user, err := u.userRepo.FindByLocalID(ctx, username)
+	user, err := u.userRepo.FindByUID(ctx, uid)
 	if err != nil {
 		return err
 	}
@@ -81,16 +81,55 @@ func (u *relationshipUsecase) OnAcceptFollow(r *http.Request, username string, a
 	return nil
 }
 
-func (u *relationshipUsecase) OnRejectFollow(r *http.Request, username string, activity *goap.Activity) error {
+func (u *relationshipUsecase) OnRejectFollow(r *http.Request, uid model.UID, activity *goap.Activity) error {
 	ctx, span := tracing.StartSpan(r.Context(), "usecase.relationship.OnRejectFollow")
 	defer span.End()
 
-	user, err := u.userRepo.FindByLocalID(ctx, username)
+	user, err := u.userRepo.FindByUID(ctx, uid)
 	if err != nil {
 		return err
 	}
 	actor := activity.Actor
 	if err := u.userRepo.DeleteFollowing(ctx, user, actor.GetID().String()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *relationshipUsecase) Follow(r *http.Request, uid model.UID, to string) error {
+	user, err := u.userRepo.FindByUID(r.Context(), uid)
+	if err != nil {
+		return err
+	}
+	actor := ap.NewPerson(user, r.Host)
+	whom, err := ap.GetPerson(r.Context(), to)
+	if err != nil {
+		return err
+	}
+	if err := ap.FollowPerson(r.Context(), actor, whom); err != nil {
+		return err
+	}
+	following := model.NewFollowing(whom.GetID().String(), model.AttemptStatusPending)
+	if err := u.userRepo.UpsertFollowing(r.Context(), user, following); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *relationshipUsecase) Unfollow(r *http.Request, uid model.UID, to string) error {
+	user, err := u.userRepo.FindByUID(r.Context(), uid)
+	if err != nil {
+		return err
+	}
+	actor := ap.NewPerson(user, r.Host)
+	whom, err := ap.GetPerson(r.Context(), to)
+	if err != nil {
+		return err
+	}
+	if err := ap.UnfollowPerson(r.Context(), actor, whom); err != nil {
+		return err
+	}
+	if err := u.userRepo.DeleteFollowing(r.Context(), user, whom.GetID().String()); err != nil {
 		return err
 	}
 	return nil

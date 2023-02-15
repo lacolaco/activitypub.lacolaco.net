@@ -13,10 +13,10 @@ import (
 )
 
 type mockAuth struct {
-	tokenToUID map[string]string
+	tokenToUID map[string]model.UID
 }
 
-func (m *mockAuth) VerifyToken(ctx context.Context, idToken string) (auth.UID, error) {
+func (m *mockAuth) VerifyToken(ctx context.Context, idToken string) (model.UID, error) {
 	if uid, ok := m.tokenToUID[idToken]; ok {
 		return uid, nil
 	}
@@ -48,7 +48,7 @@ func TestAuthMiddleware(t *testing.T) {
 	t.Run("can get current user from valid authorization header", func(tt *testing.T) {
 		user := &model.LocalUser{ID: "stub", UID: "test-uid"}
 		mock := &mockAuth{
-			tokenToUID: map[string]string{
+			tokenToUID: map[string]model.UID{
 				"token": user.UID,
 			},
 		}
@@ -99,7 +99,7 @@ func TestAssertAuthenticated(t *testing.T) {
 	t.Run("passthrough if request is authenticated", func(tt *testing.T) {
 		user := &model.LocalUser{ID: "stub", UID: "test-uid"}
 		mock := &mockAuth{
-			tokenToUID: map[string]string{
+			tokenToUID: map[string]model.UID{
 				"token": user.UID,
 			},
 		}

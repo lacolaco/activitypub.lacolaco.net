@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { RxState, stateful } from '@rx-angular/state';
-import { lastValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { AppStrokedButton } from '../shared/ui/button';
 import { FormFieldModule } from '../shared/ui/form-field';
 
@@ -74,10 +74,10 @@ export class SearchComponent {
       return;
     }
     try {
-      const resp = await lastValueFrom(
-        this.http.get<{ user: ActivityPubPerson | null }>(`/api/users/search/${userId}`),
+      const resp = await firstValueFrom(
+        this.http.get<{ person: ActivityPubPerson | null }>(`/api/search/person/${userId}`),
       );
-      this.state.set({ person: resp.user, searched: true });
+      this.state.set({ person: resp.person, searched: true });
       console.log(resp);
     } catch (e) {
       console.error(e);

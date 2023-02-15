@@ -28,16 +28,16 @@ func (r *userRepo) FindByLocalID(ctx context.Context, localID string) (*model.Lo
 	if err != nil {
 		return nil, err
 	}
-	found.UID = doc.ID
+	found.UID = model.UID(doc.ID)
 	return found, nil
 }
 
-func (r *userRepo) FindByUID(ctx context.Context, uid string) (*model.LocalUser, error) {
-	doc, err := r.firestoreClient.Collection(UsersCollectionName).Doc(uid).Get(ctx)
+func (r *userRepo) FindByUID(ctx context.Context, uid model.UID) (*model.LocalUser, error) {
+	doc, err := r.firestoreClient.Collection(UsersCollectionName).Doc(string(uid)).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	user := &model.LocalUser{UID: doc.Ref.ID}
+	user := &model.LocalUser{UID: model.UID(doc.Ref.ID)}
 	if err := doc.DataTo(&user); err != nil {
 		return nil, err
 	}

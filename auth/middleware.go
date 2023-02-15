@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -12,10 +13,10 @@ import (
 type contextKey int
 
 const (
-	currentUserContextKey contextKey = iota
+	uidContextKey contextKey = iota
 )
 
-type VerifyTokenFunc = func(ctx context.Context, token string) (UID, error)
+type VerifyTokenFunc = func(ctx context.Context, token string) (model.UID, error)
 
 func WithAuth(verifyToken VerifyTokenFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -33,8 +34,8 @@ func WithAuth(verifyToken VerifyTokenFunc) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		span.SetAttributes(attribute.String("auth.uid", uid))
-		ctx = context.WithValue(ctx, currentUserContextKey, uid)
+		span.SetAttributes(attribute.String("auth.uid", string(uid)))
+		ctx = context.WithValue(ctx, uidContextKey, uid)
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	}
@@ -52,8 +53,8 @@ func AssertAuthenticated() gin.HandlerFunc {
 }
 
 // ログイン中のユーザーを取得する。ログイン中でなければ空文字列を返す
-func UIDFromContext(c context.Context) string {
-	if uid, ok := c.Value(currentUserContextKey).(string); ok {
+func UIDFromContext(c context.Context) model.UID {
+	if uid, ok := c.Value(uidContextKey).(model.UID); ok {
 		return uid
 	}
 	return ""

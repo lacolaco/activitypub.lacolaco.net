@@ -6,32 +6,38 @@ import (
 
 	"github.com/gin-gonic/gin"
 	goap "github.com/go-ap/activitypub"
-	"github.com/lacolaco/activitypub.lacolaco.net/ap"
 	"github.com/lacolaco/activitypub.lacolaco.net/auth"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
-	"github.com/lacolaco/activitypub.lacolaco.net/web/util"
-	"github.com/lacolaco/activitypub.lacolaco.net/webfinger"
 )
 
 type UserRepository interface {
 	FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error)
-	UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error
-	DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error
+}
+
+type RelationshipUsecase interface {
+	Follow(r *http.Request, uid model.UID, whom string) error
+	Unfollow(r *http.Request, uid model.UID, whom string) error
+}
+
+type SearchUsecase interface {
+	SearchPerson(ctx context.Context, id string) (*goap.Person, error)
 }
 
 type service struct {
-	userRepo UserRepository
+	userRepo            UserRepository
+	relationshipUsecase RelationshipUsecase
+	searchUsecase       SearchUsecase
 }
 
-func New(userRepo UserRepository) *service {
-	return &service{userRepo: userRepo}
+func New(userRepo UserRepository, relationshipUsecase RelationshipUsecase, searchUsecase SearchUsecase) *service {
+	return &service{userRepo: userRepo, relationshipUsecase: relationshipUsecase, searchUsecase: searchUsecase}
 }
 
 func (s *service) RegisterRoutes(r *gin.Engine) {
 	apiRoutes := r.Group("/api")
 	apiRoutes.GET("/ping", s.ping)
 	apiRoutes.GET("/users/show/:id", s.showUser)
-	apiRoutes.GET("/users/search/:id", auth.AssertAuthenticated(), s.searchUser)
+	apiRoutes.GET("/search/person/:id", auth.AssertAuthenticated(), s.searchPerson)
 	apiRoutes.POST("/following/create", auth.AssertAuthenticated(), s.followUser)
 	apiRoutes.POST("/following/delete", auth.AssertAuthenticated(), s.unfollowUser)
 }
@@ -58,31 +64,22 @@ func (s *service) showUser(c *gin.Context) {
 	c.JSON(200, showUserResp{User: user})
 }
 
-type searchUserResp struct {
-	User *goap.Person `json:"user"`
+type searchPersonResp struct {
+	Person *goap.Person `json:"person"`
 }
 
-func (s *service) searchUser(c *gin.Context) {
+func (s *service) searchPerson(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.AbortWithStatusJSON(400, gin.H{"error": "id is required"})
 		return
 	}
-	personURI, err := webfinger.ResolveAccountURI(c.Request.Context(), id)
+	person, err := s.searchUsecase.SearchPerson(c.Request.Context(), id)
 	if err != nil {
 		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	if personURI == "" {
-		c.JSON(200, searchUserResp{User: nil})
-		return
-	}
-	person, err := ap.GetPerson(c.Request.Context(), personURI)
-	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(200, searchUserResp{User: person})
+	c.JSON(200, searchPersonResp{Person: person})
 }
 
 type followUserRequest struct {
@@ -96,24 +93,8 @@ func (s *service) followUser(c *gin.Context) {
 		return
 	}
 	uid := auth.UIDFromContext(c.Request.Context())
-	currentUser, err := s.userRepo.FindByLocalID(c.Request.Context(), uid)
-	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
-		return
-	}
-	actor := ap.NewPerson(currentUser, util.GetBaseURI(c))
-	whom, err := ap.GetPerson(c.Request.Context(), req.ID)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	if err := ap.FollowPerson(c.Request.Context(), actor, whom); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	following := model.NewFollowing(whom.GetID().String(), model.AttemptStatusPending)
-	if err := s.userRepo.UpsertFollowing(c.Request.Context(), currentUser, following); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := s.relationshipUsecase.Follow(c.Request, uid, req.ID); err != nil {
+		c.Error(err)
 		return
 	}
 	c.JSON(http.StatusAccepted, gin.H{})
@@ -130,25 +111,9 @@ func (s *service) unfollowUser(c *gin.Context) {
 		return
 	}
 	uid := auth.UIDFromContext(c.Request.Context())
-	currentUser, err := s.userRepo.FindByLocalID(c.Request.Context(), uid)
-	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{"error": err.Error()})
+	if err := s.relationshipUsecase.Unfollow(c.Request, uid, req.ID); err != nil {
+		c.Error(err)
 		return
 	}
-	actor := ap.NewPerson(currentUser, util.GetBaseURI(c))
-	whom, err := ap.GetPerson(c.Request.Context(), req.ID)
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	if err := ap.UnfollowPerson(c.Request.Context(), actor, whom); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	if err := s.userRepo.DeleteFollowing(c.Request.Context(), currentUser, whom.GetID().String()); err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.Status(200)
 	c.JSON(http.StatusAccepted, gin.H{})
 }

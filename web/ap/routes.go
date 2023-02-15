@@ -12,27 +12,22 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
-	"github.com/lacolaco/activitypub.lacolaco.net/usecase"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/util"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
 )
 
 type UserRepository interface {
-	FindByLocalID(ctx context.Context, username string) (*model.LocalUser, error)
-	UpsertFollower(ctx context.Context, user *model.LocalUser, follower *model.Follower) error
+	FindByUID(ctx context.Context, uid model.UID) (*model.LocalUser, error)
 	ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.Follower, error)
-	DeleteFollower(ctx context.Context, user *model.LocalUser, whom string) error
-	UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error
 	ListFollowing(ctx context.Context, user *model.LocalUser) ([]*model.Following, error)
-	DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error
 }
 
 type RelationshipUsecase interface {
-	OnFollow(r *http.Request, username string, activity *goap.Activity) error
-	OnUnfollow(r *http.Request, username string, activity *goap.Activity) error
-	OnAcceptFollow(r *http.Request, username string, activity *goap.Activity) error
-	OnRejectFollow(r *http.Request, username string, activity *goap.Activity) error
+	OnFollow(r *http.Request, uid model.UID, activity *goap.Activity) error
+	OnUnfollow(r *http.Request, uid model.UID, activity *goap.Activity) error
+	OnAcceptFollow(r *http.Request, uid model.UID, activity *goap.Activity) error
+	OnRejectFollow(r *http.Request, uid model.UID, activity *goap.Activity) error
 }
 
 type apService struct {
@@ -40,10 +35,10 @@ type apService struct {
 	relationshipUsecase RelationshipUsecase
 }
 
-func New(userRepo UserRepository) *apService {
+func New(userRepo UserRepository, relationshipUsecase RelationshipUsecase) *apService {
 	return &apService{
 		userRepo:            userRepo,
-		relationshipUsecase: usecase.NewRelationshipUsecase(userRepo),
+		relationshipUsecase: relationshipUsecase,
 	}
 }
 
@@ -55,30 +50,24 @@ func (s *apService) RegisterRoutes(r *gin.Engine) {
 	})
 	assertJSONPost := util.AssertContentType([]string{"application/activity+json"})
 
-	userRoutes := r.Group("/users/:username")
+	userRoutes := r.Group("/users/:uid")
 	userRoutes.GET("", assertJSONGet, s.handlePerson)
 	userRoutes.POST("/inbox", assertJSONPost, s.handleInbox)
 	userRoutes.GET("/outbox", assertJSONGet, s.handleOutbox)
 	userRoutes.GET("/followers", assertJSONGet, s.handleFollowers)
 	userRoutes.GET("/following", assertJSONGet, s.handleFollowing)
-	r.GET("/@:username", func(ctx *gin.Context) {
-		ctx.Redirect(http.StatusMovedPermanently, "/users/"+ctx.Param("username"))
-	})
 }
 
 func (s *apService) handlePerson(c *gin.Context) {
-	logger := logging.LoggerFromContext(c.Request.Context())
 	conf := config.ConfigFromContext(c.Request.Context())
-	username := c.Param("username")
-	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
+	uid := c.Param("uid")
+	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
 	if err != nil {
-		logger.Error("failed to get user", zap.Error(err))
-		c.String(http.StatusInternalServerError, err.Error())
+		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
-	logger.Debug("user found", zap.Any("user", user))
-	userPerson := ap.NewPerson(user, util.GetBaseURI(c))
-	res := userPerson.ToMap(conf.PublicKey)
+	person := ap.NewPerson(user, util.GetBaseURI(c))
+	res := person.ToMap(conf.PublicKey)
 	c.Header("Content-Type", "application/activity+json")
 	c.JSON(http.StatusOK, res)
 }
@@ -119,11 +108,11 @@ func (s *apService) handleInbox(c *gin.Context) {
 	}
 	span.SetAttributes(attribute.String("activity.actor", activity.Actor.GetID().String()))
 	span.SetAttributes(attribute.String("activity.type", string(activity.GetType())))
-	username := c.Param("username")
+	uid := model.UID(c.Param("uid"))
 
 	switch activity.GetType() {
 	case goap.FollowType:
-		if err := s.relationshipUsecase.OnFollow(c.Request, username, activity); err != nil {
+		if err := s.relationshipUsecase.OnFollow(c.Request, uid, activity); err != nil {
 			c.Error(err)
 			return
 		}
@@ -131,7 +120,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 	case goap.UndoType:
 		switch activity.Object.GetType() {
 		case goap.FollowType:
-			if err := s.relationshipUsecase.OnUnfollow(c.Request, username, activity); err != nil {
+			if err := s.relationshipUsecase.OnUnfollow(c.Request, uid, activity); err != nil {
 				c.Error(err)
 				return
 			}
@@ -147,14 +136,14 @@ func (s *apService) handleInbox(c *gin.Context) {
 		switch {
 		// follow request is accepted
 		case activity.Object.GetType() == goap.FollowType && activity.GetType() == goap.AcceptType:
-			if err := s.relationshipUsecase.OnAcceptFollow(c.Request, username, activity); err != nil {
+			if err := s.relationshipUsecase.OnAcceptFollow(c.Request, uid, activity); err != nil {
 				c.Error(err)
 				return
 			}
 			c.Status(200)
 		// follow request is rejected
 		case activity.Object.GetType() == goap.FollowType && activity.GetType() == goap.RejectType:
-			if err := s.relationshipUsecase.OnRejectFollow(c.Request, username, activity); err != nil {
+			if err := s.relationshipUsecase.OnRejectFollow(c.Request, uid, activity); err != nil {
 				c.Error(err)
 				return
 			}
@@ -172,8 +161,8 @@ func (s *apService) handleInbox(c *gin.Context) {
 func (s *apService) handleOutbox(c *gin.Context) {
 	logger := logging.LoggerFromContext(c.Request.Context())
 	baseURI := util.GetBaseURI(c)
-	username := c.Param("username")
-	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
+	uid := c.Param("uid")
+	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
 	if err != nil {
 		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
@@ -193,8 +182,8 @@ func (s *apService) handleFollowers(c *gin.Context) {
 	logger := logging.LoggerFromContext(c.Request.Context())
 	baseURI := util.GetBaseURI(c)
 
-	username := c.Param("username")
-	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
+	uid := c.Param("uid")
+	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
 	if err != nil {
 		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
@@ -226,8 +215,8 @@ func (s *apService) handleFollowing(c *gin.Context) {
 	logger := logging.LoggerFromContext(c.Request.Context())
 	baseURI := util.GetBaseURI(c)
 
-	username := c.Param("username")
-	user, err := s.userRepo.FindByLocalID(c.Request.Context(), username)
+	uid := c.Param("uid")
+	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
 	if err != nil {
 		logger.Error("failed to get user", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())

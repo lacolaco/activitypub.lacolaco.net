@@ -4,13 +4,15 @@ import (
 	"time"
 )
 
+type UID string
+
 type UserIcon struct {
 	URL       string `json:"url" firestore:"url"`
 	MediaType string `json:"media_type" firestore:"media_type"`
 }
 
 type LocalUser struct {
-	UID         string    `json:"-" firestore:"-"`
+	UID         UID       `json:"uid" firestore:"-"`
 	ID          string    `json:"id" firestore:"id"`
 	Name        string    `json:"name" firestore:"name"`
 	PrefName    string    `json:"preferred_username" firestore:"preferred_username"`
@@ -21,7 +23,7 @@ type LocalUser struct {
 }
 
 func (u *LocalUser) GetDocID() string {
-	return u.UID
+	return string(u.UID)
 }
 
 type RemoteUser struct {

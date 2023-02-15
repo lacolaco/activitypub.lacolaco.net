@@ -19,7 +19,7 @@ func NewPerson(u *model.LocalUser, baseURI string) *Person {
 }
 
 func (p *Person) GetID() string {
-	return fmt.Sprintf("%s/users/%s", p.baseURI, p.LocalUser.ID)
+	return fmt.Sprintf("%s/users/%s", p.baseURI, p.LocalUser.UID)
 }
 
 func (p *Person) PubkeyID() string {
@@ -42,6 +42,10 @@ func (p *Person) FollowingURI() string {
 	return fmt.Sprintf("%s/following", p.GetID())
 }
 
+func (p *Person) GetProfileURL() string {
+	return fmt.Sprintf("%s/@%s", p.baseURI, p.LocalUser.ID)
+}
+
 func (p *Person) ToMap(publicKey *rsa.PublicKey) map[string]interface{} {
 	id := p.GetID()
 	publicKeyPem, err := httpsig.EncodeKey(publicKey)
@@ -60,7 +64,7 @@ func (p *Person) ToMap(publicKey *rsa.PublicKey) map[string]interface{} {
 		"outbox":                    p.OutboxURI(),
 		"followers":                 p.FollowersURI(),
 		"following":                 p.FollowingURI(),
-		"url":                       id,
+		"url":                       p.GetProfileURL(),
 		"published":                 p.CreatedAt.Format(time.RFC3339),
 		"discoverable":              true,
 		"manuallyApprovesFollowers": false,
