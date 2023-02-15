@@ -20,24 +20,23 @@ jobs:
           workload_identity_provider: 'projects/350326448420/locations/global/workloadIdentityPools/pool/providers/provider'
           service_account: 'github-actions@lacolaco-activitypub.iam.gserviceaccount.com'
       - uses: google-github-actions/setup-gcloud@v1
+      - run: gcloud auth configure-docker
       - uses: ./.github/actions/setup-go
       - uses: ./.github/actions/setup-node
-      - uses: ko-build/setup-ko@v0.6
-        env:
-          KO_DOCKER_REPO: asia-northeast1-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/cloud-run-builds
       - name: install client deps
         working-directory: client
         run: yarn install
       - name: build client
         working-directory: client
         run: yarn build
-      - name: build image
-        id: 'build-image'
-        run: echo "::set-output name=image::$(ko build .)"
+      - name: build and push image
+        run: |
+          docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }} .
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}
       - name: deploy to Cloud Run
         run: |
           gcloud --quiet run deploy activitypub-lacolaco-net \
-          --image ${{ steps.build-image.outputs.image }} \
+          --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{  github.sha }} \
           --allow-unauthenticated \
           --service-account api-service@lacolaco-activitypub.iam.gserviceaccount.com \
           --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
