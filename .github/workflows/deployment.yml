@@ -22,16 +22,22 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v1
       - uses: ./.github/actions/setup-go
       - uses: ./.github/actions/setup-node
+      - uses: ko-build/setup-ko@v0.6
+        env:
+          KO_DOCKER_REPO: asia-northeast1-docker.pkg.dev/${{ steps.auth.outputs.project_id }}/cloud-run-builds
       - name: install client deps
         working-directory: client
         run: yarn install
       - name: build client
         working-directory: client
         run: yarn build
-      - name: Deploy to Cloud Run
+      - name: build image
+        id: 'build-image'
+        run: echo "::set-output name=image::$(ko build .)"
+      - name: deploy to Cloud Run
         run: |
           gcloud --quiet run deploy activitypub-lacolaco-net \
-          --source . \
+          --image ${{ steps.build-image.outputs.image }} \
           --allow-unauthenticated \
           --service-account api-service@lacolaco-activitypub.iam.gserviceaccount.com \
           --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
