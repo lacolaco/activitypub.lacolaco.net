@@ -28,7 +28,6 @@ jobs:
       - name: build client
         working-directory: client
         run: yarn build
-      - run: ls -la ./public
       - name: Deploy to Cloud Run
         run: |
           gcloud --quiet run deploy activitypub-lacolaco-net \
