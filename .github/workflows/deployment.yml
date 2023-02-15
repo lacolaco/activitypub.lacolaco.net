@@ -12,6 +12,8 @@ permissions:
 jobs:
   deploy-app:
     runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: asia-northeast1-docker.pkg.dev/lacolaco-activitypub/cloud-run-builds/server
     steps:
       - uses: actions/checkout@v3
       - id: 'auth'
@@ -20,7 +22,7 @@ jobs:
           workload_identity_provider: 'projects/350326448420/locations/global/workloadIdentityPools/pool/providers/provider'
           service_account: 'github-actions@lacolaco-activitypub.iam.gserviceaccount.com'
       - uses: google-github-actions/setup-gcloud@v1
-      - run: gcloud auth configure-docker
+      - run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
       - uses: ./.github/actions/setup-go
       - uses: ./.github/actions/setup-node
       - name: install client deps
@@ -31,12 +33,12 @@ jobs:
         run: yarn build
       - name: build and push image
         run: |
-          docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }} .
-          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{ github.sha }}
+          docker build -t ${{ env.IMAGE_IMAGE_NAME }}:${{ github.sha }} .
+          docker push $${{ env.IMAGE_NAME }}:${{ github.sha }}
       - name: deploy to Cloud Run
         run: |
           gcloud --quiet run deploy activitypub-lacolaco-net \
-          --image gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE }}:${{  github.sha }} \
+          --image ${{ env.IMAGE_NAME }}:${{ github.sha }} \
           --allow-unauthenticated \
           --service-account api-service@lacolaco-activitypub.iam.gserviceaccount.com \
           --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
