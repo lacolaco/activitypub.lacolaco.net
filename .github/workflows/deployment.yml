@@ -33,7 +33,7 @@ jobs:
         run: yarn build
       - name: build and push image
         run: |
-          docker build -t ${{ env.IMAGE_IMAGE_NAME }}:${{ github.sha }} .
+          docker build -t ${{ env.IMAGE_IMAGE }}:${{ github.sha }} .
           docker push $${{ env.IMAGE_NAME }}:${{ github.sha }}
       - name: deploy to Cloud Run
         run: |
