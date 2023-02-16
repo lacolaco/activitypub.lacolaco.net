@@ -13,7 +13,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.35.1 // indirect
 	github.com/MicahParks/keyfunc v1.5.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-fed/activity v1.0.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -60,6 +59,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1
 	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-gonic/gin v1.8.2
+	github.com/go-fed/activity v1.0.0
 	github.com/joho/godotenv v1.5.1
 	go.ajitem.com/zapdriver v1.4.1
 	go.opencensus.io v0.24.0
