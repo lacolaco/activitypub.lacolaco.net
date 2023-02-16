@@ -6,15 +6,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	goap "github.com/go-ap/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/ap"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
-	"github.com/lacolaco/activitypub.lacolaco.net/web/util"
+	"github.com/lacolaco/activitypub.lacolaco.net/util"
+	webutil "github.com/lacolaco/activitypub.lacolaco.net/web/util"
 	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/zap"
+)
+
+const (
+	mimeTypeActivityJSON = "application/activity+json"
 )
 
 type UserRepository interface {
@@ -24,10 +28,10 @@ type UserRepository interface {
 }
 
 type RelationshipUsecase interface {
-	OnFollow(r *http.Request, uid model.UID, activity *goap.Activity) error
-	OnUnfollow(r *http.Request, uid model.UID, activity *goap.Activity) error
-	OnAcceptFollow(r *http.Request, uid model.UID, activity *goap.Activity) error
-	OnRejectFollow(r *http.Request, uid model.UID, activity *goap.Activity) error
+	OnFollow(r *http.Request, uid model.UID, activity *ap.Activity) error
+	OnUnfollow(r *http.Request, uid model.UID, activity *ap.Activity) error
+	OnAcceptFollow(r *http.Request, uid model.UID, activity *ap.Activity) error
+	OnRejectFollow(r *http.Request, uid model.UID, activity *ap.Activity) error
 }
 
 type apService struct {
@@ -43,12 +47,12 @@ func New(userRepo UserRepository, relationshipUsecase RelationshipUsecase) *apSe
 }
 
 func (s *apService) RegisterRoutes(r *gin.Engine) {
-	assertJSONGet := util.AssertAccept([]string{
+	assertJSONGet := webutil.AssertAccept([]string{
 		"application/activity+json",
 		"application/ld+json",
 		"application/json",
 	})
-	assertJSONPost := util.AssertContentType([]string{"application/activity+json"})
+	assertJSONPost := webutil.AssertContentType([]string{"application/activity+json"})
 
 	userRoutes := r.Group("/users/:uid")
 	userRoutes.GET("", assertJSONGet, s.handlePerson)
@@ -66,10 +70,13 @@ func (s *apService) handlePerson(c *gin.Context) {
 		c.AbortWithError(http.StatusNotFound, err)
 		return
 	}
-	person := ap.NewPerson(user, util.GetBaseURI(c))
-	res := person.ToMap(conf.PublicKey)
-	c.Header("Content-Type", "application/activity+json")
-	c.JSON(http.StatusOK, res)
+	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)
+	b, err := person.ToBytes()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.Data(http.StatusOK, mimeTypeActivityJSON, b)
 }
 
 func (s *apService) handleInbox(c *gin.Context) {
@@ -79,88 +86,78 @@ func (s *apService) handleInbox(c *gin.Context) {
 
 	logger := logging.LoggerFromContext(ctx)
 	defer c.Request.Body.Close()
-	payload, err := io.ReadAll(c.Request.Body)
+	b, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		logger.Error("failed to get data", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	logger.Debug("payload", zap.String("payload", string(payload)))
-	if err := ap.VerifyRequest(c.Request, payload); err != nil {
+	logger.Debug("payload", zap.String("payload", string(b)))
+	if err := ap.VerifyRequest(c.Request, b); err != nil {
 		logger.Error("failed to verify request", zap.Error(err))
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	o, err := goap.UnmarshalJSON(payload)
+	activity, err := ap.ActivityFromBytes(b)
 	if err != nil {
-		logger.Error(err.Error())
+		c.Error(err)
 		return
 	}
-	var activity *goap.Activity
-	err = goap.OnActivity(o, func(a *goap.Activity) error {
-		activity = a
-		return nil
-	})
-	if err != nil {
-		logger.Error(err.Error())
-		c.String(http.StatusBadRequest, "invalid json")
-		return
-	}
-	span.SetAttributes(attribute.String("activity.actor", activity.Actor.GetID().String()))
-	span.SetAttributes(attribute.String("activity.type", string(activity.GetType())))
+	span.SetAttributes(attribute.String("activity.actor", activity.Actor))
+	span.SetAttributes(attribute.String("activity.type", string(activity.Type)))
 	uid := model.UID(c.Param("uid"))
 
-	switch activity.GetType() {
-	case goap.FollowType:
+	switch activity.Type {
+	case ap.FollowActivityType:
 		if err := s.relationshipUsecase.OnFollow(c.Request, uid, activity); err != nil {
 			c.Error(err)
 			return
 		}
 		c.Status(http.StatusOK)
-	case goap.UndoType:
+	case ap.UndoActivityType:
 		switch activity.Object.GetType() {
-		case goap.FollowType:
+		case string(ap.FollowActivityType):
 			if err := s.relationshipUsecase.OnUnfollow(c.Request, uid, activity); err != nil {
 				c.Error(err)
 				return
 			}
 			c.Status(http.StatusOK)
 		}
-	case goap.CreateType, goap.UpdateType, goap.DeleteType:
+	case ap.CreateActivityType, ap.UpdateActivityType, ap.DeleteActivityType:
 		logger.Debug("not implemented: create, update, delete")
 		c.Status(200)
-	case goap.AnnounceType:
+	case ap.AnnounceActivityType:
 		logger.Debug("not implemented: announce", zap.Any("object", activity.Object))
 		c.Status(200)
-	case goap.AcceptType, goap.RejectType:
+	case ap.AcceptActivityType, ap.RejectActivityType:
 		switch {
 		// follow request is accepted
-		case activity.Object.GetType() == goap.FollowType && activity.GetType() == goap.AcceptType:
+		case activity.GetType() == string(ap.AcceptActivityType) && activity.Object.GetType() == string(ap.FollowActivityType):
 			if err := s.relationshipUsecase.OnAcceptFollow(c.Request, uid, activity); err != nil {
 				c.Error(err)
 				return
 			}
 			c.Status(200)
 		// follow request is rejected
-		case activity.Object.GetType() == goap.FollowType && activity.GetType() == goap.RejectType:
+		case activity.GetType() == string(ap.RejectActivityType) && activity.Object.GetType() == string(ap.FollowActivityType):
 			if err := s.relationshipUsecase.OnRejectFollow(c.Request, uid, activity); err != nil {
 				c.Error(err)
 				return
 			}
 			c.Status(200)
 		default:
-			logger.Debug("not implemented: accept, reject", zap.Any("object", activity.Object))
+			logger.Debug("not implemented: accept, reject")
 			c.Status(200)
 		}
 	default:
-		logger.Error("unsuppoted activity type")
-		c.String(http.StatusBadRequest, "invalid activity type")
+		logger.Debug("unsuppoted activity type")
+		c.Status(http.StatusOK)
 	}
 }
 
 func (s *apService) handleOutbox(c *gin.Context) {
 	logger := logging.LoggerFromContext(c.Request.Context())
-	baseURI := util.GetBaseURI(c)
+	conf := config.ConfigFromContext(c.Request.Context())
 	uid := c.Param("uid")
 	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
 	if err != nil {
@@ -168,19 +165,23 @@ func (s *apService) handleOutbox(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	userPerson := ap.NewPerson(user, baseURI)
-	res := &goap.OrderedCollection{
-		ID:           goap.IRI(userPerson.OutboxURI()),
-		Type:         goap.OrderedCollectionType,
+	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)
+	res := &ap.OrderedCollection{
+		ID:           person.Outbox,
 		TotalItems:   0,
-		OrderedItems: []goap.Item{},
+		OrderedItems: []ap.ActivityPubObject{},
 	}
-	sendActivityJSON(c, http.StatusOK, res)
+	b, err := res.ToBytes()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.Data(http.StatusOK, mimeTypeActivityJSON, b)
 }
 
 func (s *apService) handleFollowers(c *gin.Context) {
 	logger := logging.LoggerFromContext(c.Request.Context())
-	baseURI := util.GetBaseURI(c)
+	conf := config.ConfigFromContext(c.Request.Context())
 
 	uid := c.Param("uid")
 	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
@@ -189,31 +190,35 @@ func (s *apService) handleFollowers(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	userPerson := ap.NewPerson(user, baseURI)
+	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)
 	followers, err := s.userRepo.ListFollowers(c.Request.Context(), user)
 	if err != nil {
 		logger.Error("failed to get followers", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	res := &goap.OrderedCollection{
-		ID:         goap.IRI(userPerson.FollowersURI()),
-		Type:       goap.OrderedCollectionType,
-		TotalItems: uint(len(followers)),
-		OrderedItems: func() []goap.Item {
-			items := make([]goap.Item, len(followers))
+	res := &ap.OrderedCollection{
+		ID:         person.Followers,
+		TotalItems: len(followers),
+		OrderedItems: func() []ap.ActivityPubObject {
+			items := make([]ap.ActivityPubObject, len(followers))
 			for i, item := range followers {
-				items[i] = goap.IRI(item.ID)
+				items[i] = ap.IRI(item.UserID)
 			}
 			return items
 		}(),
 	}
-	sendActivityJSON(c, http.StatusOK, res)
+	b, err := res.ToBytes()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.Data(http.StatusOK, mimeTypeActivityJSON, b)
 }
 
 func (s *apService) handleFollowing(c *gin.Context) {
 	logger := logging.LoggerFromContext(c.Request.Context())
-	baseURI := util.GetBaseURI(c)
+	conf := config.ConfigFromContext(c.Request.Context())
 
 	uid := c.Param("uid")
 	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
@@ -222,34 +227,28 @@ func (s *apService) handleFollowing(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	userPerson := ap.NewPerson(user, baseURI)
+	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)
 	following, err := s.userRepo.ListFollowing(c.Request.Context(), user)
 	if err != nil {
 		logger.Error("failed to get followers", zap.Error(err))
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	res := &goap.OrderedCollection{
-		ID:         goap.IRI(userPerson.FollowingURI()),
-		Type:       goap.OrderedCollectionType,
-		TotalItems: uint(len(following)),
-		OrderedItems: func() []goap.Item {
-			items := make([]goap.Item, len(following))
+	res := &ap.OrderedCollection{
+		ID:         person.Following,
+		TotalItems: len(following),
+		OrderedItems: func() []ap.ActivityPubObject {
+			items := make([]ap.ActivityPubObject, len(following))
 			for i, item := range following {
-				items[i] = goap.IRI(item.ID)
+				items[i] = ap.IRI(item.UserID)
 			}
 			return items
 		}(),
 	}
-	sendActivityJSON(c, http.StatusOK, res)
-}
-
-func sendActivityJSON(c *gin.Context, code int, item goap.Item) error {
-	body, err := ap.MarshalActivityJSON(item)
+	b, err := res.ToBytes()
 	if err != nil {
-		return err
+		c.Error(err)
+		return
 	}
-	c.Header("Content-Type", "application/activity+json")
-	c.String(code, string(body))
-	return nil
+	c.Data(http.StatusOK, mimeTypeActivityJSON, b)
 }

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	goap "github.com/go-ap/activitypub"
+	"github.com/lacolaco/activitypub.lacolaco.net/ap"
 	"github.com/lacolaco/activitypub.lacolaco.net/auth"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
 )
@@ -20,7 +20,7 @@ type RelationshipUsecase interface {
 }
 
 type SearchUsecase interface {
-	SearchPerson(ctx context.Context, id string) (*goap.Person, error)
+	SearchPerson(ctx context.Context, id string) (*ap.Person, error)
 }
 
 type service struct {
@@ -65,7 +65,7 @@ func (s *service) showUser(c *gin.Context) {
 }
 
 type searchPersonResp struct {
-	Person *goap.Person `json:"person"`
+	Person *ap.Person `json:"person"`
 }
 
 func (s *service) searchPerson(c *gin.Context) {

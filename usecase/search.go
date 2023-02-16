@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 
-	goap "github.com/go-ap/activitypub"
 	"github.com/lacolaco/activitypub.lacolaco.net/ap"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
 	"github.com/lacolaco/activitypub.lacolaco.net/webfinger"
@@ -16,7 +15,7 @@ func NewSearchUsecase() *searchUsecase {
 	return &searchUsecase{}
 }
 
-func (u *searchUsecase) SearchPerson(ctx context.Context, id string) (*goap.Person, error) {
+func (u *searchUsecase) SearchPerson(ctx context.Context, id string) (*ap.Person, error) {
 	ctx, span := tracing.StartSpan(ctx, "usecase.search.SearchPerson")
 	defer span.End()
 

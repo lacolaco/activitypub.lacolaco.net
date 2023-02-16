@@ -1,7 +1,16 @@
 package model
 
 import (
+	"crypto/rsa"
+	"fmt"
 	"time"
+
+	"github.com/lacolaco/activitypub.lacolaco.net/ap"
+	"humungus.tedunangst.com/r/webs/httpsig"
+)
+
+const (
+	publicKeyIDSuffix = "key"
 )
 
 type UID string
@@ -24,6 +33,38 @@ type LocalUser struct {
 
 func (u *LocalUser) GetDocID() string {
 	return string(u.UID)
+}
+
+func (u *LocalUser) ToPerson(baseURI string, publicKey *rsa.PublicKey) *ap.Person {
+	id := fmt.Sprintf("%s/users/%s", baseURI, u.UID)
+	publicKeyPem, err := httpsig.EncodeKey(publicKey)
+	if err != nil {
+		panic(err)
+	}
+
+	p := &ap.Person{
+		ID:                id,
+		Name:              u.Name,
+		PreferredUsername: u.PrefName,
+		Summary:           u.Description,
+		Inbox:             fmt.Sprintf("%s/inbox", id),
+		Outbox:            fmt.Sprintf("%s/outbox", id),
+		Followers:         fmt.Sprintf("%s/followers", id),
+		Following:         fmt.Sprintf("%s/following", id),
+		URL:               fmt.Sprintf("%s/@%s", baseURI, u.ID),
+		Published:         u.CreatedAt,
+		Icon: &ap.Image{
+			URL:       u.Icon.URL,
+			MediaType: u.Icon.MediaType,
+		},
+		PublicKey: &ap.PublicKey{
+			ID:           fmt.Sprintf("%s#%s", id, publicKeyIDSuffix),
+			Owner:        id,
+			PublicKeyPem: publicKeyPem,
+		},
+		Discoverable: true,
+	}
+	return p
 }
 
 type RemoteUser struct {

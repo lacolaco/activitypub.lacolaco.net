@@ -1,12 +1,7 @@
 package ap
 
-import (
-	goap "github.com/go-ap/activitypub"
-	"github.com/go-ap/jsonld"
-)
-
 var (
-	contextURIs = []interface{}{
+	ContextURIs = []interface{}{
 		"https://www.w3.org/ns/activitystreams",
 		"https://w3id.org/security/v1",
 		map[string]interface{}{
@@ -25,7 +20,3 @@ var (
 		},
 	}
 )
-
-func MarshalActivityJSON(v interface{}) ([]byte, error) {
-	return jsonld.WithContext(jsonld.IRI(goap.ActivityBaseURI), jsonld.IRI(goap.SecurityContextURI)).Marshal(v)
-}

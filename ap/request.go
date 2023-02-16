@@ -22,10 +22,9 @@ var (
 const (
 	userAgent            = "activitypub.lacolaco.net/1.0"
 	mimeTypeActivityJSON = "application/activity+json"
-	systemActorID        = "https://activitypub.lacolaco.net/users/system"
 )
 
-func signedGet(ctx context.Context, actor Actor, url string) ([]byte, error) {
+func signedGet(ctx context.Context, publicKey *PublicKey, url string) ([]byte, error) {
 	ctx, span := tracing.StartSpan(ctx, "ap.signedGet")
 	defer span.End()
 	span.SetAttributes(attribute.String("url", url))
@@ -38,8 +37,7 @@ func signedGet(ctx context.Context, actor Actor, url string) ([]byte, error) {
 	}
 	req.Header.Set("Accept", mimeTypeActivityJSON)
 	req.Header.Set("User-Agent", userAgent)
-	publicKeyID := GetPublicKeyID(actor)
-	SignRequest(publicKeyID, conf.PrivateKey, req, nil)
+	SignRequest(publicKey.ID, conf.PrivateKey, req, nil)
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	req = req.WithContext(c)
@@ -59,7 +57,7 @@ func signedGet(ctx context.Context, actor Actor, url string) ([]byte, error) {
 	return body, nil
 }
 
-func signedPost(ctx context.Context, actor Actor, url string, body []byte) ([]byte, error) {
+func signedPost(ctx context.Context, publicKey *PublicKey, url string, body []byte) ([]byte, error) {
 	ctx, span := tracing.StartSpan(ctx, "ap.signedPost")
 	defer span.End()
 	span.SetAttributes(attribute.String("url", url))
@@ -72,8 +70,7 @@ func signedPost(ctx context.Context, actor Actor, url string, body []byte) ([]by
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", mimeTypeActivityJSON)
-	publicKeyID := GetPublicKeyID(actor)
-	SignRequest(publicKeyID, conf.PrivateKey, req, body)
+	SignRequest(publicKey.ID, conf.PrivateKey, req, body)
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	req = req.WithContext(c)

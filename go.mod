@@ -10,11 +10,10 @@ require (
 	cloud.google.com/go/longrunning v0.3.0 // indirect
 	cloud.google.com/go/storage v1.27.0 // indirect
 	cloud.google.com/go/trace v1.8.0 // indirect
-	git.sr.ht/~mariusor/go-xsd-duration v0.0.0-20220703122237-02e73435a078 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.35.1 // indirect
 	github.com/MicahParks/keyfunc v1.5.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-ap/errors v0.0.0-20221205040414-01c1adfc98ea // indirect
+	github.com/go-fed/activity v1.0.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -35,7 +34,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
-	github.com/valyala/fastjson v1.6.3 // indirect
 	go.opentelemetry.io/otel/metric v0.36.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v0.36.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
@@ -62,8 +60,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1
 	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-gonic/gin v1.8.2
-	github.com/go-ap/activitypub v0.0.0-20230204125704-b4f1d45500ae
-	github.com/go-ap/jsonld v0.0.0-20221030091449-f2a191312c73
 	github.com/joho/godotenv v1.5.1
 	go.ajitem.com/zapdriver v1.4.1
 	go.opencensus.io v0.24.0
