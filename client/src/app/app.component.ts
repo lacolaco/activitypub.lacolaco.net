@@ -31,7 +31,7 @@ import { AppStrokedButton } from './shared/ui/button';
       </main>
     </ng-container>
   `,
-  host: { class: 'flex flex-col w-full h-full bg-white text-black font-sans' },
+  host: { class: 'flex flex-col w-full h-full bg-white font-sans' },
 })
 export class AppComponent {
   private readonly auth = inject(Auth);

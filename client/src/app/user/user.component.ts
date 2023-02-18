@@ -10,6 +10,7 @@ export type LocalUser = {
   name: string;
   description: string;
   icon: { url: string };
+  attachments: Array<{ name: string; value: string }>;
 };
 
 @Component({
@@ -27,6 +28,14 @@ export type LocalUser = {
           <span class="text-sm text-gray-600">@{{ user.id }}@{{ hostname }}</span>
         </div>
         <div class="py-2" [innerHTML]="user.description"></div>
+        <div class="w-full">
+          <table class="w-full">
+            <tr *ngFor="let attachment of user.attachments">
+              <td class="font-bold">{{ attachment.name }}</td>
+              <td class="ml-2" [innerHTML]="attachment.value"></td>
+            </tr>
+          </table>
+        </div>
       </div>
     </ng-container>
   `,
