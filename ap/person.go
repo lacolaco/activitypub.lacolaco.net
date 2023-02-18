@@ -131,10 +131,17 @@ func (p *Person) UnmarshalJSON(data []byte) error {
 		}
 		p.Published = published
 	}
+	if v, ok := m.GetString("icon"); ok {
+		p.Icon = &Image{
+			URL: v,
+		}
+	}
 	if v, ok := m.GetMap("icon"); ok {
 		p.Icon = &Image{
-			URL:       v["url"].(string),
-			MediaType: v["mediaType"].(string),
+			URL: v["url"].(string),
+		}
+		if mediaType, ok := v.GetString("mediaType"); ok {
+			p.Icon.MediaType = mediaType
 		}
 	}
 	if v, ok := m.GetMap("publicKey"); ok {
