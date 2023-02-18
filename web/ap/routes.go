@@ -100,7 +100,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	var activity ap.ActivityObject
+	var activity *ap.Activity
 	if json.Unmarshal(b, &activity); err != nil {
 		c.Error(err)
 		return
