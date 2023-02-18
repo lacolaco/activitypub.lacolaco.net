@@ -72,6 +72,11 @@ func (a *Activity) UnmarshalJSON(data []byte) error {
 			a.Object = &Person{
 				ID: IRI(object["id"].(string)),
 			}
+		case string(ActivityTypeFollow):
+			a.Object = &Activity{
+				ID:   IRI(object["id"].(string)),
+				Type: ActivityTypeFollow,
+			}
 		}
 	}
 	return nil

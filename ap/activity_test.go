@@ -49,6 +49,29 @@ func TestActivity(t *testing.T) {
 		}
 	})
 
+	t.Run("can be unmarshalled from JSON with nested object", func(tt *testing.T) {
+		b := []byte(`{"id": "https://example.com/activity", "type": "Undo", "actor": "https://example.com/actor", "object": {"id": "https://example.com/follow", "type": "Follow", "actor": "https://example.com/actor", "object": "https://example.com/object"}}`)
+		var a ap.Activity
+		if err := json.Unmarshal(b, &a); err != nil {
+			tt.Fatal(err)
+		}
+		if string(a.ID) != "https://example.com/activity" {
+			tt.Error("id is not https://example.com/activity", a.ID)
+		}
+		if a.Type != ap.ActivityTypeUndo {
+			tt.Error("type is not Undo", a.Type)
+		}
+		if string(a.Actor.GetID()) != "https://example.com/actor" {
+			tt.Error("actor is not https://example.com/actor", a.Actor)
+		}
+		if string(a.Object.GetID()) != "https://example.com/follow" {
+			tt.Error("object is not https://example.com/object", a.Object)
+		}
+		if a.Object.GetType() != ap.ActivityTypeFollow {
+			tt.Error("object is not Follow", a.Object.GetType())
+		}
+	})
+
 	t.Run("can be unmarshalled from unsupported type JSON", func(tt *testing.T) {
 		b := []byte(`{"id": "https://example.com/activity", "type": "Note", "actor": "https://example.com/actor", "object": "https://example.com/object"}`)
 		var a ap.Activity
