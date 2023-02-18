@@ -62,7 +62,7 @@ func (s *apService) RegisterRoutes(r *gin.Engine) {
 	userRoutes.GET("/followers", assertJSONGet, s.handleFollowers)
 	userRoutes.GET("/following", assertJSONGet, s.handleFollowing)
 	userRoutes.GET("/liked", assertJSONGet, s.handleLiked)
-	r.POST("/shared/inbox", assertJSONPost, s.handleSharedInbox)
+	r.POST("/inbox", assertJSONPost, s.handleSharedInbox)
 }
 
 func (s *apService) handlePerson(c *gin.Context) {

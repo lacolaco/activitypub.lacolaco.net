@@ -69,6 +69,10 @@ func (u *LocalUser) ToPerson(baseURI string, publicKey *rsa.PublicKey) *ap.Perso
 				Value: "\u003ca href=\"https://twitter.com/laco2net\" rel=\"me nofollow noopener\" target=\"_blank\"\u003e\u003cspan class=\"invisible\"\u003ehttps://\u003c/span\u003e\u003cspan class=\"\"\u003etwitter.com/laco2net\u003c/span\u003e\u003cspan class=\"invisible\"\u003e\u003c/span\u003e\u003c/a\u003e",
 			},
 		},
+		Endpoints: &ap.Endpoints{
+			SharedInbox: ap.IRI(fmt.Sprintf("%s/inbox", baseURI)),
+		},
+		SharedInbox:               ap.IRI(fmt.Sprintf("%s/inbox", baseURI)),
 		Discoverable:              true,
 		ManuallyApprovesFollowers: false,
 	}
