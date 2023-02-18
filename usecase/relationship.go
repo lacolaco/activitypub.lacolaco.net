@@ -7,12 +7,14 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/ap"
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
+	"github.com/lacolaco/activitypub.lacolaco.net/repository"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
 	"github.com/lacolaco/activitypub.lacolaco.net/util"
 )
 
 type UserRepository interface {
 	FindByUID(ctx context.Context, uid model.UID) (*model.LocalUser, error)
+	FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error)
 	UpsertFollowing(ctx context.Context, user *model.LocalUser, following *model.Following) error
 	DeleteFollowing(ctx context.Context, user *model.LocalUser, whom string) error
 	UpsertFollower(ctx context.Context, user *model.LocalUser, follower *model.Follower) error
@@ -33,6 +35,10 @@ func (u *relationshipUsecase) OnFollow(r *http.Request, uid model.UID, activity 
 
 	conf := config.ConfigFromContext(ctx)
 	user, err := u.userRepo.FindByUID(ctx, uid)
+	if err == repository.ErrNotFound {
+		// fallback to localID
+		user, err = u.userRepo.FindByLocalID(ctx, string(uid))
+	}
 	if err != nil {
 		return err
 	}
@@ -53,6 +59,10 @@ func (u *relationshipUsecase) OnUnfollow(r *http.Request, uid model.UID, activit
 
 	conf := config.ConfigFromContext(ctx)
 	user, err := u.userRepo.FindByUID(ctx, uid)
+	if err == repository.ErrNotFound {
+		// fallback to localID
+		user, err = u.userRepo.FindByLocalID(ctx, string(uid))
+	}
 	if err != nil {
 		return err
 	}
@@ -71,6 +81,10 @@ func (u *relationshipUsecase) OnAcceptFollow(r *http.Request, uid model.UID, act
 	defer span.End()
 
 	user, err := u.userRepo.FindByUID(ctx, uid)
+	if err == repository.ErrNotFound {
+		// fallback to localID
+		user, err = u.userRepo.FindByLocalID(ctx, string(uid))
+	}
 	if err != nil {
 		return err
 	}
@@ -86,6 +100,10 @@ func (u *relationshipUsecase) OnRejectFollow(r *http.Request, uid model.UID, act
 	defer span.End()
 
 	user, err := u.userRepo.FindByUID(ctx, uid)
+	if err == repository.ErrNotFound {
+		// fallback to localID
+		user, err = u.userRepo.FindByLocalID(ctx, string(uid))
+	}
 	if err != nil {
 		return err
 	}

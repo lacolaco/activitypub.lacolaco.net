@@ -64,6 +64,10 @@ func errorHandler() gin.HandlerFunc {
 			return
 		}
 		logging.LoggerFromContext(c.Request.Context()).Error(err.Error())
+		if err == repository.ErrNotFound {
+			c.AbortWithStatusJSON(http.StatusNotFound, err.JSON())
+			return
+		}
 		c.AbortWithStatusJSON(http.StatusInternalServerError, err.JSON())
 	}
 }
