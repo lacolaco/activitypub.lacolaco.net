@@ -8,10 +8,13 @@ import (
 )
 
 func NewLogger(conf *config.Config) *zap.Logger {
-	zc := zapdriver.NewDevelopmentConfig()
+	var zc zap.Config
 	if conf.IsRunningOnCloud() {
+		zc = zapdriver.NewProductionConfig()
 		zc.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 		zc.EncoderConfig.TimeKey = zapcore.OmitKey
+	} else {
+		zc = zapdriver.NewDevelopmentConfig()
 	}
 	logger, _ := zc.Build()
 	return logger
