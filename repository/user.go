@@ -6,6 +6,8 @@ import (
 
 	"cloud.google.com/go/firestore"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -34,6 +36,9 @@ func (r *userRepo) FindByLocalID(ctx context.Context, localID string) (*model.Lo
 
 func (r *userRepo) FindByUID(ctx context.Context, uid model.UID) (*model.LocalUser, error) {
 	doc, err := r.firestoreClient.Collection(UsersCollectionName).Doc(string(uid)).Get(ctx)
+	if status.Code(err) == codes.NotFound {
+		return nil, ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
