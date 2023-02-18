@@ -59,7 +59,7 @@ func TestActivity(t *testing.T) {
 			tt.Error("id is not https://example.com/activity", a.ID)
 		}
 		if a.Type != "Note" {
-			tt.Error("type is not Follow", a.Type)
+			tt.Error("type is not Note", a.Type)
 		}
 		if string(a.Actor.GetID()) != "https://example.com/actor" {
 			tt.Error("actor is not https://example.com/actor", a.Actor)
