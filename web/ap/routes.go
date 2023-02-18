@@ -11,7 +11,9 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/model"
+	"github.com/lacolaco/activitypub.lacolaco.net/repository"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
+	"github.com/lacolaco/activitypub.lacolaco.net/usecase"
 	"github.com/lacolaco/activitypub.lacolaco.net/util"
 	webutil "github.com/lacolaco/activitypub.lacolaco.net/web/util"
 	"go.opentelemetry.io/otel/attribute"
@@ -24,6 +26,7 @@ const (
 
 type UserRepository interface {
 	FindByUID(ctx context.Context, uid model.UID) (*model.LocalUser, error)
+	FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error)
 	ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.Follower, error)
 	ListFollowing(ctx context.Context, user *model.LocalUser) ([]*model.Following, error)
 }
@@ -66,11 +69,23 @@ func (s *apService) RegisterRoutes(r *gin.Engine) {
 }
 
 func (s *apService) handlePerson(c *gin.Context) {
+	ctx, span := tracing.StartSpan(c.Request.Context(), "ap.handlePerson")
+	defer span.End()
+	c.Request = c.Request.WithContext(ctx)
+
+	logger := logging.LoggerFromContext(ctx)
 	conf := config.ConfigFromContext(c.Request.Context())
 	uid := c.Param("uid")
 	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
+	logger.Debug("err", zap.Error(err))
+	if err == repository.ErrNotFound {
+		user, err = s.userRepo.FindByLocalID(c.Request.Context(), string(uid))
+		if err == nil {
+			err = &usecase.ErrMovedPermanently{NewURL: util.GetBaseURI(c.Request) + "/users/" + string(user.UID)}
+		}
+	}
 	if err != nil {
-		c.AbortWithError(http.StatusNotFound, err)
+		c.Error(err)
 		return
 	}
 	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)

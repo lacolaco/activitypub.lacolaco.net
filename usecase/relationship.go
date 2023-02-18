@@ -12,6 +12,14 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/util"
 )
 
+type ErrMovedPermanently struct {
+	NewURL string
+}
+
+func (e *ErrMovedPermanently) Error() string {
+	return "moved permanently to " + e.NewURL
+}
+
 type UserRepository interface {
 	FindByUID(ctx context.Context, uid model.UID) (*model.LocalUser, error)
 	FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error)
@@ -36,8 +44,10 @@ func (u *relationshipUsecase) OnFollow(r *http.Request, uid model.UID, activity 
 	conf := config.ConfigFromContext(ctx)
 	user, err := u.userRepo.FindByUID(ctx, uid)
 	if err == repository.ErrNotFound {
-		// fallback to localID
 		user, err = u.userRepo.FindByLocalID(ctx, string(uid))
+		if err == nil {
+			err = &ErrMovedPermanently{NewURL: util.GetBaseURI(r) + "/users/" + string(user.UID) + "/inbox"}
+		}
 	}
 	if err != nil {
 		return err
@@ -60,8 +70,10 @@ func (u *relationshipUsecase) OnUnfollow(r *http.Request, uid model.UID, activit
 	conf := config.ConfigFromContext(ctx)
 	user, err := u.userRepo.FindByUID(ctx, uid)
 	if err == repository.ErrNotFound {
-		// fallback to localID
 		user, err = u.userRepo.FindByLocalID(ctx, string(uid))
+		if err == nil {
+			err = &ErrMovedPermanently{NewURL: util.GetBaseURI(r) + "/users/" + string(user.UID) + "/inbox"}
+		}
 	}
 	if err != nil {
 		return err
@@ -82,8 +94,10 @@ func (u *relationshipUsecase) OnAcceptFollow(r *http.Request, uid model.UID, act
 
 	user, err := u.userRepo.FindByUID(ctx, uid)
 	if err == repository.ErrNotFound {
-		// fallback to localID
 		user, err = u.userRepo.FindByLocalID(ctx, string(uid))
+		if err == nil {
+			err = &ErrMovedPermanently{NewURL: util.GetBaseURI(r) + "/users/" + string(user.UID) + "/inbox"}
+		}
 	}
 	if err != nil {
 		return err
@@ -101,8 +115,10 @@ func (u *relationshipUsecase) OnRejectFollow(r *http.Request, uid model.UID, act
 
 	user, err := u.userRepo.FindByUID(ctx, uid)
 	if err == repository.ErrNotFound {
-		// fallback to localID
 		user, err = u.userRepo.FindByLocalID(ctx, string(uid))
+		if err == nil {
+			err = &ErrMovedPermanently{NewURL: util.GetBaseURI(r) + "/users/" + string(user.UID) + "/inbox"}
+		}
 	}
 	if err != nil {
 		return err

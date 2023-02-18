@@ -63,11 +63,15 @@ func errorHandler() gin.HandlerFunc {
 		if err == nil {
 			return
 		}
-		logging.LoggerFromContext(c.Request.Context()).Error(err.Error())
-		if err == repository.ErrNotFound {
+		if err.Err == repository.ErrNotFound {
 			c.AbortWithStatusJSON(http.StatusNotFound, err.JSON())
 			return
 		}
+		if moved, ok := err.Err.(*usecase.ErrMovedPermanently); ok {
+			c.Redirect(http.StatusMovedPermanently, moved.NewURL)
+			return
+		}
+		logging.LoggerFromContext(c.Request.Context()).Error(err.Error())
 		c.AbortWithStatusJSON(http.StatusInternalServerError, err.JSON())
 	}
 }
