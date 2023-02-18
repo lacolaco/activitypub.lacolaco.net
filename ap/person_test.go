@@ -33,6 +33,10 @@ func TestPerson(t *testing.T) {
 					Value: "value",
 				},
 			},
+			SharedInbox: ap.IRI("https://example.com/inbox"),
+			Endpoints: &ap.Endpoints{
+				SharedInbox: ap.IRI("https://example.com/inbox"),
+			},
 		}
 		b, err := person.MarshalJSON()
 		if err != nil {
@@ -52,6 +56,10 @@ func TestPerson(t *testing.T) {
 		if _, ok := j["name"]; !ok {
 			tt.Error("name is not included")
 		}
+		// publicKey
+		if _, ok := j["publicKey"]; !ok {
+			tt.Error("publicKey is not included")
+		}
 		// attachment
 		attachment, ok := j["attachment"]
 		if !ok {
@@ -59,6 +67,10 @@ func TestPerson(t *testing.T) {
 		}
 		if _, ok := attachment.([]interface{}); !ok {
 			tt.Error("attachment is not array")
+		}
+		// endpoints
+		if _, ok := j["endpoints"]; !ok {
+			tt.Error("endpoints is not included")
 		}
 		// toot property
 		if _, ok := j["discoverable"]; !ok {
@@ -101,6 +113,10 @@ func TestPerson(t *testing.T) {
 					"value": "<a href=\"https://twitter.com/test\" rel=\"me\">@test</a>"
 				}
 			],
+			"sharedInbox": "https://example.com/inbox",
+			"endpoints": {
+				"sharedInbox": "https://example.com/inbox"
+			},
 			"discoverable": true,
 			"manuallyApprovesFollowers": true
 		}`)

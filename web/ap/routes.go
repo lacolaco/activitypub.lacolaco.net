@@ -62,6 +62,7 @@ func (s *apService) RegisterRoutes(r *gin.Engine) {
 	userRoutes.GET("/followers", assertJSONGet, s.handleFollowers)
 	userRoutes.GET("/following", assertJSONGet, s.handleFollowing)
 	userRoutes.GET("/liked", assertJSONGet, s.handleLiked)
+	r.POST("/shared/inbox", assertJSONPost, s.handleSharedInbox)
 }
 
 func (s *apService) handlePerson(c *gin.Context) {
@@ -278,4 +279,33 @@ func (s *apService) handleLiked(c *gin.Context) {
 		return
 	}
 	c.Data(http.StatusOK, mimeTypeActivityJSON, b)
+}
+
+func (s *apService) handleSharedInbox(c *gin.Context) {
+	ctx, span := tracing.StartSpan(c.Request.Context(), "apService.handleSharedInbox")
+	defer span.End()
+	c.Request = c.Request.WithContext(ctx)
+
+	logger := logging.LoggerFromContext(ctx)
+	defer c.Request.Body.Close()
+	b, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	logger.Debug("payload", zap.String("payload", string(b)))
+	if err := ap.VerifyRequest(c.Request, b); err != nil {
+		logger.Error("failed to verify request", zap.Error(err))
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	var activity *ap.Activity
+	if json.Unmarshal(b, &activity); err != nil {
+		c.Error(err)
+		return
+	}
+	span.SetAttributes(attribute.String("activity.actor", string(activity.GetActor().GetID())))
+	span.SetAttributes(attribute.String("activity.type", string(activity.GetType())))
+
+	c.Status(http.StatusNotFound)
 }

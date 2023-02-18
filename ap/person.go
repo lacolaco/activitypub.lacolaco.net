@@ -17,23 +17,29 @@ type PublicKey struct {
 	PublicKeyPem string `json:"publicKeyPem,omitempty"`
 }
 
+type Endpoints struct {
+	SharedInbox IRI `json:"sharedInbox,omitempty"`
+}
+
 type Person struct {
-	Context           interface{} `json:"@context,omitempty"`
-	ID                IRI         `json:"id,omitempty"`
-	Type              ObjectType  `json:"type,omitempty"`
-	Name              string      `json:"name,omitempty"`
-	PreferredUsername string      `json:"preferredUsername,omitempty"`
-	Summary           string      `json:"summary,omitempty"`
-	Inbox             IRI         `json:"inbox,omitempty"`
-	Outbox            IRI         `json:"outbox,omitempty"`
-	Followers         IRI         `json:"followers,omitempty"`
-	Following         IRI         `json:"following,omitempty"`
-	Liked             IRI         `json:"liked,omitempty"`
-	URL               string      `json:"url,omitempty"`
-	Published         time.Time   `json:"published,omitempty"`
-	Icon              *Image      `json:"icon,omitempty"`
-	PublicKey         *PublicKey
+	Context           interface{}             `json:"@context,omitempty"`
+	ID                IRI                     `json:"id,omitempty"`
+	Type              ObjectType              `json:"type,omitempty"`
+	Name              string                  `json:"name,omitempty"`
+	PreferredUsername string                  `json:"preferredUsername,omitempty"`
+	Summary           string                  `json:"summary,omitempty"`
+	Inbox             IRI                     `json:"inbox,omitempty"`
+	Outbox            IRI                     `json:"outbox,omitempty"`
+	Followers         IRI                     `json:"followers,omitempty"`
+	Following         IRI                     `json:"following,omitempty"`
+	Liked             IRI                     `json:"liked,omitempty"`
+	URL               string                  `json:"url,omitempty"`
+	Published         time.Time               `json:"published,omitempty"`
+	Icon              *Image                  `json:"icon,omitempty"`
+	PublicKey         *PublicKey              `json:"publicKey,omitempty"`
 	Attachment        []ActivityStreamsObject `json:"attachment,omitempty"`
+	Endpoints         *Endpoints              `json:"endpoints,omitempty"`
+	SharedInbox       IRI                     `json:"sharedInbox,omitempty"`
 
 	Discoverable              bool `json:"discoverable"`
 	ManuallyApprovesFollowers bool `json:"manuallyApprovesFollowers"`
@@ -163,6 +169,15 @@ func (p *Person) UnmarshalJSON(data []byte) error {
 				})
 			}
 		}
+	}
+	if v, ok := m.GetMap("endpoints"); ok {
+		p.Endpoints = &Endpoints{}
+		if v, ok := v.GetString("sharedInbox"); ok {
+			p.Endpoints.SharedInbox = IRI(v)
+		}
+	}
+	if v, ok := m.GetString("sharedInbox"); ok {
+		p.SharedInbox = IRI(v)
 	}
 	if v, ok := m["discoverable"]; ok {
 		p.Discoverable = v.(bool)
