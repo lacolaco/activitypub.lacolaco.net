@@ -20,15 +20,21 @@ type UserIcon struct {
 	MediaType string `json:"media_type" firestore:"media_type"`
 }
 
+type UserAttachment struct {
+	Name  string `json:"name" firestore:"name"`
+	Value string `json:"value" firestore:"value"`
+}
+
 type LocalUser struct {
-	UID         UID       `json:"uid" firestore:"-"`
-	ID          string    `json:"id" firestore:"id"`
-	Name        string    `json:"name" firestore:"name"`
-	PrefName    string    `json:"preferred_username" firestore:"preferred_username"`
-	Description string    `json:"description" firestore:"description"`
-	Icon        *UserIcon `json:"icon" firestore:"icon"`
-	CreatedAt   time.Time `json:"created_at" firestore:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" firestore:"updated_at"`
+	UID         UID               `json:"uid" firestore:"-"`
+	ID          string            `json:"id" firestore:"id"`
+	Name        string            `json:"name" firestore:"name"`
+	PrefName    string            `json:"preferred_username" firestore:"preferred_username"`
+	Description string            `json:"description" firestore:"description"`
+	Icon        *UserIcon         `json:"icon" firestore:"icon"`
+	CreatedAt   time.Time         `json:"created_at" firestore:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at" firestore:"updated_at"`
+	Attachments []*UserAttachment `json:"attachments" firestore:"attachments"`
 }
 
 func (u *LocalUser) GetDocID() string {
@@ -63,12 +69,16 @@ func (u *LocalUser) ToPerson(baseURI string, publicKey *rsa.PublicKey) *ap.Perso
 			Owner:        ap.IRI(id),
 			PublicKeyPem: publicKeyPem,
 		},
-		Attachment: []ap.ActivityStreamsObject{
-			&ap.PropertyValue{
-				Name:  "Twitter",
-				Value: "\u003ca href=\"https://twitter.com/laco2net\" rel=\"me nofollow noopener\" target=\"_blank\"\u003e\u003cspan class=\"invisible\"\u003ehttps://\u003c/span\u003e\u003cspan class=\"\"\u003etwitter.com/laco2net\u003c/span\u003e\u003cspan class=\"invisible\"\u003e\u003c/span\u003e\u003c/a\u003e",
-			},
-		},
+		Attachment: func() []ap.ActivityStreamsObject {
+			attachments := make([]ap.ActivityStreamsObject, len(u.Attachments))
+			for i, a := range u.Attachments {
+				attachments[i] = &ap.PropertyValue{
+					Name:  a.Name,
+					Value: a.Value,
+				}
+			}
+			return attachments
+		}(),
 		Endpoints: &ap.Endpoints{
 			SharedInbox: ap.IRI(fmt.Sprintf("%s/inbox", baseURI)),
 		},
