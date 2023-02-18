@@ -2,11 +2,9 @@ package ap
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"net/url"
 	"time"
-
-	"humungus.tedunangst.com/r/webs/junk"
 )
 
 var (
@@ -19,75 +17,78 @@ var (
 	}
 )
 
-func Accept(ctx context.Context, actor *Person, object *Activity) error {
+func Accept(ctx context.Context, actor *Person, object ActivityObject) error {
 	now := time.Now()
-	to, err := GetPerson(ctx, object.Actor)
+	to, err := GetPerson(ctx, object.GetActor().GetID())
 	if err != nil {
 		return err
 	}
 
-	j := junk.New()
-	j["@context"] = ContextURIs
-	j["id"] = fmt.Sprintf("%s/%d", actor.ID, now.Unix())
-	j["type"] = "Accept"
-	j["actor"] = actor.ID
-	j["to"] = to.GetID()
-	j["published"] = now.UTC().Format(time.RFC3339)
-	j["object"] = object
+	accept := NewActivityAccept()
+	accept.Context = ContextURIs
+	accept.ID = IRI(fmt.Sprintf("%s/accept/%s", actor.ID, object.GetID()))
+	accept.Actor = actor.ID
+	accept.Object = object
+	accept.To = []Item{to.ID}
+	accept.Published = now.UTC()
 
-	if _, err := signedPost(ctx, actor.PublicKey, to.Inbox, j.ToBytes()); err != nil {
+	b, err := json.Marshal(accept)
+	if err != nil {
+		return err
+	}
+	if _, err := signedPost(ctx, actor.PublicKey, to.Inbox, b); err != nil {
 		return err
 	}
 	return nil
 }
 
-func GetPerson(ctx context.Context, id string) (*Person, error) {
-	addr, _ := url.Parse(id)
-	if addr.Scheme == "" {
-		addr.Scheme = "https"
-	}
-	body, err := signedGet(ctx, systemActor.PublicKey, addr.String())
+func GetPerson(ctx context.Context, id IRI) (*Person, error) {
+	body, err := signedGet(ctx, systemActor.PublicKey, id)
 	if err != nil {
 		return nil, err
 	}
-	p, err := PersonFromBytes(body)
-	if err != nil {
+	var p *Person
+	if err := json.Unmarshal(body, &p); err != nil {
 		return nil, err
 	}
 	return p, nil
 }
 
-func newFollowJunk(from *Person, to *Person) junk.Junk {
-	j := junk.New()
-	j["@context"] = ContextURIs
-	j["id"] = fmt.Sprintf("%s/follow/%s", from.GetID(), to.GetID())
-	j["type"] = "Follow"
-	j["actor"] = from.GetID()
-	j["object"] = to.GetID()
-	return j
-}
-
 func FollowPerson(ctx context.Context, from, to *Person) error {
-	j := newFollowJunk(from, to)
+	activity := NewActivityFollow()
+	activity.Context = ContextURIs
+	activity.ID = IRI(fmt.Sprintf("%s/follow/%s", from.GetID(), to.GetID()))
+	activity.Actor = from.GetID()
+	activity.Object = to.GetID()
 
-	if _, err := signedPost(ctx, from.PublicKey, to.Inbox, j.ToBytes()); err != nil {
+	b, err := json.Marshal(activity)
+	if err != nil {
+		return err
+	}
+	if _, err := signedPost(ctx, from.PublicKey, to.GetInbox(), b); err != nil {
 		return err
 	}
 	return nil
 }
 
 func UnfollowPerson(ctx context.Context, from, to *Person) error {
+	follow := NewActivityFollow()
+	follow.ID = IRI(fmt.Sprintf("%s/follow/%s", from.GetID(), to.GetID()))
+	follow.Actor = from.GetID()
+	follow.Object = to.GetID()
+
 	now := time.Now()
-	undoID := fmt.Sprintf("%s/follow/%s/undo/%d", from.GetID(), to.GetID(), now.Unix())
+	activity := NewActivityUndo()
+	activity.Context = ContextURIs
+	activity.ID = IRI(fmt.Sprintf("%s/follow/%s/undo/%d", from.GetID(), to.GetID(), now.Unix()))
+	activity.Actor = from.GetID()
+	activity.Object = follow
 
-	j := junk.New()
-	j["@context"] = ContextURIs
-	j["id"] = undoID
-	j["type"] = "Undo"
-	j["actor"] = from.GetID()
-	j["object"] = newFollowJunk(from, to)
-
-	if _, err := signedPost(ctx, from.PublicKey, to.Inbox, j.ToBytes()); err != nil {
+	b, err := json.Marshal(activity)
+	if err != nil {
+		return err
+	}
+	if _, err := signedPost(ctx, from.PublicKey, to.GetInbox(), b); err != nil {
 		return err
 	}
 	return nil

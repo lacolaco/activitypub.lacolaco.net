@@ -43,14 +43,15 @@ func (u *LocalUser) ToPerson(baseURI string, publicKey *rsa.PublicKey) *ap.Perso
 	}
 
 	p := &ap.Person{
-		ID:                id,
+		ID:                ap.IRI(id),
 		Name:              u.Name,
 		PreferredUsername: u.PrefName,
 		Summary:           u.Description,
-		Inbox:             fmt.Sprintf("%s/inbox", id),
-		Outbox:            fmt.Sprintf("%s/outbox", id),
-		Followers:         fmt.Sprintf("%s/followers", id),
-		Following:         fmt.Sprintf("%s/following", id),
+		Inbox:             ap.IRI(fmt.Sprintf("%s/inbox", id)),
+		Outbox:            ap.IRI(fmt.Sprintf("%s/outbox", id)),
+		Followers:         ap.IRI(fmt.Sprintf("%s/followers", id)),
+		Following:         ap.IRI(fmt.Sprintf("%s/following", id)),
+		Liked:             ap.IRI(fmt.Sprintf("%s/liked", id)),
 		URL:               fmt.Sprintf("%s/@%s", baseURI, u.ID),
 		Published:         u.CreatedAt,
 		Icon: &ap.Image{
@@ -58,11 +59,18 @@ func (u *LocalUser) ToPerson(baseURI string, publicKey *rsa.PublicKey) *ap.Perso
 			MediaType: u.Icon.MediaType,
 		},
 		PublicKey: &ap.PublicKey{
-			ID:           fmt.Sprintf("%s#%s", id, publicKeyIDSuffix),
-			Owner:        id,
+			ID:           ap.IRI(fmt.Sprintf("%s#%s", id, publicKeyIDSuffix)),
+			Owner:        ap.IRI(id),
 			PublicKeyPem: publicKeyPem,
 		},
-		Discoverable: true,
+		Attachment: []ap.ActivityStreamsObject{
+			&ap.PropertyValue{
+				Name:  "Twitter",
+				Value: "\u003ca href=\"https://twitter.com/laco2net\" rel=\"me nofollow noopener\" target=\"_blank\"\u003e\u003cspan class=\"invisible\"\u003ehttps://\u003c/span\u003e\u003cspan class=\"\"\u003etwitter.com/laco2net\u003c/span\u003e\u003cspan class=\"invisible\"\u003e\u003c/span\u003e\u003c/a\u003e",
+			},
+		},
+		Discoverable:              true,
+		ManuallyApprovesFollowers: false,
 	}
 	return p
 }

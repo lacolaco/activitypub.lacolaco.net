@@ -27,7 +27,7 @@ func NewRelationshipUsecase(userRepo UserRepository) *relationshipUsecase {
 	return &relationshipUsecase{userRepo: userRepo}
 }
 
-func (u *relationshipUsecase) OnFollow(r *http.Request, uid model.UID, activity *ap.Activity) error {
+func (u *relationshipUsecase) OnFollow(r *http.Request, uid model.UID, activity ap.ActivityObject) error {
 	ctx, span := tracing.StartSpan(r.Context(), "usecase.relationship.OnFollow")
 	defer span.End()
 
@@ -36,7 +36,7 @@ func (u *relationshipUsecase) OnFollow(r *http.Request, uid model.UID, activity 
 	if err != nil {
 		return err
 	}
-	follower := model.NewFollower(activity.Actor, model.AttemptStatusCompleted)
+	follower := model.NewFollower(string(activity.GetActor().GetID()), model.AttemptStatusCompleted)
 	if err := u.userRepo.UpsertFollower(ctx, user, follower); err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (u *relationshipUsecase) OnFollow(r *http.Request, uid model.UID, activity 
 	return nil
 }
 
-func (u *relationshipUsecase) OnUnfollow(r *http.Request, uid model.UID, activity *ap.Activity) error {
+func (u *relationshipUsecase) OnUnfollow(r *http.Request, uid model.UID, activity ap.ActivityObject) error {
 	ctx, span := tracing.StartSpan(r.Context(), "usecase.relationship.OnUnfollow")
 	defer span.End()
 
@@ -56,7 +56,7 @@ func (u *relationshipUsecase) OnUnfollow(r *http.Request, uid model.UID, activit
 	if err != nil {
 		return err
 	}
-	if err := u.userRepo.DeleteFollower(ctx, user, activity.Actor); err != nil {
+	if err := u.userRepo.DeleteFollower(ctx, user, string(activity.GetActor().GetID())); err != nil {
 		return err
 	}
 	actor := user.ToPerson(util.GetBaseURI(r), conf.PublicKey)
@@ -66,7 +66,7 @@ func (u *relationshipUsecase) OnUnfollow(r *http.Request, uid model.UID, activit
 	return nil
 }
 
-func (u *relationshipUsecase) OnAcceptFollow(r *http.Request, uid model.UID, activity *ap.Activity) error {
+func (u *relationshipUsecase) OnAcceptFollow(r *http.Request, uid model.UID, activity ap.ActivityObject) error {
 	ctx, span := tracing.StartSpan(r.Context(), "usecase.relationship.OnAcceptFollow")
 	defer span.End()
 
@@ -74,14 +74,14 @@ func (u *relationshipUsecase) OnAcceptFollow(r *http.Request, uid model.UID, act
 	if err != nil {
 		return err
 	}
-	following := model.NewFollowing(activity.Actor, model.AttemptStatusCompleted)
+	following := model.NewFollowing(string(activity.GetActor().GetID()), model.AttemptStatusCompleted)
 	if err := u.userRepo.UpsertFollowing(ctx, user, following); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *relationshipUsecase) OnRejectFollow(r *http.Request, uid model.UID, activity *ap.Activity) error {
+func (u *relationshipUsecase) OnRejectFollow(r *http.Request, uid model.UID, activity ap.ActivityObject) error {
 	ctx, span := tracing.StartSpan(r.Context(), "usecase.relationship.OnRejectFollow")
 	defer span.End()
 
@@ -89,7 +89,7 @@ func (u *relationshipUsecase) OnRejectFollow(r *http.Request, uid model.UID, act
 	if err != nil {
 		return err
 	}
-	if err := u.userRepo.DeleteFollowing(ctx, user, activity.Actor); err != nil {
+	if err := u.userRepo.DeleteFollowing(ctx, user, string(activity.GetActor().GetID())); err != nil {
 		return err
 	}
 	return nil
@@ -105,14 +105,14 @@ func (u *relationshipUsecase) Follow(r *http.Request, uid model.UID, to string) 
 		return err
 	}
 	actor := user.ToPerson(util.GetBaseURI(r), conf.PublicKey)
-	whom, err := ap.GetPerson(r.Context(), to)
+	whom, err := ap.GetPerson(r.Context(), ap.IRI(to))
 	if err != nil {
 		return err
 	}
 	if err := ap.FollowPerson(r.Context(), actor, whom); err != nil {
 		return err
 	}
-	following := model.NewFollowing(whom.GetID(), model.AttemptStatusPending)
+	following := model.NewFollowing(string(whom.GetID()), model.AttemptStatusPending)
 	if err := u.userRepo.UpsertFollowing(r.Context(), user, following); err != nil {
 		return err
 	}
@@ -129,14 +129,14 @@ func (u *relationshipUsecase) Unfollow(r *http.Request, uid model.UID, to string
 		return err
 	}
 	actor := user.ToPerson(util.GetBaseURI(r), conf.PublicKey)
-	whom, err := ap.GetPerson(r.Context(), to)
+	whom, err := ap.GetPerson(r.Context(), ap.IRI(to))
 	if err != nil {
 		return err
 	}
 	if err := ap.UnfollowPerson(r.Context(), actor, whom); err != nil {
 		return err
 	}
-	if err := u.userRepo.DeleteFollowing(r.Context(), user, whom.GetID()); err != nil {
+	if err := u.userRepo.DeleteFollowing(r.Context(), user, string(whom.GetID())); err != nil {
 		return err
 	}
 	return nil

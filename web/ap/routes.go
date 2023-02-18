@@ -2,6 +2,7 @@ package ap
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 
@@ -28,10 +29,10 @@ type UserRepository interface {
 }
 
 type RelationshipUsecase interface {
-	OnFollow(r *http.Request, uid model.UID, activity *ap.Activity) error
-	OnUnfollow(r *http.Request, uid model.UID, activity *ap.Activity) error
-	OnAcceptFollow(r *http.Request, uid model.UID, activity *ap.Activity) error
-	OnRejectFollow(r *http.Request, uid model.UID, activity *ap.Activity) error
+	OnFollow(r *http.Request, uid model.UID, activity ap.ActivityObject) error
+	OnUnfollow(r *http.Request, uid model.UID, activity ap.ActivityObject) error
+	OnAcceptFollow(r *http.Request, uid model.UID, activity ap.ActivityObject) error
+	OnRejectFollow(r *http.Request, uid model.UID, activity ap.ActivityObject) error
 }
 
 type apService struct {
@@ -60,6 +61,7 @@ func (s *apService) RegisterRoutes(r *gin.Engine) {
 	userRoutes.GET("/outbox", assertJSONGet, s.handleOutbox)
 	userRoutes.GET("/followers", assertJSONGet, s.handleFollowers)
 	userRoutes.GET("/following", assertJSONGet, s.handleFollowing)
+	userRoutes.GET("/liked", assertJSONGet, s.handleLiked)
 }
 
 func (s *apService) handlePerson(c *gin.Context) {
@@ -71,7 +73,7 @@ func (s *apService) handlePerson(c *gin.Context) {
 		return
 	}
 	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)
-	b, err := person.ToBytes()
+	b, err := person.MarshalJSON()
 	if err != nil {
 		c.Error(err)
 		return
@@ -98,48 +100,42 @@ func (s *apService) handleInbox(c *gin.Context) {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	activity, err := ap.ActivityFromBytes(b)
-	if err != nil {
+	var activity ap.ActivityObject
+	if json.Unmarshal(b, &activity); err != nil {
 		c.Error(err)
 		return
 	}
-	span.SetAttributes(attribute.String("activity.actor", activity.Actor))
-	span.SetAttributes(attribute.String("activity.type", string(activity.Type)))
+	span.SetAttributes(attribute.String("activity.actor", string(activity.GetActor().GetID())))
+	span.SetAttributes(attribute.String("activity.type", string(activity.GetType())))
 	uid := model.UID(c.Param("uid"))
 
-	switch activity.Type {
-	case ap.FollowActivityType:
+	switch activity.GetType() {
+	case ap.ActivityTypeFollow:
 		if err := s.relationshipUsecase.OnFollow(c.Request, uid, activity); err != nil {
 			c.Error(err)
 			return
 		}
 		c.Status(http.StatusOK)
-	case ap.UndoActivityType:
-		switch activity.Object.GetType() {
-		case string(ap.FollowActivityType):
+	case ap.ActivityTypeUndo:
+		switch activity.GetObject().GetType() {
+		case ap.ActivityTypeFollow:
 			if err := s.relationshipUsecase.OnUnfollow(c.Request, uid, activity); err != nil {
 				c.Error(err)
 				return
 			}
 			c.Status(http.StatusOK)
 		}
-	case ap.CreateActivityType, ap.UpdateActivityType, ap.DeleteActivityType:
-		logger.Debug("not implemented: create, update, delete")
-		c.Status(200)
-	case ap.AnnounceActivityType:
-		logger.Debug("not implemented: announce", zap.Any("object", activity.Object))
-		c.Status(200)
-	case ap.AcceptActivityType, ap.RejectActivityType:
+	case ap.ActivityTypeAccept, ap.ActivityTypeReject:
 		switch {
 		// follow request is accepted
-		case activity.GetType() == string(ap.AcceptActivityType) && activity.Object.GetType() == string(ap.FollowActivityType):
+		case activity.GetType() == ap.ActivityTypeAccept && activity.GetObject().GetType() == ap.ActivityTypeFollow:
 			if err := s.relationshipUsecase.OnAcceptFollow(c.Request, uid, activity); err != nil {
 				c.Error(err)
 				return
 			}
 			c.Status(200)
 		// follow request is rejected
-		case activity.GetType() == string(ap.RejectActivityType) && activity.Object.GetType() == string(ap.FollowActivityType):
+		case activity.GetType() == ap.ActivityTypeReject && activity.GetObject().GetType() == ap.ActivityTypeFollow:
 			if err := s.relationshipUsecase.OnRejectFollow(c.Request, uid, activity); err != nil {
 				c.Error(err)
 				return
@@ -149,6 +145,13 @@ func (s *apService) handleInbox(c *gin.Context) {
 			logger.Debug("not implemented: accept, reject")
 			c.Status(200)
 		}
+	case ap.ActivityTypeCreate, ap.ActivityTypeUpdate, ap.ActivityTypeDelete:
+		logger.Debug("not implemented: create, update, delete", zap.Any("object", activity.GetObject()))
+		c.Status(200)
+	case ap.ActivityTypeAnnounce:
+		logger.Debug("not implemented: announce", zap.Any("object", activity.GetObject()))
+		c.Status(200)
+
 	default:
 		logger.Debug("unsuppoted activity type")
 		c.Status(http.StatusOK)
@@ -169,9 +172,9 @@ func (s *apService) handleOutbox(c *gin.Context) {
 	res := &ap.OrderedCollection{
 		ID:           person.Outbox,
 		TotalItems:   0,
-		OrderedItems: []ap.ActivityPubObject{},
+		OrderedItems: []ap.Item{},
 	}
-	b, err := res.ToBytes()
+	b, err := json.Marshal(res)
 	if err != nil {
 		c.Error(err)
 		return
@@ -200,15 +203,15 @@ func (s *apService) handleFollowers(c *gin.Context) {
 	res := &ap.OrderedCollection{
 		ID:         person.Followers,
 		TotalItems: len(followers),
-		OrderedItems: func() []ap.ActivityPubObject {
-			items := make([]ap.ActivityPubObject, len(followers))
+		OrderedItems: func() []ap.Item {
+			items := make([]ap.Item, len(followers))
 			for i, item := range followers {
 				items[i] = ap.IRI(item.UserID)
 			}
 			return items
 		}(),
 	}
-	b, err := res.ToBytes()
+	b, err := json.Marshal(res)
 	if err != nil {
 		c.Error(err)
 		return
@@ -237,15 +240,39 @@ func (s *apService) handleFollowing(c *gin.Context) {
 	res := &ap.OrderedCollection{
 		ID:         person.Following,
 		TotalItems: len(following),
-		OrderedItems: func() []ap.ActivityPubObject {
-			items := make([]ap.ActivityPubObject, len(following))
+		OrderedItems: func() []ap.Item {
+			items := make([]ap.Item, len(following))
 			for i, item := range following {
 				items[i] = ap.IRI(item.UserID)
 			}
 			return items
 		}(),
 	}
-	b, err := res.ToBytes()
+	b, err := json.Marshal(res)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	c.Data(http.StatusOK, mimeTypeActivityJSON, b)
+}
+
+func (s *apService) handleLiked(c *gin.Context) {
+	logger := logging.LoggerFromContext(c.Request.Context())
+	conf := config.ConfigFromContext(c.Request.Context())
+	uid := c.Param("uid")
+	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
+	if err != nil {
+		logger.Error("failed to get user", zap.Error(err))
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)
+	res := &ap.OrderedCollection{
+		ID:           person.Liked,
+		TotalItems:   0,
+		OrderedItems: []ap.Item{},
+	}
+	b, err := json.Marshal(res)
 	if err != nil {
 		c.Error(err)
 		return

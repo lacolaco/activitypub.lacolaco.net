@@ -26,7 +26,7 @@ func (u *searchUsecase) SearchPerson(ctx context.Context, id string) (*ap.Person
 	if personURI == "" {
 		return nil, nil
 	}
-	person, err := ap.GetPerson(ctx, personURI)
+	person, err := ap.GetPerson(ctx, ap.IRI(personURI))
 	if err != nil {
 		return nil, err
 	}

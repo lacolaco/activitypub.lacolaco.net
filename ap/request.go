@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/lacolaco/activitypub.lacolaco.net/config"
@@ -24,20 +25,27 @@ const (
 	mimeTypeActivityJSON = "application/activity+json"
 )
 
-func signedGet(ctx context.Context, publicKey *PublicKey, url string) ([]byte, error) {
+func signedGet(ctx context.Context, publicKey *PublicKey, iri IRI) ([]byte, error) {
 	ctx, span := tracing.StartSpan(ctx, "ap.signedGet")
 	defer span.End()
-	span.SetAttributes(attribute.String("url", url))
+	url, err := url.Parse(string(iri))
+	if err != nil {
+		return nil, err
+	}
+	if url.Scheme == "" {
+		url.Scheme = "https"
+	}
+	span.SetAttributes(attribute.String("url", url.String()))
 
 	conf := config.ConfigFromContext(ctx)
 	logger := logging.LoggerFromContext(ctx)
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Accept", mimeTypeActivityJSON)
 	req.Header.Set("User-Agent", userAgent)
-	SignRequest(publicKey.ID, conf.PrivateKey, req, nil)
+	SignRequest(string(publicKey.ID), conf.PrivateKey, req, nil)
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	req = req.WithContext(c)
@@ -57,20 +65,28 @@ func signedGet(ctx context.Context, publicKey *PublicKey, url string) ([]byte, e
 	return body, nil
 }
 
-func signedPost(ctx context.Context, publicKey *PublicKey, url string, body []byte) ([]byte, error) {
+func signedPost(ctx context.Context, publicKey *PublicKey, iri IRI, body []byte) ([]byte, error) {
 	ctx, span := tracing.StartSpan(ctx, "ap.signedPost")
 	defer span.End()
-	span.SetAttributes(attribute.String("url", url))
+
+	url, err := url.Parse(string(iri))
+	if err != nil {
+		return nil, err
+	}
+	if url.Scheme == "" {
+		url.Scheme = "https"
+	}
+	span.SetAttributes(attribute.String("url", url.String()))
 
 	conf := config.ConfigFromContext(ctx)
 	logger := logging.LoggerFromContext(ctx)
-	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	req, err := http.NewRequest("POST", url.String(), bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", mimeTypeActivityJSON)
-	SignRequest(publicKey.ID, conf.PrivateKey, req, body)
+	SignRequest(string(publicKey.ID), conf.PrivateKey, req, body)
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	req = req.WithContext(c)
