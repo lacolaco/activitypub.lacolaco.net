@@ -13,12 +13,13 @@ const (
 type Item = ObjectOrLink
 
 type OrderedCollection struct {
-	ID           IRI        `json:"id,omitempty"`
-	Type         ObjectType `json:"type,omitempty"`
-	TotalItems   int        `json:"totalItems,omitempty"`
-	First        IRI        `json:"first,omitempty"`
-	Last         IRI        `json:"last,omitempty"`
-	OrderedItems []Item     `json:"orderedItems,omitempty"`
+	Context      interface{} `json:"@context,omitempty"`
+	ID           IRI         `json:"id,omitempty"`
+	Type         ObjectType  `json:"type,omitempty"`
+	TotalItems   int         `json:"totalItems,omitempty"`
+	First        IRI         `json:"first,omitempty"`
+	Last         IRI         `json:"last,omitempty"`
+	OrderedItems []Item      `json:"orderedItems,omitempty"`
 }
 
 var _ ObjectOrLink = (*OrderedCollection)(nil)

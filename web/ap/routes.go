@@ -74,6 +74,7 @@ func (s *apService) handlePerson(c *gin.Context) {
 		return
 	}
 	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)
+	person.Context = ap.ContextURIs
 	b, err := person.MarshalJSON()
 	if err != nil {
 		c.Error(err)
@@ -171,6 +172,7 @@ func (s *apService) handleOutbox(c *gin.Context) {
 	}
 	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)
 	res := &ap.OrderedCollection{
+		Context:      ap.ContextURIs,
 		ID:           person.Outbox,
 		TotalItems:   0,
 		OrderedItems: []ap.Item{},
@@ -202,6 +204,7 @@ func (s *apService) handleFollowers(c *gin.Context) {
 		return
 	}
 	res := &ap.OrderedCollection{
+		Context:    ap.ContextURIs,
 		ID:         person.Followers,
 		TotalItems: len(followers),
 		OrderedItems: func() []ap.Item {
@@ -239,6 +242,7 @@ func (s *apService) handleFollowing(c *gin.Context) {
 		return
 	}
 	res := &ap.OrderedCollection{
+		Context:    ap.ContextURIs,
 		ID:         person.Following,
 		TotalItems: len(following),
 		OrderedItems: func() []ap.Item {
@@ -269,6 +273,7 @@ func (s *apService) handleLiked(c *gin.Context) {
 	}
 	person := user.ToPerson(util.GetBaseURI(c.Request), conf.PublicKey)
 	res := &ap.OrderedCollection{
+		Context:      ap.ContextURIs,
 		ID:           person.Liked,
 		TotalItems:   0,
 		OrderedItems: []ap.Item{},
