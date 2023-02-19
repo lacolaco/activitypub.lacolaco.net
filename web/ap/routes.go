@@ -126,10 +126,19 @@ func (s *apService) handleInbox(c *gin.Context) {
 	span.SetAttributes(attribute.String("activity.actor", string(activity.GetActor().GetID())))
 	span.SetAttributes(attribute.String("activity.type", string(activity.GetType())))
 	uid := model.UID(c.Param("uid"))
+	logger.Debug("params", zap.String("uid", string(uid)), zap.String("activity.type", string(activity.GetType())))
+
+	user, err := s.userRepo.FindByUID(ctx, uid)
+	if err == repository.ErrNotFound {
+		user, err = s.userRepo.FindByLocalID(ctx, string(uid))
+		if err == nil {
+			err = &usecase.ErrMovedPermanently{NewURL: util.GetBaseURI(c.Request) + "/users/" + string(user.UID) + "/inbox"}
+		}
+	}
 
 	switch activity.GetType() {
 	case ap.ActivityTypeFollow:
-		if err := s.relationshipUsecase.OnFollow(c.Request, uid, activity); err != nil {
+		if err := s.relationshipUsecase.OnFollow(c.Request, user.UID, activity); err != nil {
 			c.Error(err)
 			return
 		}
@@ -137,7 +146,7 @@ func (s *apService) handleInbox(c *gin.Context) {
 	case ap.ActivityTypeUndo:
 		switch activity.GetObject().GetType() {
 		case ap.ActivityTypeFollow:
-			if err := s.relationshipUsecase.OnUnfollow(c.Request, uid, activity); err != nil {
+			if err := s.relationshipUsecase.OnUnfollow(c.Request, user.UID, activity); err != nil {
 				c.Error(err)
 				return
 			}
@@ -147,14 +156,14 @@ func (s *apService) handleInbox(c *gin.Context) {
 		switch {
 		// follow request is accepted
 		case activity.GetType() == ap.ActivityTypeAccept && activity.GetObject().GetType() == ap.ActivityTypeFollow:
-			if err := s.relationshipUsecase.OnAcceptFollow(c.Request, uid, activity); err != nil {
+			if err := s.relationshipUsecase.OnAcceptFollow(c.Request, user.UID, activity); err != nil {
 				c.Error(err)
 				return
 			}
 			c.Status(200)
 		// follow request is rejected
 		case activity.GetType() == ap.ActivityTypeReject && activity.GetObject().GetType() == ap.ActivityTypeFollow:
-			if err := s.relationshipUsecase.OnRejectFollow(c.Request, uid, activity); err != nil {
+			if err := s.relationshipUsecase.OnRejectFollow(c.Request, user.UID, activity); err != nil {
 				c.Error(err)
 				return
 			}
