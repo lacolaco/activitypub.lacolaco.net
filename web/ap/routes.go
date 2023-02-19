@@ -135,6 +135,10 @@ func (s *apService) handleInbox(c *gin.Context) {
 			err = &usecase.ErrMovedPermanently{NewURL: util.GetBaseURI(c.Request) + "/users/" + string(user.UID) + "/inbox"}
 		}
 	}
+	if err != nil {
+		c.Error(err)
+		return
+	}
 
 	switch activity.GetType() {
 	case ap.ActivityTypeFollow:
