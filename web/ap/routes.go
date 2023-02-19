@@ -76,8 +76,9 @@ func (s *apService) handlePerson(c *gin.Context) {
 	logger := logging.LoggerFromContext(ctx)
 	conf := config.ConfigFromContext(c.Request.Context())
 	uid := c.Param("uid")
+	logger.Debug("params", zap.String("uid", uid))
+
 	user, err := s.userRepo.FindByUID(c.Request.Context(), model.UID(uid))
-	logger.Debug("err", zap.Error(err))
 	if err == repository.ErrNotFound {
 		user, err = s.userRepo.FindByLocalID(c.Request.Context(), string(uid))
 		if err == nil {
