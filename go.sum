@@ -20,11 +20,11 @@ cloud.google.com/go/trace v1.8.0/go.mod h1:zH7vcsbAhklH8hWFig58HvxcxyQbaIqMarMg9
 firebase.google.com/go/v4 v4.10.0 h1:dgK/8uwfJbzc5LZK/GyRRfIkZEDObN9q0kgEXsjlXN4=
 firebase.google.com/go/v4 v4.10.0/go.mod h1:m0gLwPY9fxKggizzglgCNWOGnFnVPifLpqZzo5u3e/A=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.1 h1:O7dTg9ukLjzIOOLpC8RBaD1EqWD3jqicwhpju6C8meg=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.1/go.mod h1:EbS3BDOG4ESDJWUB2jE3On/u00ayOUSFeUzd4759bfU=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0.35.1 h1:s503Jzh+SCMN557CUTsenBo8vNxmGZK7zWdNlePQ9TU=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.35.1 h1:IB4aQsSppxP/PVmnCstDm9v00hsPowqrohoW4FZ+amc=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.35.1/go.mod h1:H785fvlgotVZqht+1rHhXSs8EJ8uPVmpBYkTYO3ccpc=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.2 h1:Z5/bjyZhqXd7dNI76Z/KnyxtqavKF1UgGhInFSAIa8s=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.2/go.mod h1:mHbBqn8wTt1/+bTA55xe2mLX5b+RKz2dVcGz8sH2HsY=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0.35.2 h1:xXo67CnDmiDMhgD3zAiuejKKMQ9nNkAQZZ4RS5U5jJY=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.35.2 h1:uH5W8NML+jD8iFiBbNUh5X7Nt0FVDK44Hel+Ux0ZEqU=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.35.2/go.mod h1:H785fvlgotVZqht+1rHhXSs8EJ8uPVmpBYkTYO3ccpc=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1 h1:UcJNMnXeuy7QUCDjmu+rGDJsvK4GFKy8oR34vNj/29o=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1/go.mod h1:1+b5oFxaeaSoN5Iapn/8DV9VCJOvNA9jVLXJFcoGXOM=
 github.com/MicahParks/keyfunc v1.5.1 h1:RlyyYgKQI/adkIw1yXYtPvTAOb7hBhSX42aH23d8N0Q=
