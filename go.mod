@@ -47,7 +47,6 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/appengine/v2 v2.0.2 // indirect
 	google.golang.org/genproto v0.0.0-20230125152338-dcaf20b6aeaa // indirect
-	google.golang.org/grpc v1.51.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
@@ -56,7 +55,7 @@ require (
 	cloud.google.com/go/firestore v1.9.0
 	firebase.google.com/go/v4 v4.10.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.1
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.2
 	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-gonic/gin v1.8.2
 	github.com/joho/godotenv v1.5.1
@@ -69,5 +68,6 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	google.golang.org/api v0.108.0
+	google.golang.org/grpc v1.51.0
 	humungus.tedunangst.com/r/webs v0.6.60
 )
