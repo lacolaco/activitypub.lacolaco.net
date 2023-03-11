@@ -19,7 +19,7 @@
     "@angular/platform-browser": "^15.2.0-next.0",
     "@angular/platform-browser-dynamic": "^15.2.0-next.0",
     "@angular/router": "^15.2.0-next.0",
-    "@rx-angular/state": "^1.7.0",
+    "@rx-angular/state": "^2.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
