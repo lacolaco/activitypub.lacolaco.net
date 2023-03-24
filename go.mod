@@ -58,7 +58,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.1
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1
 	github.com/gin-contrib/gzip v0.0.6
-	github.com/gin-gonic/gin v1.8.2
+	github.com/gin-gonic/gin v1.9.0
 	github.com/joho/godotenv v1.5.1
 	go.ajitem.com/zapdriver v1.4.1
 	go.opencensus.io v0.24.0
