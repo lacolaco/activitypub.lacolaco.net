@@ -1,0 +1,37 @@
+name: 'ci'
+
+on:
+  pull_request:
+    types: ['opened', 'synchronize', 'reopened']
+
+permissions:
+  contents: 'read'
+  id-token: 'write'
+
+jobs:
+  test-server:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: asia-northeast1-docker.pkg.dev/lacolaco-activitypub/cloud-run-builds/server
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-go
+      - name: install deps
+        run: go mod download
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go build -o /dev/null ./cmd/server
+
+  test-client:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: asia-northeast1-docker.pkg.dev/lacolaco-activitypub/cloud-run-builds/server
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-node
+      - name: install client deps
+        working-directory: client
+        run: yarn install
+      - name: build client
+        working-directory: client
+        run: yarn build
