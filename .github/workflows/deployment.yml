@@ -21,7 +21,6 @@ jobs:
         with:
           workload_identity_provider: 'projects/350326448420/locations/global/workloadIdentityPools/pool/providers/provider'
           service_account: 'github-actions@lacolaco-activitypub.iam.gserviceaccount.com'
-          create_credentials_file: true
       - uses: google-github-actions/setup-gcloud@v1
       - run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
       - uses: ./.github/actions/setup-go
