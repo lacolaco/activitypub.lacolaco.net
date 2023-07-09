@@ -4,8 +4,8 @@
  * @see https://tools.ietf.org/html/rfc7033#section-4.4
  */
 export interface JRDObject {
-	subject: string;
-	links: JRDLinkObject[];
+  subject: string;
+  links: JRDLinkObject[];
 }
 
 /**
@@ -14,7 +14,7 @@ export interface JRDObject {
  * @see https://tools.ietf.org/html/rfc7033#section-4.4
  **/
 export interface JRDLinkObject {
-	rel: string;
-	type: string;
-	href: string;
+  rel: string;
+  type: string;
+  href: string;
 }

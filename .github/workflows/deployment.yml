@@ -43,3 +43,20 @@ jobs:
           --service-account api-service@lacolaco-activitypub.iam.gserviceaccount.com \
           --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
           --execution-environment gen1 --region asia-northeast1 --platform managed --memory 128Mi
+
+  deploy-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: 'auth'
+        uses: google-github-actions/auth@v1.1.1
+        with:
+          workload_identity_provider: 'projects/350326448420/locations/global/workloadIdentityPools/pool/providers/provider'
+          service_account: 'github-actions@lacolaco-activitypub.iam.gserviceaccount.com'
+      - uses: ./.github/actions/setup-node
+      - run: yarn install
+        working-directory: client
+      - run: yarn build
+        working-directory: client
+      - name: deploy to Firebase Hosting
+        run: npx firebase-tools deploy --only hosting

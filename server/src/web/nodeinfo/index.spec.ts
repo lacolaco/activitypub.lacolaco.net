@@ -3,18 +3,18 @@ import { describe, test, assert, expect } from 'vitest';
 import useWebfinger from './index';
 
 describe('nodeinfo', () => {
-	const app = new Hono();
-	useWebfinger(app);
+  const app = new Hono();
+  useWebfinger(app);
 
-	test('entrypoint response is valid', async () => {
-		const req = new Request('http://localhost/.well-known/nodeinfo', {
-			method: 'GET',
-		});
-		const res = await app.request(req);
-		expect(res.headers.get('Content-Type')).toContain('application/json');
-		const body = await res.json();
+  test('entrypoint response is valid', async () => {
+    const req = new Request('http://localhost/.well-known/nodeinfo', {
+      method: 'GET',
+    });
+    const res = await app.request(req);
+    expect(res.headers.get('Content-Type')).toContain('application/json');
+    const body = await res.json();
 
-		expect(body).toMatchInlineSnapshot(`
+    expect(body).toMatchInlineSnapshot(`
 			{
 			  "links": [
 			    {
@@ -24,17 +24,17 @@ describe('nodeinfo', () => {
 			  ],
 			}
 		`);
-	});
+  });
 
-	test('nodeinfo response is valid', async () => {
-		const req = new Request('http://localhost/nodeinfo/2.1', {
-			method: 'GET',
-		});
-		const res = await app.request(req);
-		expect(res.headers.get('Content-Type')).toContain('application/json');
-		const body = await res.json();
+  test('nodeinfo response is valid', async () => {
+    const req = new Request('http://localhost/nodeinfo/2.1', {
+      method: 'GET',
+    });
+    const res = await app.request(req);
+    expect(res.headers.get('Content-Type')).toContain('application/json');
+    const body = await res.json();
 
-		expect(body).toMatchInlineSnapshot(`
+    expect(body).toMatchInlineSnapshot(`
 			{
 			  "metadata": {
 			    "disableRegistration": true,
@@ -66,5 +66,5 @@ describe('nodeinfo', () => {
 			  "version": "2.1",
 			}
 		`);
-	});
+  });
 });
