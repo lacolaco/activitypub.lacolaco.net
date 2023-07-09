@@ -55,7 +55,7 @@ func (s *service) handle(c *gin.Context) {
 			map[string]string{
 				"rel":  "self",
 				"type": "application/activity+json",
-				"href": "https://" + host + "/users/" + string(user.UID),
+				"href": "https://" + host + "/ap/users/" + string(user.UID),
 			},
 			map[string]string{
 				"rel":  "http://webfinger.net/rel/profile-page",

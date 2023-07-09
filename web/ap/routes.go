@@ -51,21 +51,18 @@ func New(userRepo UserRepository, relationshipUsecase RelationshipUsecase) *apSe
 }
 
 func (s *apService) RegisterRoutes(r *gin.Engine) {
-	assertJSONGet := webutil.AssertAccept([]string{
-		"application/activity+json",
-		"application/ld+json",
-		"application/json",
-	})
 	assertJSONPost := webutil.AssertContentType([]string{"application/activity+json"})
 
-	userRoutes := r.Group("/users/:uid")
-	userRoutes.GET("", assertJSONGet, s.handlePerson)
+	apRoutes := r.Group("/ap")
+
+	userRoutes := apRoutes.Group("/users/:uid")
+	userRoutes.GET("", s.handlePerson)
 	userRoutes.POST("/inbox", assertJSONPost, s.handleInbox)
-	userRoutes.GET("/outbox", assertJSONGet, s.handleOutbox)
-	userRoutes.GET("/followers", assertJSONGet, s.handleFollowers)
-	userRoutes.GET("/following", assertJSONGet, s.handleFollowing)
-	userRoutes.GET("/liked", assertJSONGet, s.handleLiked)
-	r.POST("/inbox", assertJSONPost, s.handleSharedInbox)
+	userRoutes.GET("/outbox", s.handleOutbox)
+	userRoutes.GET("/followers", s.handleFollowers)
+	userRoutes.GET("/following", s.handleFollowing)
+	userRoutes.GET("/liked", s.handleLiked)
+	apRoutes.POST("/inbox", assertJSONPost, s.handleSharedInbox)
 }
 
 func (s *apService) handlePerson(c *gin.Context) {
