@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "baseUrl": "",
+    "target": "es2021",
+    "module": "es2022",
+    "moduleResolution": "node",
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "paths": {
+      "@app/activitypub": ["server/src/activitypub/index.ts"],
+      "@app/domain/*": ["server/src/domain/*"],
+      "@app/repository/*": ["server/src/repository/*"],
+      "@app/web/*": ["server/src/web/*"]
+    }
+  }
+}
