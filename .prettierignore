@@ -1,5 +1,6 @@
 .*
 node_modules
+dist
 
 go.sum
 go.mod
