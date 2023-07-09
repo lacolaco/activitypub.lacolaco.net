@@ -21,6 +21,8 @@ jobs:
           workload_identity_provider: 'projects/350326448420/locations/global/workloadIdentityPools/pool/providers/provider'
           service_account: 'github-actions@lacolaco-activitypub.iam.gserviceaccount.com'
       - uses: ./.github/actions/setup-go
+      - name: copy env
+        run: cp .env.example .env
       - name: install deps
         run: go mod download
       - run: go vet ./...

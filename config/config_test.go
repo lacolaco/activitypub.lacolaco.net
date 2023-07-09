@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -10,7 +9,6 @@ import (
 )
 
 func TestLoad(t *testing.T) {
-	os.Clearenv()
 	godotenv.Load("../.env")
 	conf, err := config.Load()
 	if err != nil {
