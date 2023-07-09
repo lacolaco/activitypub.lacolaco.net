@@ -32,6 +32,7 @@ type LocalUser struct {
 	PrefName    string            `json:"preferred_username" firestore:"preferred_username"`
 	Description string            `json:"description" firestore:"description"`
 	Icon        *UserIcon         `json:"icon" firestore:"icon"`
+	URL         string            `json:"url" firestore:"url"`
 	CreatedAt   time.Time         `json:"created_at" firestore:"created_at"`
 	UpdatedAt   time.Time         `json:"updated_at" firestore:"updated_at"`
 	Attachments []*UserAttachment `json:"attachments" firestore:"attachments"`
@@ -58,7 +59,7 @@ func (u *LocalUser) ToPerson(baseURI string, publicKey *rsa.PublicKey) *ap.Perso
 		Followers:         ap.IRI(fmt.Sprintf("%s/followers", id)),
 		Following:         ap.IRI(fmt.Sprintf("%s/following", id)),
 		Liked:             ap.IRI(fmt.Sprintf("%s/liked", id)),
-		URL:               fmt.Sprintf("%s/@%s", baseURI, u.ID),
+		URL:               u.URL,
 		Published:         u.CreatedAt,
 		Icon: &ap.Image{
 			URL:       u.Icon.URL,
