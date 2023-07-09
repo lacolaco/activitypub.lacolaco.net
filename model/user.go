@@ -42,22 +42,22 @@ func (u *LocalUser) GetDocID() string {
 }
 
 func (u *LocalUser) ToPerson(baseURI string, publicKey *rsa.PublicKey) *ap.Person {
-	userURI := fmt.Sprintf("%s/ap/users/%s", baseURI, u.UID)
+	id := fmt.Sprintf("%s/users/%s", baseURI, u.UID)
 	publicKeyPem, err := httpsig.EncodeKey(publicKey)
 	if err != nil {
 		panic(err)
 	}
 
 	p := &ap.Person{
-		ID:                ap.IRI(userURI),
+		ID:                ap.IRI(id),
 		Name:              u.Name,
 		PreferredUsername: u.PrefName,
 		Summary:           u.Description,
-		Inbox:             ap.IRI(fmt.Sprintf("%s/inbox", userURI)),
-		Outbox:            ap.IRI(fmt.Sprintf("%s/outbox", userURI)),
-		Followers:         ap.IRI(fmt.Sprintf("%s/followers", userURI)),
-		Following:         ap.IRI(fmt.Sprintf("%s/following", userURI)),
-		Liked:             ap.IRI(fmt.Sprintf("%s/liked", userURI)),
+		Inbox:             ap.IRI(fmt.Sprintf("%s/inbox", id)),
+		Outbox:            ap.IRI(fmt.Sprintf("%s/outbox", id)),
+		Followers:         ap.IRI(fmt.Sprintf("%s/followers", id)),
+		Following:         ap.IRI(fmt.Sprintf("%s/following", id)),
+		Liked:             ap.IRI(fmt.Sprintf("%s/liked", id)),
 		URL:               fmt.Sprintf("%s/@%s", baseURI, u.ID),
 		Published:         u.CreatedAt,
 		Icon: &ap.Image{
@@ -65,8 +65,8 @@ func (u *LocalUser) ToPerson(baseURI string, publicKey *rsa.PublicKey) *ap.Perso
 			MediaType: u.Icon.MediaType,
 		},
 		PublicKey: &ap.PublicKey{
-			ID:           ap.IRI(fmt.Sprintf("%s#%s", userURI, publicKeyIDSuffix)),
-			Owner:        ap.IRI(userURI),
+			ID:           ap.IRI(fmt.Sprintf("%s#%s", id, publicKeyIDSuffix)),
+			Owner:        ap.IRI(id),
 			PublicKeyPem: publicKeyPem,
 		},
 		Attachment: func() []ap.ActivityStreamsObject {
