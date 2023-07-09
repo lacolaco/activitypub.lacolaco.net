@@ -59,7 +59,7 @@ func (s *apService) RegisterRoutes(r *gin.Engine) {
 	assertJSONPost := webutil.AssertContentType([]string{"application/activity+json"})
 
 	userRoutes := r.Group("/users/:uid")
-	userRoutes.GET("", assertJSONGet, s.handlePerson)
+	userRoutes.GET("", s.handlePerson)
 	userRoutes.POST("/inbox", assertJSONPost, s.handleInbox)
 	userRoutes.GET("/outbox", assertJSONGet, s.handleOutbox)
 	userRoutes.GET("/followers", assertJSONGet, s.handleFollowers)
