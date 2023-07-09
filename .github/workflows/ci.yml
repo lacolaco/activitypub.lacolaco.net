@@ -25,7 +25,7 @@ jobs:
         working-directory: client
       - run: yarn build
         working-directory: client
-      - run: npm run build
+      - run: npm run build:server
 
   test-server:
     runs-on: ubuntu-latest
