@@ -3,7 +3,6 @@ package ap_test
 import (
 	"bytes"
 	"net/http"
-	"os"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -12,7 +11,6 @@ import (
 )
 
 func TestSignRequest(t *testing.T) {
-	os.Clearenv()
 	godotenv.Load("../.env")
 	conf, _ := config.Load()
 
