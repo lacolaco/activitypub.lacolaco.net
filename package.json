@@ -1,0 +1,11 @@
+{
+  "name": "activitypub-lacolaco-net",
+  "private": true,
+  "scripts": {
+    "format": "prettier --cache --write ."
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  }
+}
