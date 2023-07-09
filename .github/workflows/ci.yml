@@ -9,6 +9,24 @@ permissions:
   id-token: 'write'
 
 jobs:
+  build-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: google-github-actions/auth@v1.1.1
+        id: 'auth'
+        with:
+          workload_identity_provider: 'projects/350326448420/locations/global/workloadIdentityPools/pool/providers/provider'
+          service_account: 'github-actions@lacolaco-activitypub.iam.gserviceaccount.com'
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/setup-go
+      - run: cp .env.example .env
+      - run: yarn install
+        working-directory: client
+      - run: yarn build
+        working-directory: client
+      - run: npm run build
+
   test-server:
     runs-on: ubuntu-latest
     steps:
@@ -19,10 +37,8 @@ jobs:
           workload_identity_provider: 'projects/350326448420/locations/global/workloadIdentityPools/pool/providers/provider'
           service_account: 'github-actions@lacolaco-activitypub.iam.gserviceaccount.com'
       - uses: ./.github/actions/setup-go
-      - name: copy env
-        run: cp .env.example .env
-      - name: install deps
-        run: go mod download
+      - run: cp .env.example .env
+      - run: go mod download
       - run: go vet ./...
       # - run: go test ./...
 
@@ -31,9 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-node
-      - name: install client deps
+      - run: yarn install
         working-directory: client
-        run: yarn install
-      - name: build client
+      - run: yarn build
         working-directory: client
-        run: yarn build

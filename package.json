@@ -2,7 +2,8 @@
   "name": "activitypub-lacolaco-net",
   "private": true,
   "scripts": {
-    "format": "prettier --cache --write ."
+    "format": "prettier --cache --write .",
+    "build:server": "docker build ."
   },
   "license": "MIT",
   "devDependencies": {
