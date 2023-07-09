@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { map, switchMap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { RxState, stateful } from '@rx-angular/state';
+import { RxState } from '@rx-angular/state';
+import { stateful } from '@rx-angular/state/selections';
 
 export type LocalUser = {
   id: string;
