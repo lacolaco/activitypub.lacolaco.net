@@ -56,7 +56,9 @@ export class UserComponent implements OnInit {
     this.state.connect(
       'user',
       this.username$.pipe(
-        switchMap((username) => this.http.get<{ user: LocalUser }>(`${environment.backend}/api/users/show/${username}`)),
+        switchMap((username) =>
+          this.http.get<{ user: LocalUser }>(`${environment.backend}/api/users/show/${username}`),
+        ),
         map((resp) => resp.user),
       ),
     );
