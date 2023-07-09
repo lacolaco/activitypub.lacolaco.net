@@ -7,6 +7,7 @@ import { stateful } from '@rx-angular/state/selections';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { AppStrokedButton } from '../shared/ui/button';
 import { FormFieldModule } from '../shared/ui/form-field';
+import { environment } from '../../environments/environment';
 
 type ActivityPubPerson = {
   id: string;
@@ -62,7 +63,7 @@ export class SearchComponent {
   readonly state$ = this.state.select().pipe(stateful());
 
   readonly form = new FormGroup({
-    userId: new FormControl('@lacolaco@social.mikutter.hachune.net', { nonNullable: true }),
+    userId: new FormControl('@lacolaco@misskey.io', { nonNullable: true }),
   });
 
   ngOnInit() {
@@ -76,7 +77,7 @@ export class SearchComponent {
     }
     try {
       const resp = await firstValueFrom(
-        this.http.get<{ person: ActivityPubPerson | null }>(`/api/search/person/${userId}`),
+        this.http.get<{ person: ActivityPubPerson | null }>(`${environment.backend}/api/search/person/${userId}`),
       );
       this.state.set({ person: resp.person, searched: true });
       console.log(resp);
@@ -87,7 +88,7 @@ export class SearchComponent {
 
   async requestFollow(person: ActivityPubPerson) {
     try {
-      await lastValueFrom(this.http.post(`/api/following/create`, { id: person.id }));
+      await lastValueFrom(this.http.post(`${environment.backend}/api/following/create`, { id: person.id }));
     } catch (e) {
       console.error(e);
     }
@@ -95,7 +96,7 @@ export class SearchComponent {
 
   async requestUnfollow(person: ActivityPubPerson) {
     try {
-      await lastValueFrom(this.http.post(`/api/following/delete`, { id: person.id }));
+      await lastValueFrom(this.http.post(`${environment.backend}/api/following/delete`, { id: person.id }));
     } catch (e) {
       console.error(e);
     }

@@ -28,8 +28,5 @@ COPY --from=builder /app/bin/server /app/server
 
 WORKDIR /app
 
-# Copy static files
-COPY ./client/dist ./public
-
 # Run the web service on container startup.
 CMD ["./server"]

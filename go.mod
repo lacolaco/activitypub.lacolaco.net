@@ -65,6 +65,7 @@ require (
 	firebase.google.com/go/v4 v4.10.0
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.1
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-gonic/gin v1.9.1
 	github.com/joho/godotenv v1.5.1

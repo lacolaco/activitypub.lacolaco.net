@@ -14,10 +14,10 @@ import (
 
 type Config struct {
 	Port              string
-	StaticDir         string
 	PrivateKey        *rsa.PrivateKey
 	PublicKey         *rsa.PublicKey
 	googleCredentials *google.Credentials
+	ClientOrigin      string
 	isRunningOnCloud  bool
 }
 
@@ -38,7 +38,7 @@ func Load() (*Config, error) {
 	if config.Port == "" {
 		config.Port = "8080"
 	}
-	config.StaticDir = os.Getenv("KO_DATA_PATH")
+	config.ClientOrigin = os.Getenv("CLIENT_ORIGIN")
 	rsaPrivateKey := os.Getenv("RSA_PRIVATE_KEY")
 	if rsaPrivateKey == "" {
 		return nil, fmt.Errorf("RSA keys are not set")

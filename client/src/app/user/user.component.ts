@@ -5,6 +5,7 @@ import { map, switchMap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { RxState } from '@rx-angular/state';
 import { stateful } from '@rx-angular/state/selections';
+import { environment } from '../../environments/environment';
 
 export type LocalUser = {
   id: string;
@@ -55,7 +56,7 @@ export class UserComponent implements OnInit {
     this.state.connect(
       'user',
       this.username$.pipe(
-        switchMap((username) => this.http.get<{ user: LocalUser }>(`/api/users/show/${username}`)),
+        switchMap((username) => this.http.get<{ user: LocalUser }>(`${environment.backend}/api/users/show/${username}`)),
         map((resp) => resp.user),
       ),
     );

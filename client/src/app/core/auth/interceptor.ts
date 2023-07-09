@@ -2,12 +2,13 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Auth, idToken } from '@angular/fire/auth';
 import { switchMap } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 export function authInterceptor(): HttpInterceptorFn {
   return (req, next) => {
     const auth = inject(Auth);
     // skip if not a request to our API
-    if (!req.url.startsWith('/api')) {
+    if (!req.url.startsWith(environment.backend)) {
       return next(req);
     }
 

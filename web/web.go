@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/lacolaco/activitypub.lacolaco.net/auth"
@@ -11,7 +12,6 @@ import (
 	"github.com/lacolaco/activitypub.lacolaco.net/gcp"
 	"github.com/lacolaco/activitypub.lacolaco.net/logging"
 	"github.com/lacolaco/activitypub.lacolaco.net/repository"
-	"github.com/lacolaco/activitypub.lacolaco.net/static"
 	"github.com/lacolaco/activitypub.lacolaco.net/tracing"
 	"github.com/lacolaco/activitypub.lacolaco.net/usecase"
 	"github.com/lacolaco/activitypub.lacolaco.net/web/ap"
@@ -38,11 +38,15 @@ func Start(conf *config.Config) error {
 
 	r := gin.New()
 	r.Use(gin.Recovery())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{conf.ClientOrigin}
+	corsConfig.AllowHeaders = []string{"Authorization", "Content-Type"}
+	corsConfig.AllowCredentials = true
+	r.Use(cors.New(corsConfig))
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(config.WithConfig(conf))
 	r.Use(tracing.WithTracing(conf))
 	r.Use(logging.WithLogging(conf))
-	r.Use(static.WithStatic("/", "./public"))
 	r.Use(auth.WithAuth(auth.FirebaseAuthTokenVerifier(firebaseAuth)))
 	r.Use(errorHandler())
 
