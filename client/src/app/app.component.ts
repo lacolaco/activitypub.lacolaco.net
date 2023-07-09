@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { Auth, authState, GoogleAuthProvider, signInWithPopup, signOut, User } from '@angular/fire/auth';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { RxState, stateful } from '@rx-angular/state';
+import { RxState } from '@rx-angular/state';
+import { stateful } from '@rx-angular/state/selections';
 import { tap } from 'rxjs';
 import { AppStrokedButton } from './shared/ui/button';
 
