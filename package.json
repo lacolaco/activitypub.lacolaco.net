@@ -9,7 +9,7 @@
     "test": "vitest"
   },
   "license": "MIT",
-  "packageManager": "pnpm@7.14.0",
+  "packageManager": "pnpm@7.33.3",
   "dependencies": {
     "@activity-kit/types": "^0.4.36",
     "hono": "^3.2.7",
