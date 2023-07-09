@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -11,7 +10,6 @@ import (
 )
 
 func TestFindByUID(t *testing.T) {
-	os.Clearenv()
 	godotenv.Load("../.env")
 	client := gcp.NewFirestoreClient()
 	repo := repository.NewUserRepository(client)
@@ -38,7 +36,6 @@ func TestFindByUID(t *testing.T) {
 }
 
 func TestFindByLocalID(t *testing.T) {
-	os.Clearenv()
 	godotenv.Load("../.env")
 	client := gcp.NewFirestoreClient()
 	repo := repository.NewUserRepository(client)

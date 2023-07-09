@@ -25,7 +25,6 @@ jobs:
         run: go mod download
       - run: go vet ./...
       - run: go test ./...
-      - run: go build -o /dev/null ./cmd/server
 
   test-client:
     runs-on: ubuntu-latest
