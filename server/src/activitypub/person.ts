@@ -16,7 +16,7 @@ export function buildPerson(origin: string, user: User) {
     summary: user.description ?? '',
     icon: {
       type: 'Image',
-      url: new URL(user.iconUrl),
+      url: new URL(user.icon.url),
     },
     attachment: user.attachments?.map((a) => buildPropertyValue(a.name, a.value)) as unknown as AP.EntityReference[],
     inbox: new URL(`${userURI}/inbox`),

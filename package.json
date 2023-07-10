@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "format": "prettier --cache --write .",
-    "start:server": "tsx server/src/index.ts",
+    "start:server": "dotenv -- tsx watch ./server/src/main.ts",
     "build:client": "pnpm --filter client run build",
     "build:server": "esbuild server/src/main.ts --bundle --platform=node --target=node18 --outfile=server/dist/main.js",
     "test": "vitest"
@@ -12,6 +12,7 @@
   "packageManager": "pnpm@7.33.3",
   "dependencies": {
     "@activity-kit/types": "^0.4.36",
+    "@google-cloud/firestore": "^6.6.1",
     "hono": "^3.2.7",
     "zod": "^3.21.4"
   },
@@ -19,6 +20,7 @@
     "@hono/node-server": "^1.0.2",
     "@types/node": "^20.4.1",
     "@types/node-fetch": "^2.6.4",
+    "dotenv-cli": "^7.2.1",
     "esbuild": "^0.18.11",
     "prettier": "^3.0.0",
     "tsx": "^3.12.7",

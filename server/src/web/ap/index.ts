@@ -1,7 +1,6 @@
 import * as ap from '@app/activitypub';
 import { UsersRepository } from '@app/repository/users';
 import { Handler, Hono, MiddlewareHandler } from 'hono';
-import { Env } from '../../env';
 import { assertContentTypeHeader } from '../../middleware/asserts';
 
 const setContentType = (): MiddlewareHandler => async (c, next) => {
@@ -10,30 +9,30 @@ const setContentType = (): MiddlewareHandler => async (c, next) => {
 };
 
 export default (app: Hono) => {
-  const apRoutes = new Hono<Env>();
+  const apRoutes = new Hono();
   // middlewares
   apRoutes.get('*', setContentType());
   apRoutes.post('*', assertContentTypeHeader(['application/activity+json']));
   // routes
   apRoutes.post('/inbox', handlePostSharedInbox);
 
-  const userRoutes = new Hono<Env>();
+  const userRoutes = new Hono();
   userRoutes.get('/', handleGetPerson);
   userRoutes.post('/inbox', handlePostInbox);
   userRoutes.get('/outbox', handleGetOutbox);
   userRoutes.get('/followers', handleGetFollowers);
   userRoutes.get('/following', handleGetFollowing);
 
-  apRoutes.route('/users/:username', userRoutes);
-  app.route('/ap', apRoutes);
+  apRoutes.route('/users/:id', userRoutes);
+  app.route('/', apRoutes);
 };
 
-const handleGetPerson: Handler<Env> = async (c) => {
+const handleGetPerson: Handler = async (c) => {
   const { origin } = new URL(c.req.url);
-  const userRepo = new UsersRepository(c.env.DB);
-  const username = c.req.param('username');
+  const userRepo = new UsersRepository();
+  const id = c.req.param('id');
 
-  const user = await userRepo.findByUsername(username);
+  const user = await userRepo.findByID(id);
   if (user == null) {
     c.status(404);
     return c.text('Not Found');
@@ -42,16 +41,16 @@ const handleGetPerson: Handler<Env> = async (c) => {
   return res;
 };
 
-const handlePostInbox: Handler<Env> = async (c) => {
+const handlePostInbox: Handler = async (c) => {
   return c.text('ok');
 };
 
-const handleGetOutbox: Handler<Env> = async (c) => {
+const handleGetOutbox: Handler = async (c) => {
   const { origin } = new URL(c.req.url);
-  const userRepo = new UsersRepository(c.env.DB);
-  const username = c.req.param('username');
+  const userRepo = new UsersRepository();
+  const id = c.req.param('id');
 
-  const user = await userRepo.findByUsername(username);
+  const user = await userRepo.findByID(id);
   if (user == null) {
     c.status(404);
     return c.text('Not Found');
@@ -61,12 +60,12 @@ const handleGetOutbox: Handler<Env> = async (c) => {
   return res;
 };
 
-const handleGetFollowers: Handler<Env> = async (c) => {
+const handleGetFollowers: Handler = async (c) => {
   const { origin } = new URL(c.req.url);
-  const userRepo = new UsersRepository(c.env.DB);
-  const username = c.req.param('username');
+  const userRepo = new UsersRepository();
+  const id = c.req.param('id');
 
-  const user = await userRepo.findByUsername(username);
+  const user = await userRepo.findByID(id);
   if (user == null) {
     c.status(404);
     return c.text('Not Found');
@@ -76,12 +75,12 @@ const handleGetFollowers: Handler<Env> = async (c) => {
   return res;
 };
 
-const handleGetFollowing: Handler<Env> = async (c) => {
+const handleGetFollowing: Handler = async (c) => {
   const { origin } = new URL(c.req.url);
-  const userRepo = new UsersRepository(c.env.DB);
-  const username = c.req.param('username');
+  const userRepo = new UsersRepository();
+  const id = c.req.param('id');
 
-  const user = await userRepo.findByUsername(username);
+  const user = await userRepo.findByID(id);
   if (user == null) {
     c.status(404);
     return c.text('Not Found');
@@ -91,6 +90,6 @@ const handleGetFollowing: Handler<Env> = async (c) => {
   return res;
 };
 
-const handlePostSharedInbox: Handler<Env> = async (c) => {
+const handlePostSharedInbox: Handler = async (c) => {
   return c.text('ok');
 };

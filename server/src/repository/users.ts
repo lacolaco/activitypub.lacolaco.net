@@ -1,17 +1,34 @@
 import { User } from '@app/domain/user';
+import { DocumentReference, Firestore, Timestamp } from '@google-cloud/firestore';
+
+type UserDocument = {
+  id: string;
+  username: string;
+  displayName: string;
+  description: string;
+  icon: { url: string };
+  url: string;
+  attachments: Array<{ name: string; value: string }>;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+};
 
 export class UsersRepository {
-  constructor(readonly db: D1Database) {}
+  readonly db = new Firestore();
 
-  async findByUsername(username: string): Promise<User | null> {
-    const findUser = this.db.prepare(`SELECT * FROM Users WHERE username = ?`).bind(username);
-    const user = await findUser.first();
-    if (user == null) {
+  async findByID(uid: string): Promise<User | null> {
+    const findUser = this.db.collection('users').doc(uid) as DocumentReference<UserDocument>;
+    const userDoc = await findUser.get();
+    const data = userDoc.data();
+    if (data == null) {
       return null;
     }
-    const queryAttachments = this.db.prepare(`SELECT * FROM UserAttachments WHERE userId = ?`).bind(user.id);
-    const { results } = await queryAttachments.all();
-    user.attachments = results;
-    return User.parse(user);
+
+    return User.parse({
+      ...data,
+      id: userDoc.id,
+      createdAt: data.createdAt.toDate(),
+      updatedAt: data.updatedAt.toDate(),
+    });
   }
 }

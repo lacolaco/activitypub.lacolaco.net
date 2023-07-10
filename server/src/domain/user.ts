@@ -1,11 +1,14 @@
 import { z } from 'zod';
 
 export const User = z.object({
-  id: z.number(),
+  id: z.string(),
   username: z.string(),
   displayName: z.string(),
   description: z.string().nullable(),
-  iconUrl: z.string(),
+  icon: z.object({
+    url: z.string(),
+  }),
+  url: z.string(),
   attachments: z
     .array(
       z.object({
