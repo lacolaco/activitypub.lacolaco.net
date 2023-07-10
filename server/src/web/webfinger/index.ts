@@ -21,7 +21,7 @@ const handleWebfinger: Handler = async (c) => {
       {
         rel: 'self',
         type: 'application/activity+json',
-        href: `${origin}/ap/users/${username}`,
+        href: `${origin}/users/${username}`,
       },
     ],
   });

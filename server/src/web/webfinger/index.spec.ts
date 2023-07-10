@@ -13,17 +13,17 @@ describe('webfinger', () => {
     });
     const res = await app.request(req);
     assert.equal(res.headers.get('Content-Type'), 'application/jrd+json');
-    const body = await res.json<JRDObject>();
+    const body = (await res.json()) as JRDObject;
     assert.equal(body.subject, 'acct:alice@localhost');
     assert.equal(body.links[0].rel, 'self');
     assert.equal(body.links[0].type, 'application/activity+json');
-    assert.equal(body.links[0].href, 'http://localhost/ap/users/alice');
+    assert.equal(body.links[0].href, 'http://localhost/users/alice');
 
     expect(body).toMatchInlineSnapshot(`
 			{
 			  "links": [
 			    {
-			      "href": "http://localhost/ap/users/alice",
+			      "href": "http://localhost/users/alice",
 			      "rel": "self",
 			      "type": "application/activity+json",
 			    },

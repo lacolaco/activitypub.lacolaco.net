@@ -6,7 +6,7 @@ import { buildPropertyValue } from './property-value';
 type Person = AP.Person & Record<string, unknown>;
 
 export function buildPerson(origin: string, user: User) {
-  const userURI = `${origin}/ap/users/${user.username}`;
+  const userURI = `${origin}/users/${user.username}`;
   return {
     '@context': contextURIs,
     id: new URL(userURI),
@@ -24,7 +24,7 @@ export function buildPerson(origin: string, user: User) {
     followers: new URL(`${userURI}/followers`),
     following: new URL(`${userURI}/following`),
     endpoints: {
-      sharedInbox: new URL(`${origin}/ap/inbox`),
+      sharedInbox: new URL(`${origin}/inbox`),
     },
     url: new URL(userURI), // TODO: use user's website
     published: user.createdAt,
