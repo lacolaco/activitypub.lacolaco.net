@@ -11,6 +11,10 @@ export const getEntityID = (entity?: undefined | null | AP.EntityReference | AP.
     return entity;
   }
 
+  if (typeof entity === 'string') {
+    return new URL(entity);
+  }
+
   if ('id' in entity) {
     return entity.id ?? null;
   }
