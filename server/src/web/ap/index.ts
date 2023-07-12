@@ -196,7 +196,7 @@ const handlePostSharedInbox: Handler<AppContext> = async (c) => {
     }
 
     const activity = await c.req.json<ap.Activity>();
-    console.debug('activity', activity);
+    console.debug(JSON.stringify(activity));
 
     span.setAttributes({
       'activity.type': activity.type,
