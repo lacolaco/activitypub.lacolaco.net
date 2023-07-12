@@ -178,5 +178,24 @@ const handleGetFollowing: Handler = async (c) => {
 };
 
 const handlePostSharedInbox: Handler = async (c) => {
-  return c.json({});
+  return getTracer().startActiveSpan('ap.handlePostSharedInbox', async (span) => {
+    try {
+      await ap.verifySignature(c.req);
+    } catch (e) {
+      console.error(e);
+      c.status(400);
+      return c.json({ error: 'Bad Request' });
+    }
+
+    const activity = await c.req.json<ap.Activity>();
+    console.debug('activity', activity);
+
+    span.setAttributes({
+      'activity.type': activity.type,
+      'activity.actor': ap.getEntityID(activity.actor)?.toString(),
+    });
+
+    c.status(404);
+    return c.json({ error: 'Not Found' });
+  });
 };
