@@ -26,13 +26,17 @@ export async function acceptFollowRequest(
   console.log('accepting follow request from', actorID.toString());
   // resolve remote user
   const actor = await fetchPersonByID(actorID);
+  const inboxURL = getID(actor.inbox);
+  if (inboxURL == null) {
+    throw new Error('inboxURL is null');
+  }
 
   // send accept activity
   try {
     const agent = new ActivityPubAgent(privateKey);
     const person = buildPerson(c.get('origin'), user);
     const acceptActivity = buildAcceptAcivity(person.id, activity);
-    await agent.postActivity(new URL(actorID), person.id.toString(), acceptActivity);
+    await agent.postActivity(inboxURL, person.id.toString(), acceptActivity);
   } catch (e) {
     console.error(e);
     throw new Error('Failed to send accept activity');
@@ -55,12 +59,20 @@ export async function deleteFollower(c: Context<AppContext>, user: User, activit
     throw new Error('actorID is null');
   }
 
+  console.log('accepting unfollow request from', actorID.toString());
+  // resolve remote user
+  const actor = await fetchPersonByID(actorID);
+  const inboxURL = getID(actor.inbox);
+  if (inboxURL == null) {
+    throw new Error('inboxURL is null');
+  }
+
   // send accept activity
   try {
     const agent = new ActivityPubAgent(privateKey);
     const person = buildPerson(c.get('origin'), user);
     const acceptActivity = buildAcceptAcivity(person.id, activity);
-    await agent.postActivity(new URL(actorID), person.id.toString(), acceptActivity);
+    await agent.postActivity(inboxURL, person.id.toString(), acceptActivity);
   } catch (e) {
     console.error(e);
     throw new Error('Failed to send accept activity');
