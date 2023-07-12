@@ -8,7 +8,7 @@ export default (app: Hono<AppContext>) => {
 
 const handleHostMetaXML: Handler = async (c) => {
   const accept = c.req.headers.get('Accept');
-  const { protocol, host } = new URL(c.req.url);
+  const origin = c.get('origin');
 
   if (accept === 'application/json') {
     return c.redirect(`/.well-known/host-meta.json`);
@@ -16,7 +16,7 @@ const handleHostMetaXML: Handler = async (c) => {
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
-    <Link rel="lrdd" template="${protocol}//${host}/.well-known/webfinger?resource={uri}"/>
+    <Link rel="lrdd" template="${origin}/.well-known/webfinger?resource={uri}"/>
 </XRD>`;
 
   const res = c.text(body);
@@ -25,7 +25,7 @@ const handleHostMetaXML: Handler = async (c) => {
 };
 
 const handleHostMetaJSON: Handler = async (c) => {
-  const { origin } = new URL(c.req.url);
+  const origin = c.get('origin');
   const body = {
     links: [
       {

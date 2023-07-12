@@ -8,7 +8,7 @@ export default (app: Hono<AppContext>) => {
 };
 
 const handleNodeinfo: Handler = async (c) => {
-  const { origin } = new URL(c.req.url);
+  const origin = c.get('origin');
 
   const res = c.json({
     links: [

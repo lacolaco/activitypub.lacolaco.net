@@ -1,17 +1,19 @@
+import { JRDObject } from '@app/webfinger';
 import { Hono } from 'hono';
 import { assert, describe, expect, test } from 'vitest';
-import { AppContext } from '../context';
+import { AppContext, withOrigin } from '../context';
 import useWebfinger from './index';
-import { JRDObject } from './types';
 
 describe('webfinger', () => {
   const app = new Hono<AppContext>();
+  app.use('*', withOrigin());
   useWebfinger(app);
 
   // TODO: UsersRepository をモックできるようにする
   test.skip('response is JRD content', async () => {
     const req = new Request('http://localhost/.well-known/webfinger?resource=acct:alice@localhost', {
       method: 'GET',
+      headers: { host: 'localhost:80' },
     });
     const res = await app.request(req);
     assert.equal(res.headers.get('Content-Type'), 'application/jrd+json');

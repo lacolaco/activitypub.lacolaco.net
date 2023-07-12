@@ -15,6 +15,7 @@ describe('endpoints for activitypub compatibility', () => {
   test.skip('webfinger is supported', async () => {
     const req = new Request('http://localhost/.well-known/webfinger?resource=acct:alice@localhost', {
       method: 'GET',
+      headers: { host: 'localhost:80' },
     });
     const res = await app.request(req);
     assert.equal(res.status, 200);
@@ -24,6 +25,7 @@ describe('endpoints for activitypub compatibility', () => {
   test('nodeinfo is supported', async () => {
     const req = new Request('http://localhost/.well-known/nodeinfo', {
       method: 'GET',
+      headers: { host: 'localhost:80' },
     });
     const res = await app.request(req);
     assert.equal(res.status, 200);
@@ -33,6 +35,7 @@ describe('endpoints for activitypub compatibility', () => {
   test('host-meta (xml) is supported', async () => {
     const req = new Request('http://localhost/.well-known/host-meta', {
       method: 'GET',
+      headers: { host: 'localhost:80' },
     });
     const res = await app.request(req);
     assert.equal(res.status, 200);
@@ -42,6 +45,7 @@ describe('endpoints for activitypub compatibility', () => {
   test('host-meta (json) is supported', async () => {
     const req = new Request('http://localhost/.well-known/host-meta.json', {
       method: 'GET',
+      headers: { host: 'localhost:80' },
     });
     const res = await app.request(req);
     assert.equal(res.status, 200);

@@ -34,7 +34,7 @@ export default (app: Hono<AppContext>) => {
 
 const handleGetPerson: Handler<AppContext> = async (c) => {
   return getTracer().startActiveSpan('ap.handleGetPerson', async (span) => {
-    const { origin } = new URL(c.req.url);
+    const origin = c.get('origin');
 
     const userRepo = new UsersRepository();
     const id = c.req.param('id');
@@ -60,7 +60,7 @@ const handleGetPerson: Handler<AppContext> = async (c) => {
 };
 
 const handleGetInbox: Handler<AppContext> = async (c) => {
-  const { origin } = new URL(c.req.url);
+  const origin = c.get('origin');
   const userRepo = new UsersRepository();
   const id = c.req.param('id');
 
@@ -126,7 +126,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
 };
 
 const handleGetOutbox: Handler = async (c) => {
-  const { origin } = new URL(c.req.url);
+  const origin = c.get('origin');
   const userRepo = new UsersRepository();
   const id = c.req.param('id');
 
@@ -141,7 +141,7 @@ const handleGetOutbox: Handler = async (c) => {
 };
 
 const handleGetFollowers: Handler = async (c) => {
-  const { origin } = new URL(c.req.url);
+  const origin = c.get('origin');
 
   const userRepo = new UsersRepository();
   const id = c.req.param('id');
@@ -164,7 +164,7 @@ const handleGetFollowers: Handler = async (c) => {
 };
 
 const handleGetFollowing: Handler = async (c) => {
-  const { origin } = new URL(c.req.url);
+  const origin = c.get('origin');
   const userRepo = new UsersRepository();
   const id = c.req.param('id');
 
