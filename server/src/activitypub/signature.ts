@@ -1,6 +1,6 @@
 import parser, { Sha256Signer } from 'activitypub-http-signatures';
 import { Person } from './person';
-import { getEntityID } from './utilities';
+import { getID } from './utilities';
 import { getTracer } from '@app/tracing';
 
 export function getPublicKeyID(actorID: string): string {
@@ -19,7 +19,7 @@ export type PublicKey = {
 };
 
 export function withPublicKey(entity: Person, publicKey: string): Person {
-  const id = getEntityID(entity);
+  const id = getID(entity);
   if (id == null) {
     throw new Error('person.id is null');
   }

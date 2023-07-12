@@ -200,7 +200,7 @@ const handlePostSharedInbox: Handler<AppContext> = async (c) => {
 
     span.setAttributes({
       'activity.type': activity.type,
-      'activity.actor': ap.getEntityID(activity.actor)?.toString(),
+      'activity.actor': ap.getID(activity.actor)?.toString(),
     });
 
     c.status(404);

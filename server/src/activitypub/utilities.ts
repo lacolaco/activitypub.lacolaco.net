@@ -1,24 +1,21 @@
-import { AP } from '@activity-kit/types';
 import { Activity } from './activity';
 import { signRequest } from './signature';
 
-export const getEntityID = (entity?: undefined | null | AP.EntityReference | AP.EntityReference[]) => {
-  if (!entity || Array.isArray(entity)) {
+export const getID = (entity: unknown) => {
+  if (entity == null) {
     return null;
   }
-
-  if (entity instanceof URL) {
-    return entity;
-  }
-
   if (typeof entity === 'string') {
     return new URL(entity);
   }
-
-  if ('id' in entity) {
-    return entity.id ?? null;
+  if (entity instanceof URL) {
+    return entity;
   }
-
+  if (typeof entity === 'object') {
+    if ('id' in entity && typeof entity.id === 'string') {
+      return new URL(entity.id);
+    }
+  }
   return null;
 };
 
