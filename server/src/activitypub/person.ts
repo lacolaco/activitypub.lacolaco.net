@@ -33,7 +33,7 @@ export function buildPerson(origin: string, user: User) {
     updated: user.updatedAt,
     manuallyApprovesFollowers: false,
     discoverable: true,
-  } satisfies Person;
+  } as const satisfies Person;
 }
 
 export async function fetchPersonByID(id: URL): Promise<Person> {

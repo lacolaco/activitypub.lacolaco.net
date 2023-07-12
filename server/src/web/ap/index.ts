@@ -94,12 +94,12 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
     }
 
     const activity = await c.req.json<ap.Activity>();
-    console.debug(activity);
+    console.debug(JSON.stringify(activity));
 
     if (ap.isFollowActivity(activity)) {
       try {
         const privateKey = c.get('rsaKeyPair').privateKey;
-        await acceptFollowRequest(user, activity, privateKey);
+        await acceptFollowRequest(c, user, activity, privateKey);
         return c.json({ ok: true });
       } catch (e) {
         console.error(e);
@@ -112,7 +112,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
       if (ap.isFollowActivity(object)) {
         try {
           const privateKey = c.get('rsaKeyPair').privateKey;
-          await deleteFollower(user, activity, privateKey);
+          await deleteFollower(c, user, activity, privateKey);
           return c.json({ ok: true });
         } catch (e) {
           console.error(e);

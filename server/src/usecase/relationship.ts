@@ -1,8 +1,10 @@
 import { RemoteUser } from '@app/domain/remote-user';
 import { User } from '@app/domain/user';
 import { UserFollowersRepository } from '@app/repository/user-followers';
+import { AppContext } from '@app/web/context';
+import { Context } from 'hono';
 import { FollowActivity, UndoActivity, buildAcceptAcivity } from '../activitypub/activity';
-import { fetchPersonByID } from '../activitypub/person';
+import { buildPerson, fetchPersonByID } from '../activitypub/person';
 import { ActivityPubAgent, getID } from '../activitypub/utilities';
 
 export async function getUserFollowers(user: User): Promise<RemoteUser[]> {
@@ -11,19 +13,26 @@ export async function getUserFollowers(user: User): Promise<RemoteUser[]> {
   return followers;
 }
 
-export async function acceptFollowRequest(user: User, activity: FollowActivity, privateKey: string) {
+export async function acceptFollowRequest(
+  c: Context<AppContext>,
+  user: User,
+  activity: FollowActivity,
+  privateKey: string,
+) {
   const actorID = getID(activity.actor);
   if (actorID == null) {
     throw new Error('actorID is null');
   }
+  console.log('accept follow request from', actorID);
   // resolve remote user
   const actor = await fetchPersonByID(actorID);
 
   // send accept activity
   try {
     const agent = new ActivityPubAgent(privateKey);
-    const acceptActivity = buildAcceptAcivity(new URL(user.id), activity);
-    await agent.postActivity(new URL(actorID), user.id, acceptActivity);
+    const person = buildPerson(c.get('origin'), user);
+    const acceptActivity = buildAcceptAcivity(person.id, activity);
+    await agent.postActivity(new URL(actorID), person.id.toString(), acceptActivity);
   } catch (e) {
     console.error(e);
     throw new Error('Failed to send accept activity');
@@ -40,7 +49,7 @@ export async function acceptFollowRequest(user: User, activity: FollowActivity, 
   }
 }
 
-export async function deleteFollower(user: User, activity: UndoActivity, privateKey: string) {
+export async function deleteFollower(c: Context<AppContext>, user: User, activity: UndoActivity, privateKey: string) {
   const actorID = getID(activity.actor);
   if (actorID == null) {
     throw new Error('actorID is null');
@@ -49,8 +58,9 @@ export async function deleteFollower(user: User, activity: UndoActivity, private
   // send accept activity
   try {
     const agent = new ActivityPubAgent(privateKey);
-    const acceptActivity = buildAcceptAcivity(new URL(user.id), activity);
-    await agent.postActivity(new URL(actorID), user.id, acceptActivity);
+    const person = buildPerson(c.get('origin'), user);
+    const acceptActivity = buildAcceptAcivity(person.id, activity);
+    await agent.postActivity(new URL(actorID), person.id.toString(), acceptActivity);
   } catch (e) {
     console.error(e);
     throw new Error('Failed to send accept activity');
