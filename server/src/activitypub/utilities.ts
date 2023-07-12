@@ -31,6 +31,7 @@ export class ActivityPubAgent {
       body: JSON.stringify(activity),
     });
     const signedReq = signRequest(req, actorID, this.privateKey);
+    console.debug(JSON.stringify(signedReq));
     const res = await fetch(new Request(signedReq));
     if (!res.ok) {
       throw new Error(`postActivity: ${res.status} ${res.statusText}`);
