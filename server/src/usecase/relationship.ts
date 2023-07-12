@@ -25,6 +25,7 @@ export async function acceptFollowRequest(user: User, activity: FollowActivity, 
     const acceptActivity = buildAcceptAcivity(new URL(user.id), activity);
     await agent.postActivity(new URL(actorID), user.id, acceptActivity);
   } catch (e) {
+    console.error(e);
     throw new Error('Failed to send accept activity');
   }
 
@@ -34,6 +35,7 @@ export async function acceptFollowRequest(user: User, activity: FollowActivity, 
     const newFollower = RemoteUser.parse(actor);
     await followersRepo.upsert(user, newFollower);
   } catch (e) {
+    console.error(e);
     throw new Error('Failed to save follower');
   }
 }
@@ -50,6 +52,7 @@ export async function deleteFollower(user: User, activity: UndoActivity, private
     const acceptActivity = buildAcceptAcivity(new URL(user.id), activity);
     await agent.postActivity(new URL(actorID), user.id, acceptActivity);
   } catch (e) {
+    console.error(e);
     throw new Error('Failed to send accept activity');
   }
 
@@ -58,6 +61,7 @@ export async function deleteFollower(user: User, activity: UndoActivity, private
     const followersRepo = new UserFollowersRepository();
     await followersRepo.delete(user, actorID.toString());
   } catch (e) {
+    console.error(e);
     throw new Error('Failed to delete follower');
   }
 }

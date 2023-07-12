@@ -68,7 +68,11 @@ async function fetchPublicKey(keyID: string) {
         accept: 'application/activity+json',
       },
     });
-    const { publicKey } = (await res.json()) as { publicKey: PublicKey };
-    return publicKey;
+    if (!res.ok) {
+      throw new Error(`fetchPublicKey: ${res.status} ${res.statusText}`);
+    }
+    const body = (await res.json()) as { publicKey: PublicKey };
+    console.debug(JSON.stringify(body));
+    return body.publicKey;
   });
 }
