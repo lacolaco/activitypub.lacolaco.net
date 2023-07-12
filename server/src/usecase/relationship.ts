@@ -1,4 +1,3 @@
-import { Config } from '@app/domain/config';
 import { RemoteUser } from '@app/domain/remote-user';
 import { User } from '@app/domain/user';
 import { UserFollowersRepository } from '@app/repository/user-followers';
@@ -12,7 +11,7 @@ export async function getUserFollowers(user: User): Promise<RemoteUser[]> {
   return followers;
 }
 
-export async function acceptFollowRequest(user: User, activity: FollowActivity, config: Config) {
+export async function acceptFollowRequest(user: User, activity: FollowActivity, privateKey: string) {
   const actorID = getEntityID(getActorOf(activity));
   if (actorID == null) {
     throw new Error('actorID is null');
@@ -22,7 +21,7 @@ export async function acceptFollowRequest(user: User, activity: FollowActivity, 
 
   // send accept activity
   try {
-    const agent = new ActivityPubAgent(config.privateKeyPem);
+    const agent = new ActivityPubAgent(privateKey);
     const acceptActivity = buildAcceptAcivity(new URL(user.id), activity);
     await agent.postActivity(new URL(actorID), user.id, acceptActivity);
   } catch (e) {
@@ -39,7 +38,7 @@ export async function acceptFollowRequest(user: User, activity: FollowActivity, 
   }
 }
 
-export async function deleteFollower(user: User, activity: UndoActivity, config: Config) {
+export async function deleteFollower(user: User, activity: UndoActivity, privateKey: string) {
   const actorID = getEntityID(getActorOf(activity));
   if (actorID == null) {
     throw new Error('actorID is null');
@@ -47,7 +46,7 @@ export async function deleteFollower(user: User, activity: UndoActivity, config:
 
   // send accept activity
   try {
-    const agent = new ActivityPubAgent(config.privateKeyPem);
+    const agent = new ActivityPubAgent(privateKey);
     const acceptActivity = buildAcceptAcivity(new URL(user.id), activity);
     await agent.postActivity(new URL(actorID), user.id, acceptActivity);
   } catch (e) {

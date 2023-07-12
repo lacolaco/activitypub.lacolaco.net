@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { describe, expect, test } from 'vitest';
+import { AppContext } from '../context';
 import useHostmeta from './index';
 
 describe('hostmeta', () => {
-  const app = new Hono();
+  const app = new Hono<AppContext>();
   useHostmeta(app);
 
   test('response has a lrdd link', async () => {

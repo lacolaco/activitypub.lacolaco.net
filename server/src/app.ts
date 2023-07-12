@@ -15,13 +15,13 @@ async function createApplication(): Promise<Hono<AppContext>> {
   const app = new Hono<AppContext>();
 
   const config = await getConfigWithEnv();
+  const isDevelopment = !config.isRunningOnCloud;
 
   setupTracing();
 
   app.use('*', logger());
   app.use('*', poweredBy());
   app.use('*', async (c, next) => {
-    c.set('Config', config);
     const privateKey = config.privateKeyPem;
     const publicKey = getPublicKey(privateKey);
     c.set('rsaKeyPair', { privateKey, publicKey });
@@ -32,6 +32,12 @@ async function createApplication(): Promise<Hono<AppContext>> {
   useHostMeta(app);
   useWebfinger(app);
   useActivityPub(app);
+
+  if (isDevelopment) {
+    app.routes.forEach((route) => {
+      console.log(`${route.method} ${route.path}`);
+    });
+  }
 
   return app;
 }

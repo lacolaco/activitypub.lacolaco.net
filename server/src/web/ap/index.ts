@@ -69,8 +69,8 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
     const activity = await c.req.json<ap.Activity>();
     if (ap.isFollowActivity(activity)) {
       try {
-        const config = c.get('Config');
-        await acceptFollowRequest(user, activity, config);
+        const privateKey = c.get('rsaKeyPair').privateKey;
+        await acceptFollowRequest(user, activity, privateKey);
         return c.json({ ok: true });
       } catch (e) {
         console.error(e);
@@ -82,8 +82,8 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
       // unfollow
       if (ap.isFollowActivity(object)) {
         try {
-          const config = c.get('Config');
-          await deleteFollower(user, activity, config);
+          const privateKey = c.get('rsaKeyPair').privateKey;
+          await deleteFollower(user, activity, privateKey);
           return c.json({ ok: true });
         } catch (e) {
           console.error(e);

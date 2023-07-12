@@ -5,10 +5,6 @@ const port = Number(process.env.PORT || 8080);
 
 createApplication()
   .then((app) => {
-    app.routes.forEach((route) => {
-      console.log(`${route.method} ${route.path}`);
-    });
-
     serve({ fetch: app.fetch, port }).once('listening', () => {
       console.log(`Listening on http://localhost:${port}`);
     });

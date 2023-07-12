@@ -9,7 +9,7 @@ export function createUser(override?: Partial<User>): User {
     icon: {
       url: 'https://example.com/avatar.png',
     },
-    url: 'https://example.com/banner.png',
+    url: 'https://example.com/@test',
     createdAt: new Date('2006-01-02T15:04:05.999Z'),
     updatedAt: new Date('2006-01-02T15:04:05.999Z'),
     attachments: [],
