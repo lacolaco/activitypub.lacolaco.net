@@ -6,7 +6,7 @@ describe('buildPerson', () => {
   test('build a person', async () => {
     const user = createUser();
 
-    const person = buildPerson('http://localhost', user, 'PUBLIC_KEY');
+    const person = buildPerson('http://localhost', user);
 
     expect(person).toMatchInlineSnapshot(`
       {
@@ -45,11 +45,6 @@ describe('buildPerson', () => {
         "name": "test",
         "outbox": "http://localhost/users/1/outbox",
         "preferredUsername": "test",
-        "publicKey": {
-          "id": "http://localhost/users/1#main-key",
-          "owner": "http://localhost/users/1",
-          "publicKeyPem": "PUBLIC_KEY",
-        },
         "published": 2006-01-02T15:04:05.999Z,
         "summary": "test",
         "type": "Person",
