@@ -1,12 +1,15 @@
-import { AP } from '@activity-kit/types';
+import { AP, isTypeOf } from '@activity-kit/types';
 import { User } from '@app/domain/user';
 import { contextURIs } from './context';
 import { buildPropertyValue } from './property-value';
+import { getPublicKeyID } from './signature';
 
 type Person = AP.Person & Record<string, unknown>;
 
-export function buildPerson(origin: string, user: User) {
-  const userURI = `${origin}/users/${user.username}`;
+export function buildPerson(origin: string, user: User, publicKey: string) {
+  // `preferredUsername` はあとから変更可能にするため、不変なURIを `id` として使う
+  const userURI = `${origin}/users/${user.id}`;
+
   return {
     '@context': contextURIs,
     id: new URL(userURI),
@@ -31,5 +34,28 @@ export function buildPerson(origin: string, user: User) {
     updated: user.updatedAt,
     manuallyApprovesFollowers: false,
     discoverable: true,
+    publicKey: {
+      id: getPublicKeyID(userURI),
+      owner: userURI,
+      publicKeyPem: publicKey,
+    },
   } satisfies Person;
+}
+
+export async function fetchPersonByID(id: URL): Promise<Person> {
+  const res = await fetch(id, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/activity+json, application/json',
+    },
+  });
+  if (res.status !== 200) {
+    throw new Error(`unexpected status code: ${res.status}`);
+  }
+
+  const person = await res.json();
+  if (!isTypeOf<Person>(person, AP.ActorTypes)) {
+    throw new Error(`unexpected type: ${person.type}`);
+  }
+  return person;
 }

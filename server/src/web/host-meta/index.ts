@@ -1,6 +1,7 @@
 import { Handler, Hono } from 'hono';
+import { AppContext } from '../context';
 
-export default (app: Hono) => {
+export default (app: Hono<AppContext>) => {
   app.get('/.well-known/host-meta', handleHostMetaXML);
   app.get('/.well-known/host-meta.json', handleHostMetaJSON);
 };

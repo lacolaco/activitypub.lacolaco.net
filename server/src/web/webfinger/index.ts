@@ -1,7 +1,8 @@
 import { Handler, Hono } from 'hono';
 import { JRDObject } from './types';
+import { AppContext } from '../context';
 
-export default (app: Hono) => {
+export default (app: Hono<AppContext>) => {
   app.get('/.well-known/webfinger', handleWebfinger);
 };
 

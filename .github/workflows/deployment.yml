@@ -37,6 +37,32 @@ jobs:
           --set-env-vars=CLIENT_ORIGIN=${{ vars.CLIENT_ORIGIN }} \
           --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
           --execution-environment gen1 --region asia-northeast1 --platform managed --memory 128Mi
+  deploy-server-node:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: "${{ vars.CLOUDRUN_SERVER_IMAGE_NAME }}-node"
+    steps:
+      - uses: actions/checkout@v3
+      - id: 'auth'
+        uses: google-github-actions/auth@v1.1.1
+        with:
+          workload_identity_provider: ${{ vars.GOOGLE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GOOGLE_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v1
+      - run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+      - name: build and push image
+        run: |
+          docker build --file ./Dockerfile.node -t $IMAGE_NAME:${{ github.sha }} .
+          docker push $IMAGE_NAME:${{ github.sha }}
+      - name: deploy to Cloud Run
+        run: |
+          gcloud --quiet run deploy activitypub-lacolaco-net-node \
+          --image $IMAGE_NAME:${{ github.sha }} \
+          --allow-unauthenticated \
+          --service-account ${{ vars.CLOUDRUN_SERVER_SERVICE_ACCOUNT }} \
+          --set-env-vars=CLIENT_ORIGIN=${{ vars.CLIENT_ORIGIN }} \
+          --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
+          --execution-environment gen1 --region asia-northeast1 --platform managed --memory 128Mi
 
   deploy-client:
     runs-on: ubuntu-latest

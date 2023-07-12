@@ -1,12 +1,19 @@
 import { serve } from '@hono/node-server';
-import app from './app';
-
-app.routes.forEach((route) => {
-  console.log(`${route.method} ${route.path}`);
-});
+import createApplication from './app';
 
 const port = Number(process.env.PORT || 8080);
 
-serve({ fetch: app.fetch, port }).once('listening', () => {
-  console.log(`Listening on http://localhost:${port}`);
-});
+createApplication()
+  .then((app) => {
+    app.routes.forEach((route) => {
+      console.log(`${route.method} ${route.path}`);
+    });
+
+    serve({ fetch: app.fetch, port }).once('listening', () => {
+      console.log(`Listening on http://localhost:${port}`);
+    });
+  })
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });

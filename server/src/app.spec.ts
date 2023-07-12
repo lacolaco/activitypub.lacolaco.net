@@ -1,7 +1,16 @@
-import { describe, test, assert } from 'vitest';
-import app from './app';
+import { Hono } from 'hono';
+import { assert, beforeEach, describe, test } from 'vitest';
+
+import createApplication from './app';
+import { AppContext } from './web/context';
 
 describe('endpoints for activitypub compatibility', () => {
+  let app: Hono<AppContext>;
+
+  beforeEach(async () => {
+    app = await createApplication();
+  });
+
   test('webfinger is supported', async () => {
     const req = new Request('http://localhost/.well-known/webfinger?resource=acct:alice@localhost', {
       method: 'GET',

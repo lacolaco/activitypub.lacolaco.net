@@ -5,7 +5,7 @@
     "format": "prettier --cache --write .",
     "start:server": "dotenv -- tsx watch ./server/src/main.ts",
     "build:client": "pnpm --filter client run build",
-    "build:server": "esbuild server/src/main.ts --bundle --platform=node --target=node18 --outfile=server/dist/main.js",
+    "build:server": "esbuild server/src/main.ts --bundle --platform=node --target=node18 --supported:top-level-await=false --outfile=server/dist/main.js",
     "test": "vitest"
   },
   "license": "MIT",
@@ -13,6 +13,8 @@
   "dependencies": {
     "@activity-kit/types": "^0.4.36",
     "@google-cloud/firestore": "^6.6.1",
+    "activitypub-http-signatures": "^2.0.1",
+    "google-auth-library": "^8.9.0",
     "hono": "^3.2.7",
     "zod": "^3.21.4"
   },

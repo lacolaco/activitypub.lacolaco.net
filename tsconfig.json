@@ -15,7 +15,8 @@
       "@app/activitypub": ["server/src/activitypub/index.ts"],
       "@app/domain/*": ["server/src/domain/*"],
       "@app/repository/*": ["server/src/repository/*"],
-      "@app/web/*": ["server/src/web/*"]
+      "@app/web/*": ["server/src/web/*"],
+      "@app/util/*": ["server/src/util/*"]
     }
   }
 }

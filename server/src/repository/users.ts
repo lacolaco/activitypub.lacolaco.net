@@ -1,5 +1,5 @@
 import { User } from '@app/domain/user';
-import { DocumentReference, Firestore, Timestamp } from '@google-cloud/firestore';
+import { CollectionReference, Firestore, Timestamp } from '@google-cloud/firestore';
 
 type UserDocument = {
   id: string;
@@ -17,8 +17,8 @@ export class UsersRepository {
   readonly db = new Firestore();
 
   async findByID(uid: string): Promise<User | null> {
-    const findUser = this.db.collection('users').doc(uid) as DocumentReference<UserDocument>;
-    const userDoc = await findUser.get();
+    const collection = this.db.collection('users') as CollectionReference<UserDocument>;
+    const userDoc = await collection.doc(uid).get();
     const data = userDoc.data();
     if (data == null) {
       return null;

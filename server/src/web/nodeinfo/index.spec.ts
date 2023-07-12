@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
-import { describe, test, assert, expect } from 'vitest';
+import { describe, expect, test } from 'vitest';
+import { AppContext } from '../context';
 import useWebfinger from './index';
 
 describe('nodeinfo', () => {
-  const app = new Hono();
+  const app = new Hono<AppContext>();
   useWebfinger(app);
 
   test('entrypoint response is valid', async () => {

@@ -1,7 +1,8 @@
 import { Handler, Hono } from 'hono';
 import * as pkg from '../../../../package.json';
+import { AppContext } from '../context';
 
-export default (app: Hono) => {
+export default (app: Hono<AppContext>) => {
   app.get('/.well-known/nodeinfo', handleNodeinfo);
   app.get('/nodeinfo/2.1', handleNodeinfo21);
 };
