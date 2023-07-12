@@ -1,14 +1,14 @@
-import { AP, isType, isTypeOf } from '@activity-kit/types';
+import { AP, isType } from '@activity-kit/types';
 import { contextURIs } from './context';
 
 export type Activity = AP.Activity;
 
 export function getActorOf(activity: Activity): AP.Actor {
   const actor = activity.actor;
-  if (isTypeOf<AP.Actor>(actor, AP.ActorTypes)) {
+  if (isType<AP.Actor>(actor, AP.ActorTypes.PERSON)) {
     return actor;
   }
-  throw new Error('invalid actor');
+  throw new Error(`invalid actor: ${JSON.stringify(actor)}`);
 }
 
 export type FollowActivity = AP.Follow;

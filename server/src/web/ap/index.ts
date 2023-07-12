@@ -94,6 +94,8 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
     }
 
     const activity = await c.req.json<ap.Activity>();
+    console.debug(activity);
+
     if (ap.isFollowActivity(activity)) {
       try {
         const privateKey = c.get('rsaKeyPair').privateKey;
