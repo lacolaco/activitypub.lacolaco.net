@@ -16,6 +16,7 @@
       "@app/domain/*": ["server/src/domain/*"],
       "@app/repository/*": ["server/src/repository/*"],
       "@app/web/*": ["server/src/web/*"],
+      "@app/tracing": ["server/src/tracing/index.ts"],
       "@app/util/*": ["server/src/util/*"]
     }
   }

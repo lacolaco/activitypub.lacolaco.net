@@ -4,6 +4,7 @@ import { Handler, Hono, MiddlewareHandler } from 'hono';
 import { acceptFollowRequest, deleteFollower, getUserFollowers } from 'server/src/usecase/relationship';
 import { assertContentTypeHeader } from '../../middleware/asserts';
 import { AppContext } from '../context';
+import { getTracer } from '@app/tracing';
 
 const setActivityJSONContentType = (): MiddlewareHandler => async (c, next) => {
   await next();
@@ -30,66 +31,71 @@ export default (app: Hono<AppContext>) => {
 };
 
 const handleGetPerson: Handler<AppContext> = async (c) => {
-  const { origin } = new URL(c.req.url);
+  return getTracer().startActiveSpan('ap.handleGetPerson', async (span) => {
+    const { origin } = new URL(c.req.url);
 
-  const userRepo = new UsersRepository();
-  const id = c.req.param('id');
+    const userRepo = new UsersRepository();
+    const id = c.req.param('id');
+    span.setAttribute('id', id);
 
-  const user = await userRepo.findByID(id);
-  if (user == null) {
-    c.status(404);
-    return c.text('Not Found');
-  }
-  const person = ap.setPublicKey(ap.buildPerson(origin, user), c.get('rsaKeyPair').publicKey);
-  const res = c.json(person);
-  return res;
+    const user = await userRepo.findByID(id);
+    if (user == null) {
+      c.status(404);
+      return c.text('Not Found');
+    }
+    const person = ap.setPublicKey(ap.buildPerson(origin, user), c.get('rsaKeyPair').publicKey);
+    const res = c.json(person);
+    return res;
+  });
 };
 
 const handlePostInbox: Handler<AppContext> = async (c) => {
-  try {
-    await ap.verifySignature(c.req);
-  } catch (e) {
-    c.status(400);
-    return c.text('Bad Request');
-  }
-
-  const userRepo = new UsersRepository();
-  const id = c.req.param('id');
-  const user = await userRepo.findByID(id);
-  if (user == null) {
-    c.status(404);
-    return c.text('Not Found');
-  }
-
-  const activity = await c.req.json<ap.Activity>();
-  if (ap.isFollowActivity(activity)) {
+  return getTracer().startActiveSpan('ap.handlePostInbox', async (span) => {
     try {
-      const config = c.get('Config');
-      await acceptFollowRequest(user, activity, config);
-      return c.json({ ok: true });
+      await ap.verifySignature(c.req);
     } catch (e) {
-      console.error(e);
-      c.status(500);
-      return c.text('Internal Server Error');
+      c.status(400);
+      return c.text('Bad Request');
     }
-  } else if (ap.isUndoActivity(activity)) {
-    const object = activity.object;
-    // unfollow
-    if (ap.isFollowActivity(object)) {
+
+    const userRepo = new UsersRepository();
+    const id = c.req.param('id');
+    const user = await userRepo.findByID(id);
+    if (user == null) {
+      c.status(404);
+      return c.text('Not Found');
+    }
+
+    const activity = await c.req.json<ap.Activity>();
+    if (ap.isFollowActivity(activity)) {
       try {
         const config = c.get('Config');
-        await deleteFollower(user, activity, config);
+        await acceptFollowRequest(user, activity, config);
         return c.json({ ok: true });
       } catch (e) {
         console.error(e);
         c.status(500);
         return c.text('Internal Server Error');
       }
+    } else if (ap.isUndoActivity(activity)) {
+      const object = activity.object;
+      // unfollow
+      if (ap.isFollowActivity(object)) {
+        try {
+          const config = c.get('Config');
+          await deleteFollower(user, activity, config);
+          return c.json({ ok: true });
+        } catch (e) {
+          console.error(e);
+          c.status(500);
+          return c.text('Internal Server Error');
+        }
+      }
     }
-  }
 
-  console.log('unsupported activity');
-  return c.text('ok');
+    console.log('unsupported activity');
+    return c.text('ok');
+  });
 };
 
 const handleGetOutbox: Handler = async (c) => {

@@ -2,18 +2,21 @@ import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { poweredBy } from 'hono/powered-by';
 
+import { getPublicKey } from '@app/util/crypto';
 import useActivityPub from '@app/web/ap';
 import useHostMeta from '@app/web/host-meta';
 import useNodeinfo from '@app/web/nodeinfo';
 import useWebfinger from '@app/web/webfinger';
-import { AppContext } from './web/context';
 import { getConfigWithEnv } from './domain/config';
-import { getPublicKey } from '@app/util/crypto';
+import { setupTracing } from './tracing';
+import { AppContext } from './web/context';
 
 async function createApplication(): Promise<Hono<AppContext>> {
   const app = new Hono<AppContext>();
 
   const config = await getConfigWithEnv();
+
+  setupTracing();
 
   app.use('*', logger());
   app.use('*', poweredBy());
