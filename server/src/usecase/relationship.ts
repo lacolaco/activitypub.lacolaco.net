@@ -1,7 +1,7 @@
 import { RemoteUser } from '@app/domain/remote-user';
 import { User } from '@app/domain/user';
 import { UserFollowersRepository } from '@app/repository/user-followers';
-import { FollowActivity, UndoActivity, buildAcceptAcivity, getActorOf } from '../activitypub/activity';
+import { FollowActivity, UndoActivity, buildAcceptAcivity } from '../activitypub/activity';
 import { fetchPersonByID } from '../activitypub/person';
 import { ActivityPubAgent, getEntityID } from '../activitypub/utilities';
 
@@ -12,7 +12,7 @@ export async function getUserFollowers(user: User): Promise<RemoteUser[]> {
 }
 
 export async function acceptFollowRequest(user: User, activity: FollowActivity, privateKey: string) {
-  const actorID = getEntityID(getActorOf(activity));
+  const actorID = getEntityID(activity.actor);
   if (actorID == null) {
     throw new Error('actorID is null');
   }
@@ -39,7 +39,7 @@ export async function acceptFollowRequest(user: User, activity: FollowActivity, 
 }
 
 export async function deleteFollower(user: User, activity: UndoActivity, privateKey: string) {
-  const actorID = getEntityID(getActorOf(activity));
+  const actorID = getEntityID(activity.actor);
   if (actorID == null) {
     throw new Error('actorID is null');
   }

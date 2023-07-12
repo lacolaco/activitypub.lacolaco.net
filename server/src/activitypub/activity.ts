@@ -3,14 +3,6 @@ import { contextURIs } from './context';
 
 export type Activity = AP.Activity;
 
-export function getActorOf(activity: Activity): AP.Actor {
-  const actor = activity.actor;
-  if (isType<AP.Actor>(actor, AP.ActorTypes.PERSON)) {
-    return actor;
-  }
-  throw new Error(`invalid actor: ${JSON.stringify(actor)}`);
-}
-
 export type FollowActivity = AP.Follow;
 
 export function isFollowActivity(object: unknown): object is FollowActivity {
