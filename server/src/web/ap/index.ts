@@ -78,6 +78,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
     try {
       await ap.verifySignature(c.req);
     } catch (e) {
+      console.error(e);
       c.status(400);
       return c.json({ error: 'Bad Request' });
     }
@@ -86,6 +87,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
     const id = c.req.param('id');
     const user = await userRepo.findByID(id);
     if (user == null) {
+      console.log('user not found', id);
       c.status(404);
       return c.json({ error: 'Not Found' });
     }
