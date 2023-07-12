@@ -31,4 +31,22 @@ export class UsersRepository {
       updatedAt: data.updatedAt.toDate(),
     });
   }
+
+  async findByUsername(username: string): Promise<User | null> {
+    const collection = this.db.collection('users') as CollectionReference<UserDocument>;
+    const query = collection.where('username', '==', username).limit(1);
+    const snapshot = await query.get();
+    if (snapshot.empty) {
+      return null;
+    }
+
+    const userDoc = snapshot.docs[0];
+    const data = userDoc.data();
+    return User.parse({
+      ...data,
+      id: userDoc.id,
+      createdAt: data.createdAt.toDate(),
+      updatedAt: data.updatedAt.toDate(),
+    });
+  }
 }

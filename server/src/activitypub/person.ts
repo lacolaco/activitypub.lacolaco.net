@@ -28,7 +28,7 @@ export function buildPerson(origin: string, user: User) {
     endpoints: {
       sharedInbox: new URL(`${origin}/inbox`),
     },
-    url: new URL(userURI), // TODO: use user's website
+    url: new URL(user.url),
     published: user.createdAt,
     updated: user.updatedAt,
     manuallyApprovesFollowers: false,

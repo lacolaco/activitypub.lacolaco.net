@@ -1,6 +1,7 @@
 import { Handler, Hono } from 'hono';
 import { JRDObject } from './types';
 import { AppContext } from '../context';
+import { UsersRepository } from '@app/repository/users';
 
 export default (app: Hono<AppContext>) => {
   app.get('/.well-known/webfinger', handleWebfinger);
@@ -14,7 +15,14 @@ const handleWebfinger: Handler = async (c) => {
     return c.text('Bad Request');
   }
   const { origin } = new URL(c.req.url);
-  const username = resource.split('@')[0].split(':')[1];
+  const [, username] = resource.split('@')[0].split(':');
+
+  const userRepo = new UsersRepository();
+  const user = await userRepo.findByUsername(username);
+  if (user == null) {
+    c.status(404);
+    return c.text('Not Found');
+  }
 
   const res = c.json<JRDObject>({
     subject: resource,
@@ -22,7 +30,7 @@ const handleWebfinger: Handler = async (c) => {
       {
         rel: 'self',
         type: 'application/activity+json',
-        href: `${origin}/users/${username}`,
+        href: `${origin}/users/${user.id}`,
       },
     ],
   });
