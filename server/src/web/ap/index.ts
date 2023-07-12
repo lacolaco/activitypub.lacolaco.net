@@ -40,6 +40,14 @@ const handleGetPerson: Handler<AppContext> = async (c) => {
 
     const user = await userRepo.findByID(id);
     if (user == null) {
+      // if an user has the username, tell client to redirect permanently
+      const u = await userRepo.findByUsername(id);
+      if (u != null) {
+        c.status(301);
+        c.res.headers.set('Location', `${origin}/users/${u.id}`);
+        return c.json({ error: 'Moved Permanently' });
+      }
+
       c.status(404);
       return c.json({ error: 'Not Found' });
     }
