@@ -63,7 +63,7 @@ jobs:
           --service-account ${{ vars.CLOUDRUN_SERVER_SERVICE_ACCOUNT }} \
           --set-env-vars=CLIENT_ORIGIN=${{ vars.CLIENT_ORIGIN }} \
           --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
-          --execution-environment gen1 --region asia-northeast1 --platform managed --memory 128Mi
+          --execution-environment gen2 --region asia-northeast1 --platform managed --memory 512Mi
 
   deploy-client:
     runs-on: ubuntu-latest
