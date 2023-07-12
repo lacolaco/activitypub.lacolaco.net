@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import { poweredBy } from 'hono/powered-by';
 
 import { getPublicKey } from '@app/util/crypto';
 import useActivityPub from '@app/web/ap';
@@ -9,7 +8,6 @@ import useNodeinfo from '@app/web/nodeinfo';
 import useWebfinger from '@app/web/webfinger';
 import { getConfigWithEnv } from './domain/config';
 import { setupTracing } from './tracing';
-import { getOrigin } from './util/url';
 import { AppContext, withOrigin } from './web/context';
 
 async function createApplication(): Promise<Hono<AppContext>> {
@@ -21,7 +19,6 @@ async function createApplication(): Promise<Hono<AppContext>> {
   setupTracing();
 
   app.use('*', logger());
-  app.use('*', poweredBy());
   app.use('*', withOrigin());
   app.use('*', async (c, next) => {
     const privateKey = config.privateKeyPem;
