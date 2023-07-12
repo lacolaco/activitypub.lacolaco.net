@@ -65,7 +65,7 @@ async function fetchPublicKey(keyID: string) {
 
     const res = await fetch(keyID, {
       headers: {
-        accept: 'application/ld+json, application/json',
+        accept: 'application/activity+json',
       },
     });
     const { publicKey } = (await res.json()) as { publicKey: PublicKey };
