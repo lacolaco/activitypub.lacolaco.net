@@ -2,11 +2,10 @@ import { AP, isTypeOf } from '@activity-kit/types';
 import { User } from '@app/domain/user';
 import { contextURIs } from './context';
 import { buildPropertyValue } from './property-value';
-import { getPublicKeyID } from './signature';
 
-type Person = AP.Person & Record<string, unknown>;
+export type Person = AP.Person & Record<string, unknown>;
 
-export function buildPerson(origin: string, user: User, publicKey: string) {
+export function buildPerson(origin: string, user: User) {
   // `preferredUsername` はあとから変更可能にするため、不変なURIを `id` として使う
   const userURI = `${origin}/users/${user.id}`;
 
@@ -34,11 +33,6 @@ export function buildPerson(origin: string, user: User, publicKey: string) {
     updated: user.updatedAt,
     manuallyApprovesFollowers: false,
     discoverable: true,
-    publicKey: {
-      id: getPublicKeyID(userURI),
-      owner: userURI,
-      publicKeyPem: publicKey,
-    },
   } satisfies Person;
 }
 

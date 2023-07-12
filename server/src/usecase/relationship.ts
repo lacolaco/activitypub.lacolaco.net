@@ -6,6 +6,12 @@ import { FollowActivity, buildAcceptAcivity, getActorOf } from '../activitypub/a
 import { fetchPersonByID } from '../activitypub/person';
 import { ActivityPubAgent, getEntityID } from '../activitypub/utilities';
 
+export async function getUserFollowers(user: User): Promise<RemoteUser[]> {
+  const followersRepo = new UserFollowersRepository();
+  const followers = await followersRepo.list(user);
+  return followers;
+}
+
 export async function acceptFollowRequest(user: User, activity: FollowActivity, config: Config) {
   const actorID = getEntityID(getActorOf(activity));
   if (actorID == null) {

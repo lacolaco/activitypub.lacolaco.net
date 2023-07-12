@@ -4,6 +4,7 @@ import { CollectionReference, Firestore } from '@google-cloud/firestore';
 
 type UserFollowerDocument = {
   id: string;
+  createdAt: Date;
 };
 
 export class UserFollowersRepository {
@@ -15,8 +16,17 @@ export class UserFollowersRepository {
       .doc(user.id)
       .collection('followers') as CollectionReference<UserFollowerDocument>;
 
-    const followerDoc = collection.doc(follower.id);
-    await followerDoc.set(follower, { merge: true });
+    const query = collection.where('id', '==', follower.id).limit(1);
+    const snapshot = await query.get();
+    if (snapshot.empty) {
+      await collection.add({
+        id: follower.id,
+        createdAt: new Date(),
+      });
+    } else {
+      const doc = snapshot.docs[0];
+      await doc.ref.update(follower);
+    }
   }
 
   async list(user: User): Promise<RemoteUser[]> {
@@ -25,12 +35,13 @@ export class UserFollowersRepository {
       .doc(user.id)
       .collection('followers') as CollectionReference<UserFollowerDocument>;
 
-    const snapshot = await collection.get();
+    const query = collection.orderBy('createdAt', 'desc');
+
+    const snapshot = await query.get();
     const followers = snapshot.docs.map((doc) => {
       const data = doc.data();
       return RemoteUser.parse({
         ...data,
-        id: doc.id,
       });
     });
 

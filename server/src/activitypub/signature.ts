@@ -1,4 +1,6 @@
 import parser, { Sha256Signer } from 'activitypub-http-signatures';
+import { Person } from './person';
+import { getEntityID } from './utilities';
 
 export function getPublicKeyID(actorID: string): string {
   return `${actorID}#main-key`;
@@ -14,6 +16,22 @@ export type PublicKey = {
   owner: string;
   publicKeyPem: string;
 };
+
+export function setPublicKey(person: Person, publicKey: string): Person {
+  const id = getEntityID(person);
+  if (id == null) {
+    throw new Error('person.id is null');
+  }
+
+  return {
+    ...person,
+    publicKey: {
+      id: getPublicKeyID(id.toString()),
+      owner: id.toString(),
+      publicKeyPem: publicKey,
+    },
+  };
+}
 
 export function signRequest(req: Request, actorID: string, privateKey: string) {
   const { url, method, headers } = req;

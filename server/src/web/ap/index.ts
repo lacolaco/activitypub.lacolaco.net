@@ -1,11 +1,11 @@
 import * as ap from '@app/activitypub';
 import { UsersRepository } from '@app/repository/users';
 import { Handler, Hono, MiddlewareHandler } from 'hono';
-import { acceptFollowRequest } from 'server/src/usecase/relationship';
+import { acceptFollowRequest, getUserFollowers } from 'server/src/usecase/relationship';
 import { assertContentTypeHeader } from '../../middleware/asserts';
 import { AppContext } from '../context';
 
-const setContentType = (): MiddlewareHandler => async (c, next) => {
+const setActivityJSONContentType = (): MiddlewareHandler => async (c, next) => {
   await next();
   c.res.headers.set('Content-Type', 'application/activity+json');
 };
@@ -13,7 +13,7 @@ const setContentType = (): MiddlewareHandler => async (c, next) => {
 export default (app: Hono<AppContext>) => {
   const apRoutes = new Hono();
   // middlewares
-  apRoutes.get('*', setContentType());
+  apRoutes.get('*', setActivityJSONContentType());
   apRoutes.post('*', assertContentTypeHeader(['application/activity+json']));
   // routes
   apRoutes.post('/inbox', handlePostSharedInbox);
@@ -40,7 +40,8 @@ const handleGetPerson: Handler<AppContext> = async (c) => {
     c.status(404);
     return c.text('Not Found');
   }
-  const res = c.json(ap.buildPerson(origin, user, c.get('rsaKeyPair').publicKey));
+  const person = ap.setPublicKey(ap.buildPerson(origin, user), c.get('rsaKeyPair').publicKey);
+  const res = c.json(person);
   return res;
 };
 
@@ -86,23 +87,31 @@ const handleGetOutbox: Handler = async (c) => {
     c.status(404);
     return c.text('Not Found');
   }
-  const person = ap.buildPerson(origin, user, c.get('rsaKeyPair').publicKey);
+  const person = ap.buildPerson(origin, user);
   const res = c.json(ap.buildOrderedCollection(person.outbox, []));
   return res;
 };
 
 const handleGetFollowers: Handler = async (c) => {
   const { origin } = new URL(c.req.url);
+
   const userRepo = new UsersRepository();
   const id = c.req.param('id');
-
   const user = await userRepo.findByID(id);
   if (user == null) {
     c.status(404);
     return c.text('Not Found');
   }
-  const person = ap.buildPerson(origin, user, c.get('rsaKeyPair').publicKey);
-  const res = c.json(ap.buildOrderedCollection(person.followers, []));
+
+  const followers = await getUserFollowers(user);
+
+  const person = ap.buildPerson(origin, user);
+  const res = c.json(
+    ap.buildOrderedCollection(
+      person.followers,
+      followers.map((f) => new URL(f.id)),
+    ),
+  );
   return res;
 };
 
@@ -116,7 +125,7 @@ const handleGetFollowing: Handler = async (c) => {
     c.status(404);
     return c.text('Not Found');
   }
-  const person = ap.buildPerson(origin, user, c.get('rsaKeyPair').publicKey);
+  const person = ap.buildPerson(origin, user);
   const res = c.json(ap.buildOrderedCollection(person.following, []));
   return res;
 };
