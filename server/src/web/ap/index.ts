@@ -1,10 +1,10 @@
 import * as ap from '@app/activitypub';
 import { UsersRepository } from '@app/repository/users';
+import { getTracer } from '@app/tracing';
 import { Handler, Hono, MiddlewareHandler } from 'hono';
 import { acceptFollowRequest, deleteFollower, getUserFollowers } from 'server/src/usecase/relationship';
 import { assertContentTypeHeader } from '../../middleware/asserts';
 import { AppContext } from '../context';
-import { getTracer } from '@app/tracing';
 
 const setActivityJSONContentType = (): MiddlewareHandler => async (c, next) => {
   await next();
@@ -17,6 +17,7 @@ export default (app: Hono<AppContext>) => {
   apRoutes.get('*', setActivityJSONContentType());
   apRoutes.post('*', assertContentTypeHeader(['application/activity+json']));
   // routes
+  apRoutes.get('/inbox', handleGetSharedInbox);
   apRoutes.post('/inbox', handlePostSharedInbox);
 
   const userRoutes = new Hono();
@@ -177,7 +178,12 @@ const handleGetFollowing: Handler = async (c) => {
   return res;
 };
 
-const handlePostSharedInbox: Handler = async (c) => {
+const handleGetSharedInbox: Handler<AppContext> = async (c) => {
+  c.status(404);
+  return c.json({ error: 'Not Found' });
+};
+
+const handlePostSharedInbox: Handler<AppContext> = async (c) => {
   return getTracer().startActiveSpan('ap.handlePostSharedInbox', async (span) => {
     try {
       await ap.verifySignature(c.req);
