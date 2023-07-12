@@ -1,6 +1,7 @@
 import parser, { Sha256Signer } from 'activitypub-http-signatures';
 import { Person } from './person';
 import { getEntityID } from './utilities';
+import { getTracer } from '@app/tracing';
 
 export function getPublicKeyID(actorID: string): string {
   return `${actorID}#key`;
@@ -59,11 +60,15 @@ export async function verifySignature(req: { url: string; method: string; header
 }
 
 async function fetchPublicKey(keyID: string) {
-  const res = await fetch(keyID, {
-    headers: {
-      accept: 'application/ld+json, application/json',
-    },
+  return getTracer().startActiveSpan('fetchPublicKey', async (span) => {
+    span.setAttribute('keyID', keyID);
+
+    const res = await fetch(keyID, {
+      headers: {
+        accept: 'application/ld+json, application/json',
+      },
+    });
+    const { publicKey } = (await res.json()) as { publicKey: PublicKey };
+    return publicKey;
   });
-  const { publicKey } = (await res.json()) as { publicKey: PublicKey };
-  return publicKey;
 }
