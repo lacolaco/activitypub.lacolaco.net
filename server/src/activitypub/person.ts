@@ -1,4 +1,4 @@
-import { AP, isTypeOf } from '@activity-kit/types';
+import { AP, isType } from '@activity-kit/types';
 import { User } from '@app/domain/user';
 import { contextURIs } from './context';
 import { buildPropertyValue } from './property-value';
@@ -48,7 +48,7 @@ export async function fetchPersonByID(id: URL): Promise<Person> {
   }
 
   const person = await res.json();
-  if (!isTypeOf<Person>(person, AP.ActorTypes)) {
+  if (!isType<Person>(person, AP.ActorTypes.PERSON)) {
     throw new Error(`unexpected type: ${person.type}`);
   }
   return person;

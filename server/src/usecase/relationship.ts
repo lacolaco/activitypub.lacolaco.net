@@ -23,7 +23,7 @@ export async function acceptFollowRequest(
   if (actorID == null) {
     throw new Error('actorID is null');
   }
-  console.log('accept follow request from', actorID);
+  console.log('accepting follow request from', actorID.toString());
   // resolve remote user
   const actor = await fetchPersonByID(actorID);
 

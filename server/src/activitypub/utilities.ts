@@ -22,7 +22,7 @@ export const getID = (entity: unknown) => {
 export class ActivityPubAgent {
   constructor(readonly privateKey: string) {}
 
-  postActivity(url: URL, actorID: string, activity: Activity) {
+  async postActivity(url: URL, actorID: string, activity: Activity) {
     const req = new Request(url, {
       method: 'POST',
       headers: {
@@ -31,6 +31,10 @@ export class ActivityPubAgent {
       body: JSON.stringify(activity),
     });
     const signedReq = signRequest(req, actorID, this.privateKey);
-    return fetch(new Request(signedReq));
+    const res = await fetch(new Request(signedReq));
+    if (!res.ok) {
+      throw new Error(`postActivity: ${res.status} ${res.statusText}`);
+    }
+    return res;
   }
 }
