@@ -3,7 +3,7 @@ import { Person } from './person';
 import { getEntityID } from './utilities';
 
 export function getPublicKeyID(actorID: string): string {
-  return `${actorID}#main-key`;
+  return `${actorID}#key`;
 }
 
 /**
@@ -17,14 +17,14 @@ export type PublicKey = {
   publicKeyPem: string;
 };
 
-export function setPublicKey(person: Person, publicKey: string): Person {
-  const id = getEntityID(person);
+export function withPublicKey(entity: Person, publicKey: string): Person {
+  const id = getEntityID(entity);
   if (id == null) {
     throw new Error('person.id is null');
   }
 
   return {
-    ...person,
+    ...entity,
     publicKey: {
       id: getPublicKeyID(id.toString()),
       owner: id.toString(),

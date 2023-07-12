@@ -43,7 +43,7 @@ const handleGetPerson: Handler<AppContext> = async (c) => {
       c.status(404);
       return c.text('Not Found');
     }
-    const person = ap.setPublicKey(ap.buildPerson(origin, user), c.get('rsaKeyPair').publicKey);
+    const person = ap.withPublicKey(ap.buildPerson(origin, user), c.get('rsaKeyPair').publicKey);
     const res = c.json(person);
     return res;
   });
