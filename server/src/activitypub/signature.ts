@@ -62,6 +62,7 @@ export async function verifySignature(req: { url: string; method: string; header
 async function fetchPublicKey(keyID: string) {
   return getTracer().startActiveSpan('fetchPublicKey', async (span) => {
     span.setAttribute('keyID', keyID);
+    console.debug(`fetchPublicKey: ${keyID}`);
 
     const res = await fetch(keyID, {
       headers: {
