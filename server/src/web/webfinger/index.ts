@@ -12,7 +12,7 @@ const handleWebfinger: Handler = async (c) => {
   const resource = c.req.query('resource');
   if (resource == null) {
     c.status(400);
-    return c.text('Bad Request');
+    return c.json({ error: 'Bad Request' });
   }
   const { origin } = new URL(c.req.url);
   const [, username] = resource.split('@')[0].split(':');
@@ -21,7 +21,7 @@ const handleWebfinger: Handler = async (c) => {
   const user = await userRepo.findByUsername(username);
   if (user == null) {
     c.status(404);
-    return c.text('Not Found');
+    return c.json({ error: 'Not Found' });
   }
 
   const res = c.json<JRDObject>({

@@ -41,7 +41,7 @@ const handleGetPerson: Handler<AppContext> = async (c) => {
     const user = await userRepo.findByID(id);
     if (user == null) {
       c.status(404);
-      return c.text('Not Found');
+      return c.json({ error: 'Not Found' });
     }
     const person = ap.withPublicKey(ap.buildPerson(origin, user), c.get('rsaKeyPair').publicKey);
     const res = c.json(person);
@@ -55,7 +55,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
       await ap.verifySignature(c.req);
     } catch (e) {
       c.status(400);
-      return c.text('Bad Request');
+      return c.json({ error: 'Bad Request' });
     }
 
     const userRepo = new UsersRepository();
@@ -63,7 +63,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
     const user = await userRepo.findByID(id);
     if (user == null) {
       c.status(404);
-      return c.text('Not Found');
+      return c.json({ error: 'Not Found' });
     }
 
     const activity = await c.req.json<ap.Activity>();
@@ -75,7 +75,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
       } catch (e) {
         console.error(e);
         c.status(500);
-        return c.text('Internal Server Error');
+        return c.json({ error: 'Internal Server Error' });
       }
     } else if (ap.isUndoActivity(activity)) {
       const object = activity.object;
@@ -88,13 +88,13 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
         } catch (e) {
           console.error(e);
           c.status(500);
-          return c.text('Internal Server Error');
+          return c.json({ error: 'Internal Server Error' });
         }
       }
     }
 
     console.log('unsupported activity');
-    return c.text('ok');
+    return c.json({});
   });
 };
 
@@ -106,7 +106,7 @@ const handleGetOutbox: Handler = async (c) => {
   const user = await userRepo.findByID(id);
   if (user == null) {
     c.status(404);
-    return c.text('Not Found');
+    return c.json({ error: 'Not Found' });
   }
   const person = ap.buildPerson(origin, user);
   const res = c.json(ap.buildOrderedCollection(person.outbox, []));
@@ -121,7 +121,7 @@ const handleGetFollowers: Handler = async (c) => {
   const user = await userRepo.findByID(id);
   if (user == null) {
     c.status(404);
-    return c.text('Not Found');
+    return c.json({ error: 'Not Found' });
   }
 
   const followers = await getUserFollowers(user);
@@ -144,7 +144,7 @@ const handleGetFollowing: Handler = async (c) => {
   const user = await userRepo.findByID(id);
   if (user == null) {
     c.status(404);
-    return c.text('Not Found');
+    return c.json({ error: 'Not Found' });
   }
   const person = ap.buildPerson(origin, user);
   const res = c.json(ap.buildOrderedCollection(person.following, []));
@@ -152,5 +152,5 @@ const handleGetFollowing: Handler = async (c) => {
 };
 
 const handlePostSharedInbox: Handler = async (c) => {
-  return c.text('ok');
+  return c.json({});
 };
