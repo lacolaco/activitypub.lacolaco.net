@@ -21,6 +21,7 @@ export default (app: Hono<AppContext>) => {
 
   const userRoutes = new Hono();
   userRoutes.get('/', handleGetPerson);
+  userRoutes.get('/inbox', handleGetInbox);
   userRoutes.post('/inbox', handlePostInbox);
   userRoutes.get('/outbox', handleGetOutbox);
   userRoutes.get('/followers', handleGetFollowers);
@@ -55,6 +56,21 @@ const handleGetPerson: Handler<AppContext> = async (c) => {
     const res = c.json(person);
     return res;
   });
+};
+
+const handleGetInbox: Handler<AppContext> = async (c) => {
+  const { origin } = new URL(c.req.url);
+  const userRepo = new UsersRepository();
+  const id = c.req.param('id');
+
+  const user = await userRepo.findByID(id);
+  if (user == null) {
+    c.status(404);
+    return c.json({ error: 'Not Found' });
+  }
+  const person = ap.buildPerson(origin, user);
+  const res = c.json(ap.buildOrderedCollection(person.inbox, []));
+  return res;
 };
 
 const handlePostInbox: Handler<AppContext> = async (c) => {
