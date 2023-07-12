@@ -1,7 +1,7 @@
 import * as ap from '@app/activitypub';
 import { UsersRepository } from '@app/repository/users';
 import { Handler, Hono, MiddlewareHandler } from 'hono';
-import { acceptFollowRequest, getUserFollowers } from 'server/src/usecase/relationship';
+import { acceptFollowRequest, deleteFollower, getUserFollowers } from 'server/src/usecase/relationship';
 import { assertContentTypeHeader } from '../../middleware/asserts';
 import { AppContext } from '../context';
 
@@ -66,10 +66,25 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
     try {
       const config = c.get('Config');
       await acceptFollowRequest(user, activity, config);
+      return c.json({ ok: true });
     } catch (e) {
       console.error(e);
       c.status(500);
       return c.text('Internal Server Error');
+    }
+  } else if (ap.isUndoActivity(activity)) {
+    const object = activity.object;
+    // unfollow
+    if (ap.isFollowActivity(object)) {
+      try {
+        const config = c.get('Config');
+        await deleteFollower(user, activity, config);
+        return c.json({ ok: true });
+      } catch (e) {
+        console.error(e);
+        c.status(500);
+        return c.text('Internal Server Error');
+      }
     }
   }
 

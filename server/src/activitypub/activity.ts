@@ -1,8 +1,7 @@
-import { AP, isTypeOf } from '@activity-kit/types';
+import { AP, isType, isTypeOf } from '@activity-kit/types';
 import { contextURIs } from './context';
 
 export type Activity = AP.Activity;
-export type FollowActivity = AP.Follow;
 
 export function getActorOf(activity: Activity): AP.Actor {
   const actor = activity.actor;
@@ -12,8 +11,22 @@ export function getActorOf(activity: Activity): AP.Actor {
   throw new Error('invalid actor');
 }
 
-export function isFollowActivity(activity: Activity): activity is AP.Follow {
-  return activity.type === 'Follow';
+export type FollowActivity = AP.Follow;
+
+export function isFollowActivity(object: unknown): object is FollowActivity {
+  return isType<AP.Follow>(object, AP.ActivityTypes.FOLLOW);
+}
+
+export type UndoActivity = AP.Undo;
+
+export function isUndoActivity(object: unknown): object is UndoActivity {
+  return isType<AP.Undo>(object, AP.ActivityTypes.UNDO);
+}
+
+export type AcceptActivity = AP.Accept;
+
+export function isAcceptActivity(object: unknown): object is AcceptActivity {
+  return isType<AP.Accept>(object, AP.ActivityTypes.ACCEPT);
 }
 
 export function buildAcceptAcivity(actorID: URL, object: Activity) {
@@ -24,5 +37,5 @@ export function buildAcceptAcivity(actorID: URL, object: Activity) {
     id,
     actor: actorID,
     object: object,
-  } satisfies AP.Accept;
+  } satisfies AcceptActivity;
 }

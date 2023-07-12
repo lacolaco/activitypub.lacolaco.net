@@ -47,4 +47,20 @@ export class UserFollowersRepository {
 
     return followers;
   }
+
+  async delete(user: User, followerID: string): Promise<void> {
+    const collection = this.db
+      .collection('users')
+      .doc(user.id)
+      .collection('followers') as CollectionReference<UserFollowerDocument>;
+
+    const query = collection.where('id', '==', followerID).limit(1);
+    const snapshot = await query.get();
+    if (snapshot.empty) {
+      return;
+    }
+
+    const doc = snapshot.docs[0];
+    await doc.ref.delete();
+  }
 }
