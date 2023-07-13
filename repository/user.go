@@ -119,7 +119,7 @@ func (r *userRepo) UpsertFollower(ctx context.Context, user *model.LocalUser, fo
 
 func (r *userRepo) ListFollowers(ctx context.Context, user *model.LocalUser) ([]*model.Follower, error) {
 	users := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
-	q := users.OrderBy("created_at", firestore.Desc)
+	q := users.OrderBy("createdAt", firestore.Desc)
 	items, err := getAllItems[model.Follower](ctx, q)
 	if err != nil {
 		return nil, err
