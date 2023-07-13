@@ -57,11 +57,6 @@ func (s *service) handle(c *gin.Context) {
 				"type": "application/activity+json",
 				"href": "https://" + host + "/users/" + string(user.UID),
 			},
-			map[string]string{
-				"rel":  "http://webfinger.net/rel/profile-page",
-				"type": "text/html",
-				"href": "https://" + host + "/@" + string(user.ID),
-			},
 		},
 	}
 	c.Header("Content-Type", "application/jrd+json")

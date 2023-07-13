@@ -26,7 +26,7 @@ func NewUserRepository(firestoreClient *firestore.Client) *userRepo {
 
 func (r *userRepo) FindByLocalID(ctx context.Context, localID string) (*model.LocalUser, error) {
 	collection := r.firestoreClient.Collection(UsersCollectionName)
-	found, doc, err := findItem[model.LocalUser](ctx, collection.Where("id", "==", localID))
+	found, doc, err := findItem[model.LocalUser](ctx, collection.Where("username", "==", localID))
 	if err != nil {
 		return nil, err
 	}
