@@ -1,6 +1,6 @@
 import { AP, isType } from '@activity-kit/types';
+import { randomUUID } from 'node:crypto';
 import { contextURIs } from './context';
-import { getID } from './utilities';
 
 export type Activity = AP.Activity & Record<string, unknown>;
 
@@ -23,14 +23,13 @@ export function isAcceptActivity(object: unknown): object is AcceptActivity {
 }
 
 export function buildAcceptAcivity(actorID: URL, object: Activity) {
-  const id = new URL(`${actorID}/accept/${object.id}`);
+  const uuid = randomUUID();
+  const id = new URL(`${actorID}/accept/${uuid}`);
   return {
     '@context': contextURIs,
     type: 'Accept',
     id,
     actor: actorID,
     object: object,
-    to: [getID(object.actor)],
-    published: new Date().toISOString(),
   } satisfies AcceptActivity;
 }
