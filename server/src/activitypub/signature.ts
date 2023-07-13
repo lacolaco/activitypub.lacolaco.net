@@ -36,7 +36,7 @@ export function withPublicKey(entity: Person, publicKey: string): Person {
 
 export function signRequest(req: Request, actorID: string, privateKey: string) {
   const { url, method, headers } = req;
-  const headerNames = Object.keys(headers);
+  const headerNames = Array.from(headers.keys());
   const headersObject = Object.fromEntries(headers.entries());
   const publicKeyId = getPublicKeyID(actorID);
 
@@ -48,12 +48,17 @@ export function signRequest(req: Request, actorID: string, privateKey: string) {
   return req;
 }
 
-export async function verifySignature(req: { url: string; method: string; headers: Headers }) {
+export type ResolvePublicKeyFn = (keyID: string) => Promise<PublicKey>;
+
+export async function verifySignature(
+  req: { url: string; method: string; headers: Headers },
+  resolvePublicKey: ResolvePublicKeyFn = fetchPublicKey,
+) {
   const { url, method, headers } = req;
   const headersObject = Object.fromEntries(headers.entries());
   const signature = parser.parse({ url, method, headers: headersObject });
 
-  const publicKey = await fetchPublicKey(signature.keyId);
+  const publicKey = await resolvePublicKey(signature.keyId);
   const success = signature.verify(publicKey.publicKeyPem);
 
   return success;
