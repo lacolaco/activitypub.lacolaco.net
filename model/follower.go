@@ -5,19 +5,12 @@ import (
 )
 
 type Follower struct {
-	ID        string        `firestore:"-"`
-	CreatedAt time.Time     `firestore:"created_at"`
-	Status    AttemptStatus `firestore:"status"`
-	UserID    string        `firestore:"user_id"`
+	ID        string    `firestore:"id"`
+	CreatedAt time.Time `firestore:"createdAt"`
 }
 
 func NewFollower(userID string, status AttemptStatus) *Follower {
 	return &Follower{
-		Status: status,
-		UserID: userID,
+		ID: userID,
 	}
-}
-
-func (f *Follower) GetDocID() string {
-	return f.ID
 }

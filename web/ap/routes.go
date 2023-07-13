@@ -234,7 +234,7 @@ func (s *apService) handleFollowers(c *gin.Context) {
 		OrderedItems: func() []ap.Item {
 			items := make([]ap.Item, len(followers))
 			for i, item := range followers {
-				items[i] = ap.IRI(item.UserID)
+				items[i] = ap.IRI(item.ID)
 			}
 			return items
 		}(),

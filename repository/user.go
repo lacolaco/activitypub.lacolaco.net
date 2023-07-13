@@ -101,7 +101,7 @@ func (r *userRepo) DeleteFollowing(ctx context.Context, user *model.LocalUser, w
 
 func (r *userRepo) UpsertFollower(ctx context.Context, user *model.LocalUser, follower *model.Follower) error {
 	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
-	found, doc, err := findItem[model.Follower](ctx, col.Where("user_id", "==", follower.UserID))
+	found, doc, err := findItem[model.Follower](ctx, col.Where("id", "==", follower.ID))
 	if err != nil && err != ErrNotFound {
 		return err
 	}
@@ -129,7 +129,7 @@ func (r *userRepo) ListFollowers(ctx context.Context, user *model.LocalUser) ([]
 
 func (r *userRepo) FindFollower(ctx context.Context, user *model.LocalUser, whom string) (*model.Follower, error) {
 	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
-	found, doc, err := findItem[model.Follower](ctx, col.Where("user_id", "==", whom))
+	found, doc, err := findItem[model.Follower](ctx, col.Where("id", "==", whom))
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (r *userRepo) FindFollower(ctx context.Context, user *model.LocalUser, whom
 
 func (r *userRepo) DeleteFollower(ctx context.Context, user *model.LocalUser, whom string) error {
 	col := r.firestoreClient.Collection(UsersCollectionName).Doc(user.GetDocID()).Collection(FollowersCollectionName)
-	if err := deleteItems(ctx, col.Where("user_id", "==", whom)); err != nil {
+	if err := deleteItems(ctx, col.Where("id", "==", whom)); err != nil {
 		return err
 	}
 	return nil
