@@ -37,8 +37,6 @@ export class ActivityPubAgent {
       throw new Error(`postActivity: ${res.status} ${res.statusText}`);
     }
     console.debug(`postActivity: ${res.status} ${res.statusText}`);
-    const body = await res.json();
-    console.debug(JSON.stringify(body));
     return res;
   }
 }
