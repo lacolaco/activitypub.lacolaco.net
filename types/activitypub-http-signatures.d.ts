@@ -3,7 +3,7 @@
  */
 declare module 'activitypub-http-signatures' {
   export class Sha256Signer {
-    constructor(params: { publicKeyId: string; privateKey: string; headerNames: string[] });
+    constructor(params: { publicKeyId: string; privateKey: string; headerNames?: string[] });
 
     sign(params: { url: string; method: string; headers: Record<string, string> }): string;
   }

@@ -2,6 +2,7 @@ import parser, { Sha256Signer } from 'activitypub-http-signatures';
 import { Person } from './person';
 import { getID } from './utilities';
 import { getTracer } from '@app/tracing';
+import * as crypto from 'node:crypto';
 
 export function getPublicKeyID(actorID: string): string {
   return `${actorID}#key`;
@@ -34,13 +35,27 @@ export function withPublicKey(person: Person, publicKey: string): Person {
   };
 }
 
-export function signRequest(req: Request, actorID: string, privateKey: string) {
+/**
+ * Convert string to bytes.
+ */
+function stob(s: string) {
+  return Uint8Array.from(s, (c) => c.charCodeAt(0));
+}
+
+/**
+ * Convert bytes to string.
+ */
+function btos(b: ArrayBuffer) {
+  return String.fromCharCode(...new Uint8Array(b));
+}
+
+export async function signRequest(req: Request, actorID: string, body: unknown, privateKey: string) {
   const { url, method, headers } = req;
-  const headerNames = Array.from(headers.keys());
+
   const headersObject = Object.fromEntries(headers.entries());
   const publicKeyId = getPublicKeyID(actorID);
 
-  const signer = new Sha256Signer({ publicKeyId, privateKey, headerNames });
+  const signer = new Sha256Signer({ publicKeyId, privateKey });
   const signature = signer.sign({ url, method, headers: headersObject });
 
   req.headers.set('Signature', signature);
