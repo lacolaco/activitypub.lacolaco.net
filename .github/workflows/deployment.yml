@@ -30,7 +30,7 @@ jobs:
           docker push $IMAGE_NAME:${{ github.sha }}
       - name: deploy to Cloud Run
         run: |
-          gcloud --quiet run deploy activitypub-lacolaco-net \
+          gcloud --quiet run deploy activitypub-lacolaco-net-go \
           --image $IMAGE_NAME:${{ github.sha }} \
           --allow-unauthenticated \
           --service-account ${{ vars.CLOUDRUN_SERVER_SERVICE_ACCOUNT }} \
@@ -57,7 +57,7 @@ jobs:
           docker push $IMAGE_NAME:${{ github.sha }}
       - name: deploy to Cloud Run
         run: |
-          gcloud --quiet run deploy activitypub-lacolaco-net-node \
+          gcloud --quiet run deploy activitypub-lacolaco-net \
           --image $IMAGE_NAME:${{ github.sha }} \
           --allow-unauthenticated \
           --service-account ${{ vars.CLOUDRUN_SERVER_SERVICE_ACCOUNT }} \
