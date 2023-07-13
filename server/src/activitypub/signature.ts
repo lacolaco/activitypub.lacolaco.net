@@ -1,8 +1,7 @@
+import { getTracer } from '@app/tracing';
 import parser, { Sha256Signer } from 'activitypub-http-signatures';
 import { Person } from './person';
 import { getID } from './utilities';
-import { getTracer } from '@app/tracing';
-import * as crypto from 'node:crypto';
 
 export function getPublicKeyID(actorID: string): string {
   return `${actorID}#key`;
@@ -49,7 +48,7 @@ function btos(b: ArrayBuffer) {
   return String.fromCharCode(...new Uint8Array(b));
 }
 
-export async function signRequest(req: Request, actorID: string, body: unknown, privateKey: string) {
+export async function signRequest(req: Request, actorID: string, privateKey: string) {
   const { url, method, headers } = req;
 
   const headersObject = Object.fromEntries(headers.entries());
