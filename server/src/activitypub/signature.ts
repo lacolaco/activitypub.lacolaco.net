@@ -18,14 +18,14 @@ export type PublicKey = {
   publicKeyPem: string;
 };
 
-export function withPublicKey(entity: Person, publicKey: string): Person {
-  const id = getID(entity);
+export function withPublicKey(person: Person, publicKey: string): Person {
+  const id = getID(person);
   if (id == null) {
     throw new Error('person.id is null');
   }
 
   return {
-    ...entity,
+    ...person,
     publicKey: {
       id: getPublicKeyID(id.toString()),
       owner: id.toString(),

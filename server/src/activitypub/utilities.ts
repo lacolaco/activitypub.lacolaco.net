@@ -11,9 +11,12 @@ export const getID = (entity: unknown) => {
   if (entity instanceof URL) {
     return entity;
   }
-  if (typeof entity === 'object') {
-    if ('id' in entity && typeof entity.id === 'string') {
+  if (typeof entity === 'object' && 'id' in entity) {
+    if (typeof entity.id === 'string') {
       return new URL(entity.id);
+    }
+    if (entity.id instanceof URL) {
+      return entity.id;
     }
   }
   return null;
