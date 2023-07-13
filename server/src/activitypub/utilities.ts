@@ -35,7 +35,7 @@ export class ActivityPubAgent {
       },
       body: JSON.stringify(activity),
     });
-    const signedReq = signRequest(req, actorID, this.privateKey);
+    const signedReq = await signRequest(req, actorID, this.privateKey);
     console.debug(JSON.stringify(Object.fromEntries(signedReq.headers.entries())));
     const res = await fetch(new Request(signedReq));
     if (!res.ok) {

@@ -17,7 +17,7 @@ describe('signature', () => {
       });
       const actorID = 'https://example.com/users/1';
 
-      const signed = signRequest(req, actorID, privateKey);
+      const signed = await signRequest(req, actorID, privateKey);
 
       const signature = signed.headers.get('Signature');
       expect(signature).not.toBe(null);
@@ -37,7 +37,7 @@ describe('signature', () => {
         body: JSON.stringify({ hello: 'world' }),
       });
 
-      const signed = signRequest(req, 'https://example.com/users/1', privateKey);
+      const signed = await signRequest(req, 'https://example.com/users/1', privateKey);
 
       const ok = await verifySignature(signed, async () => ({
         id: 'https://example.com/users/1#key',
