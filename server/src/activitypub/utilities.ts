@@ -23,6 +23,7 @@ export class ActivityPubAgent {
   constructor(readonly privateKey: string) {}
 
   async postActivity(url: URL, actorID: string, activity: Activity) {
+    console.debug(`postActivity: ${url.toString()}`);
     const req = new Request(url, {
       method: 'POST',
       headers: {
@@ -31,11 +32,13 @@ export class ActivityPubAgent {
       body: JSON.stringify(activity),
     });
     const signedReq = signRequest(req, actorID, this.privateKey);
-    console.debug(JSON.stringify(signedReq.headers));
     const res = await fetch(new Request(signedReq));
     if (!res.ok) {
       throw new Error(`postActivity: ${res.status} ${res.statusText}`);
     }
+    console.debug(`postActivity: ${res.status} ${res.statusText}`);
+    const body = await res.json();
+    console.debug(JSON.stringify(body));
     return res;
   }
 }
