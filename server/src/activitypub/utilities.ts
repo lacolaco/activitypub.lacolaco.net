@@ -24,6 +24,7 @@ export class ActivityPubAgent {
 
   async postActivity(url: URL, actorID: string, activity: Activity) {
     console.debug(`postActivity: ${url.toString()}`);
+    console.debug(JSON.stringify(activity));
     const req = new Request(url, {
       method: 'POST',
       headers: {
