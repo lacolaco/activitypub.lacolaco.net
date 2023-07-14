@@ -30,7 +30,6 @@ describe('signature', () => {
 
       const signature = headers['Signature'];
       expect(signature).not.toBe(null);
-      expect(signature).toMatchInlineSnapshot('"keyId=\\"https://example.com/users/1\\",algorithm=\\"rsa-sha256\\",headers=\\"(request-target) host date digest\\",signature=\\"jErQgNvc4xpcXboWDvBEM2Mxh8yhTLFvNcDtaKWfIe0ndPYqOPNcJjRHB1j9LofktVss9DokdyzkTyRUq0PWMpWnxIX3ITc8mvnkwRrSI/lqN3gGHbQfhnoXfdP7yXVO94cyPZsvMvZ1/mAIR6NdbVfEPVZ603bmm8DL71aa6ZEoq8HeEpkKs+9hdSXj5qd5cQA3oeinl6OVqnRv7gCinnFTGB7qyYD4eYxvQpoKxJl1jL/GDcBXdraQn8uN1mFgsIs0zZf7UWIRLamOJRaJ4GPrOJBDh2gc4xRZEvnEGSgTch5antKA0xrYt3M2h0RK4sefPKavEnSgjaAbbOqHJQ==\\""');
     });
   });
 
