@@ -2,8 +2,6 @@ import { Config } from '@app/domain/config';
 import { RemoteUser } from '@app/domain/remote-user';
 import { User } from '@app/domain/user';
 import { UserFollowersRepository } from '@app/repository/user-followers';
-import { AppContext } from '@app/web/context';
-import { Context } from 'hono';
 import { FollowActivity, UndoActivity, buildAcceptAcivity } from '../activitypub/activity';
 import { buildPerson, fetchPersonByID } from '../activitypub/person';
 import { getPublicKeyID } from '../activitypub/signature';
@@ -15,12 +13,7 @@ export async function getUserFollowers(user: User): Promise<RemoteUser[]> {
   return followers;
 }
 
-export async function acceptFollowRequest(
-  config: Config,
-  c: Context<AppContext>,
-  user: User,
-  activity: FollowActivity,
-) {
+export async function acceptFollowRequest(config: Config, origin: string, user: User, activity: FollowActivity) {
   const actorID = getID(activity.actor);
   if (actorID == null) {
     throw new Error('actorID is null');
@@ -35,7 +28,7 @@ export async function acceptFollowRequest(
 
   // send accept activity
   try {
-    const person = buildPerson(c.get('origin'), user);
+    const person = buildPerson(origin, user);
     const acceptActivity = buildAcceptAcivity(person.id, activity);
     await postActivity(inboxURL, acceptActivity, getPublicKeyID(person.id.toString()), config.privateKey);
   } catch (e) {
@@ -54,7 +47,7 @@ export async function acceptFollowRequest(
   }
 }
 
-export async function deleteFollower(config: Config, c: Context<AppContext>, user: User, activity: UndoActivity) {
+export async function deleteFollower(config: Config, origin: string, user: User, activity: UndoActivity) {
   const actorID = getID(activity.actor);
   if (actorID == null) {
     throw new Error('actorID is null');
@@ -70,7 +63,7 @@ export async function deleteFollower(config: Config, c: Context<AppContext>, use
 
   // send accept activity
   try {
-    const person = buildPerson(c.get('origin'), user);
+    const person = buildPerson(origin, user);
     const acceptActivity = buildAcceptAcivity(person.id, activity);
     await postActivity(inboxURL, acceptActivity, getPublicKeyID(person.id.toString()), config.privateKey);
   } catch (e) {

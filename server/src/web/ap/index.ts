@@ -1,10 +1,41 @@
 import * as ap from '@app/activitypub';
+import { User } from '@app/domain/user';
 import { UsersRepository } from '@app/repository/users';
 import { getTracer } from '@app/tracing';
+import { acceptFollowRequest, deleteFollower, getUserFollowers } from '@app/usecase/relationship';
 import { Handler, Hono, MiddlewareHandler } from 'hono';
-import { acceptFollowRequest, deleteFollower, getUserFollowers } from 'server/src/usecase/relationship';
 import { assertContentTypeHeader } from '../../middleware/asserts';
 import { AppContext } from '../context';
+
+type UserRouteContext = AppContext & {
+  Variables: {
+    user: User;
+  };
+};
+
+function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
+  return async (c, next) => {
+    const userRepo = new UsersRepository();
+    const id = c.req.param('id');
+    const user = await userRepo.findByID(id);
+    if (user == null) {
+      // if an user has the username, tell client to redirect permanently
+      const u = await userRepo.findByUsername(id);
+      if (u != null) {
+        c.status(301);
+        const redirectTo = new URL(c.req.url);
+        redirectTo.pathname = redirectTo.pathname.replace(id, u.id);
+        c.res.headers.set('Location', redirectTo.toString());
+        return c.json({ error: 'Moved Permanently' });
+      }
+
+      c.status(404);
+      return c.json({ error: 'Not Found' });
+    }
+    c.set('user', user);
+    await next();
+  };
+}
 
 const setActivityJSONContentType = (): MiddlewareHandler => async (c, next) => {
   await next();
@@ -12,7 +43,7 @@ const setActivityJSONContentType = (): MiddlewareHandler => async (c, next) => {
 };
 
 export default (app: Hono<AppContext>) => {
-  const apRoutes = new Hono();
+  const apRoutes = new Hono<AppContext>();
   // middlewares
   apRoutes.get('*', setActivityJSONContentType());
   apRoutes.post('*', assertContentTypeHeader(['application/activity+json']));
@@ -20,62 +51,38 @@ export default (app: Hono<AppContext>) => {
   apRoutes.get('/inbox', handleGetSharedInbox);
   apRoutes.post('/inbox', handlePostSharedInbox);
 
-  const userRoutes = new Hono();
+  const userRoutes = new Hono<UserRouteContext>();
+  userRoutes.use('*', setUserMiddleware());
   userRoutes.get('/', handleGetPerson);
   userRoutes.get('/inbox', handleGetInbox);
   userRoutes.post('/inbox', handlePostInbox);
   userRoutes.get('/outbox', handleGetOutbox);
   userRoutes.get('/followers', handleGetFollowers);
   userRoutes.get('/following', handleGetFollowing);
-
   apRoutes.route('/users/:id', userRoutes);
   app.route('/', apRoutes);
 };
 
-const handleGetPerson: Handler<AppContext> = async (c) => {
+const handleGetPerson: Handler<UserRouteContext> = async (c) => {
   return getTracer().startActiveSpan('ap.handleGetPerson', async (span) => {
     const config = c.get('config');
     const origin = c.get('origin');
-
-    const userRepo = new UsersRepository();
-    const id = c.req.param('id');
-    span.setAttribute('id', id);
-
-    const user = await userRepo.findByID(id);
-    if (user == null) {
-      // if an user has the username, tell client to redirect permanently
-      const u = await userRepo.findByUsername(id);
-      if (u != null) {
-        c.status(301);
-        c.res.headers.set('Location', `${origin}/users/${u.id}`);
-        return c.json({ error: 'Moved Permanently' });
-      }
-
-      c.status(404);
-      return c.json({ error: 'Not Found' });
-    }
+    const user = c.get('user');
     const person = ap.withPublicKey(ap.buildPerson(origin, user), config.publicKeyPem);
     const res = c.json(person);
     return res;
   });
 };
 
-const handleGetInbox: Handler<AppContext> = async (c) => {
+const handleGetInbox: Handler<UserRouteContext> = async (c) => {
   const origin = c.get('origin');
-  const userRepo = new UsersRepository();
-  const id = c.req.param('id');
-
-  const user = await userRepo.findByID(id);
-  if (user == null) {
-    c.status(404);
-    return c.json({ error: 'Not Found' });
-  }
+  const user = c.get('user');
   const person = ap.buildPerson(origin, user);
   const res = c.json(ap.buildOrderedCollection(person.inbox, []));
   return res;
 };
 
-const handlePostInbox: Handler<AppContext> = async (c) => {
+const handlePostInbox: Handler<UserRouteContext> = async (c) => {
   return getTracer().startActiveSpan('ap.handlePostInbox', async (span) => {
     try {
       await ap.verifySignature(c.req);
@@ -85,22 +92,15 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
       return c.json({ error: 'Bad Request' });
     }
     const config = c.get('config');
-
-    const userRepo = new UsersRepository();
-    const id = c.req.param('id');
-    const user = await userRepo.findByID(id);
-    if (user == null) {
-      console.log('user not found', id);
-      c.status(404);
-      return c.json({ error: 'Not Found' });
-    }
+    const origin = c.get('origin');
+    const user = c.get('user');
 
     const activity = await c.req.json<ap.Activity>();
     console.debug(JSON.stringify(activity));
 
     if (ap.isFollowActivity(activity)) {
       try {
-        await acceptFollowRequest(config, c, user, activity);
+        await acceptFollowRequest(config, origin, user, activity);
         return c.json({ ok: true });
       } catch (e) {
         console.error(e);
@@ -112,7 +112,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
       // unfollow
       if (ap.isFollowActivity(object)) {
         try {
-          await deleteFollower(config, c, user, activity);
+          await deleteFollower(config, origin, user, activity);
           return c.json({ ok: true });
         } catch (e) {
           console.error(e);
@@ -127,31 +127,17 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
   });
 };
 
-const handleGetOutbox: Handler = async (c) => {
+const handleGetOutbox: Handler<UserRouteContext> = async (c) => {
   const origin = c.get('origin');
-  const userRepo = new UsersRepository();
-  const id = c.req.param('id');
-
-  const user = await userRepo.findByID(id);
-  if (user == null) {
-    c.status(404);
-    return c.json({ error: 'Not Found' });
-  }
+  const user = c.get('user');
   const person = ap.buildPerson(origin, user);
   const res = c.json(ap.buildOrderedCollection(person.outbox, []));
   return res;
 };
 
-const handleGetFollowers: Handler = async (c) => {
+const handleGetFollowers: Handler<UserRouteContext> = async (c) => {
   const origin = c.get('origin');
-
-  const userRepo = new UsersRepository();
-  const id = c.req.param('id');
-  const user = await userRepo.findByID(id);
-  if (user == null) {
-    c.status(404);
-    return c.json({ error: 'Not Found' });
-  }
+  const user = c.get('user');
 
   const followers = await getUserFollowers(user);
 
@@ -165,16 +151,9 @@ const handleGetFollowers: Handler = async (c) => {
   return res;
 };
 
-const handleGetFollowing: Handler = async (c) => {
+const handleGetFollowing: Handler<UserRouteContext> = async (c) => {
   const origin = c.get('origin');
-  const userRepo = new UsersRepository();
-  const id = c.req.param('id');
-
-  const user = await userRepo.findByID(id);
-  if (user == null) {
-    c.status(404);
-    return c.json({ error: 'Not Found' });
-  }
+  const user = c.get('user');
   const person = ap.buildPerson(origin, user);
   const res = c.json(ap.buildOrderedCollection(person.following, []));
   return res;
