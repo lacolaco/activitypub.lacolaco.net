@@ -78,6 +78,6 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.9.0
 	google.golang.org/api v0.129.0
-	google.golang.org/grpc v1.56.1
+	google.golang.org/grpc v1.56.2
 	humungus.tedunangst.com/r/webs v0.6.60
 )
