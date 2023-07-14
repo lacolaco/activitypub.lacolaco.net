@@ -68,6 +68,13 @@ export function parseSignatureString(signature: string): Record<string, string> 
   return map;
 }
 
+export function createDigest(body: object) {
+  const hash = createHash('SHA-256');
+  hash.write(JSON.stringify(body));
+  hash.end();
+  return hash.digest('base64');
+}
+
 export async function signHeaders(
   method: 'POST',
   url: URL,
@@ -77,11 +84,7 @@ export async function signHeaders(
   now = new Date(),
 ) {
   const dateStr = now.toUTCString();
-
-  const hash = createHash('sha256');
-  hash.write(JSON.stringify(body));
-  hash.end();
-  const digest = hash.copy().digest('base64').toString();
+  const digest = createDigest(body);
 
   const signString = createSignString(
     { method, url },
@@ -91,7 +94,7 @@ export async function signHeaders(
       digest: `SHA-256=${digest}`,
     },
   );
-  const signature = sign('SHA256', Buffer.from(signString), privateKey).toString('base64');
+  const signature = sign('SHA-256', Buffer.from(signString), privateKey).toString('base64');
 
   const headers = {
     Host: url.host,
@@ -130,7 +133,7 @@ export async function verifySignature(
   const signString = createSignString({ method, url: new URL(url) }, headersObject, headerNames);
 
   try {
-    verify('SHA256', Buffer.from(signString), publicKeyPem, Buffer.from(signature));
+    verify('SHA-256', Buffer.from(signString), publicKeyPem, Buffer.from(signature));
     return true;
   } catch (err) {
     console.error(err);

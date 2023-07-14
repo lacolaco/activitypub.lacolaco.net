@@ -1,9 +1,18 @@
 import { getConfigWithEnv } from '@app/domain/config';
 import { describe, expect, test } from 'vitest';
-import { parseSignatureString, signHeaders, verifySignature } from './signature';
-import exp from 'node:constants';
+import { createDigest, parseSignatureString, signHeaders, verifySignature } from './signature';
 
 describe('signature', () => {
+  describe('createDigest', () => {
+    test('creates a digest', async () => {
+      const body = { hello: 'world' };
+      console.log(JSON.stringify(body));
+      const digest = createDigest(body);
+      // echo -n '{"hello":"world"}' | sha256sum | xxd -r -p | base64
+      expect(digest).toBe('k6I5cakU5erL8KjSUVTNownDwccvu5kU1Hxg88toFYg=');
+    });
+  });
+
   describe('parseSignatureString', () => {
     test('parses a signature string', async () => {
       const signature =
