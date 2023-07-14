@@ -1,10 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { map, switchMap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { RxState } from '@rx-angular/state';
-import { stateful } from '@rx-angular/state/selections';
+import { Component, effect, inject, Input, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export type LocalUser = {
@@ -20,47 +17,48 @@ export type LocalUser = {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <ng-container *ngIf="state$ | async as state">
-      <div *ngIf="state.user as user" class="flex flex-col items-start rounded-lg bg-panel p-4 shadow">
-        <div>
-          <img [src]="user.icon.url" class="w-24 h-24 rounded-lg" />
-        </div>
-        <div class="flex flex-col items-start py-2">
-          <span class="font-bold text-xl">{{ user.name }}</span>
-          <span class="text-sm text-gray-600">@{{ user.id }}@{{ hostname }}</span>
-        </div>
-        <div class="py-2" [innerHTML]="user.description"></div>
-        <div class="w-full">
-          <table class="w-full">
-            <tr *ngFor="let attachment of user.attachments">
-              <td class="font-bold">{{ attachment.name }}</td>
-              <td class="ml-2" [innerHTML]="attachment.value"></td>
-            </tr>
-          </table>
-        </div>
+    <div *ngIf="user() as u" class="flex flex-col items-start rounded-lg bg-panel p-4 shadow">
+      <div>
+        <img [src]="u.icon.url" class="w-24 h-24 rounded-lg" />
       </div>
-    </ng-container>
+      <div class="flex flex-col items-start py-2">
+        <span class="font-bold text-xl">{{ u.name }}</span>
+        <span class="text-sm text-gray-600">@{{ u.id }}@{{ hostname }}</span>
+      </div>
+      <div class="py-2" [innerHTML]="u.description"></div>
+      <div class="w-full">
+        <table class="w-full">
+          <tr *ngFor="let attachment of u.attachments">
+            <td class="font-bold">{{ attachment.name }}</td>
+            <td class="ml-2" [innerHTML]="attachment.value"></td>
+          </tr>
+        </table>
+      </div>
+    </div>
   `,
   styles: [],
 })
-export class UserComponent implements OnInit {
-  private readonly route = inject(ActivatedRoute);
+export class UserComponent {
   private readonly http = inject(HttpClient);
-  private readonly state = new RxState<{ user: LocalUser | null }>();
-  readonly state$ = this.state.select().pipe(stateful());
-  readonly username$ = this.route.params.pipe(map((params) => params['username']));
+  readonly user = signal<LocalUser | null>(null);
 
   readonly hostname = window.location.hostname;
 
-  ngOnInit() {
-    this.state.connect(
-      'user',
-      this.username$.pipe(
-        switchMap((username) =>
+  readonly #username = signal<string | null>(null);
+
+  @Input() set username(username: string) {
+    this.#username.set(username);
+  }
+
+  constructor() {
+    effect(async () => {
+      const username = this.#username();
+      if (username) {
+        const resp = await firstValueFrom(
           this.http.get<{ user: LocalUser }>(`${environment.backend}/api/users/show/${username}`),
-        ),
-        map((resp) => resp.user),
-      ),
-    );
+        );
+        this.user.set(resp.user);
+      }
+    });
   }
 }
