@@ -9,7 +9,7 @@
     "test": "vitest"
   },
   "license": "MIT",
-  "packageManager": "pnpm@7.33.3",
+  "packageManager": "pnpm@8.6.7",
   "dependencies": {
     "@activity-kit/types": "^0.4.36",
     "@google-cloud/firestore": "^6.6.1",

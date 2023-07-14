@@ -4,7 +4,4 @@ runs:
   using: 'composite'
   steps:
     - uses: actions/setup-node@v3
-      with:
-        node-version-file: 'client/package.json'
-        cache: yarn
-        cache-dependency-path: 'client/yarn.lock'
+    - uses: pnpm/action-setup@v2
