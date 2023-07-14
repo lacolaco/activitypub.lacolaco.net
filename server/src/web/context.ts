@@ -1,13 +1,11 @@
+import { Config } from '@app/domain/config';
 import { getOrigin } from '@app/util/url';
 import { MiddlewareHandler } from 'hono';
 
 export type AppContext = {
   Variables: {
     readonly origin: string;
-    readonly rsaKeyPair: {
-      readonly publicKey: string;
-      readonly privateKey: string;
-    };
+    readonly config: Config;
   };
 };
 

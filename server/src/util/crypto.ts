@@ -1,6 +1,25 @@
-import { createPublicKey } from 'node:crypto';
+import * as crypto from 'node:crypto';
 
-export function getPublicKey(privateKey: string) {
-  const publicKey = createPublicKey(privateKey);
-  return publicKey.export({ type: 'pkcs1', format: 'pem' }).toString();
+/**
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/importKey#pkcs_8_import
+ */
+export async function parsePrivateKey(pem: string) {
+  const privateKey = crypto.createPrivateKey({
+    key: pem,
+    format: 'pem',
+    type: 'pkcs8',
+  });
+  const publicKeyObject = crypto.createPublicKey(privateKey);
+  const publicKeyPem = publicKeyObject
+    .export({
+      format: 'pem',
+      type: 'spki',
+    })
+    .toString();
+
+  return {
+    privateKey,
+    publicKeyPem,
+  };
 }

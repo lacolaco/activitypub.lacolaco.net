@@ -34,6 +34,7 @@ export default (app: Hono<AppContext>) => {
 
 const handleGetPerson: Handler<AppContext> = async (c) => {
   return getTracer().startActiveSpan('ap.handleGetPerson', async (span) => {
+    const config = c.get('config');
     const origin = c.get('origin');
 
     const userRepo = new UsersRepository();
@@ -53,7 +54,7 @@ const handleGetPerson: Handler<AppContext> = async (c) => {
       c.status(404);
       return c.json({ error: 'Not Found' });
     }
-    const person = ap.withPublicKey(ap.buildPerson(origin, user), c.get('rsaKeyPair').publicKey);
+    const person = ap.withPublicKey(ap.buildPerson(origin, user), config.publicKeyPem);
     const res = c.json(person);
     return res;
   });
@@ -83,6 +84,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
       c.status(400);
       return c.json({ error: 'Bad Request' });
     }
+    const config = c.get('config');
 
     const userRepo = new UsersRepository();
     const id = c.req.param('id');
@@ -98,8 +100,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
 
     if (ap.isFollowActivity(activity)) {
       try {
-        const privateKey = c.get('rsaKeyPair').privateKey;
-        await acceptFollowRequest(c, user, activity, privateKey);
+        await acceptFollowRequest(config, c, user, activity);
         return c.json({ ok: true });
       } catch (e) {
         console.error(e);
@@ -111,8 +112,7 @@ const handlePostInbox: Handler<AppContext> = async (c) => {
       // unfollow
       if (ap.isFollowActivity(object)) {
         try {
-          const privateKey = c.get('rsaKeyPair').privateKey;
-          await deleteFollower(c, user, activity, privateKey);
+          await deleteFollower(config, c, user, activity);
           return c.json({ ok: true });
         } catch (e) {
           console.error(e);

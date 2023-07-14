@@ -1,5 +1,6 @@
+import { KeyObject } from 'crypto';
 import { Activity } from './activity';
-import { signRequest } from './signature';
+import { signHeaders } from './signature';
 
 export const getID = (entity: unknown) => {
   if (entity == null) {
@@ -22,26 +23,25 @@ export const getID = (entity: unknown) => {
   return null;
 };
 
-export class ActivityPubAgent {
-  constructor(readonly privateKey: string) {}
-
-  async postActivity(url: URL, actorID: string, activity: Activity) {
-    console.debug(`postActivity: ${url.toString()}`);
-    console.debug(JSON.stringify(activity));
-    const req = new Request(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/activity+json',
-      },
-      body: JSON.stringify(activity),
-    });
-    const signedReq = await signRequest(req, actorID, this.privateKey);
-    console.debug(JSON.stringify(Object.fromEntries(signedReq.headers.entries())));
-    const res = await fetch(new Request(signedReq));
-    if (!res.ok) {
-      throw new Error(`postActivity: ${res.status} ${res.statusText}`);
-    }
-    console.debug(`postActivity: ${res.status} ${res.statusText}`);
-    return res;
+export async function postActivity(inbox: URL, activity: Activity, publicKeyID: string, privateKey: KeyObject) {
+  console.debug(`postActivity: ${inbox.toString()}`);
+  console.debug(JSON.stringify(activity));
+  const headers = await signHeaders('POST', inbox, activity, publicKeyID, privateKey);
+  console.debug(JSON.stringify(headers));
+  const res = await fetch(inbox, {
+    method: 'POST',
+    headers: {
+      ...headers,
+      Accept: 'application/activity+json',
+      'Content-Type': 'application/activity+json',
+      'Accept-Encoding': 'gzip',
+      'User-Agent': `activitypub.lacolaco.net/1.0`,
+    },
+    body: JSON.stringify(activity),
+  });
+  if (!res.ok) {
+    throw new Error(`postActivity: ${res.status} ${res.statusText}`);
   }
+  console.debug(`postActivity: ${res.status} ${res.statusText}`);
+  return res;
 }

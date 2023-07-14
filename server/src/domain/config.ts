@@ -1,7 +1,10 @@
+import { parsePrivateKey } from '@app/util/crypto';
+import { KeyObject } from 'crypto';
 import { GoogleAuth } from 'google-auth-library';
 
 export type Config = {
-  readonly privateKeyPem: string;
+  readonly privateKey: KeyObject;
+  readonly publicKeyPem: string;
   readonly gcpProjectID: string;
   readonly clientOrigin: string;
   readonly isRunningOnCloud: boolean;
@@ -12,12 +15,14 @@ export async function getConfigWithEnv(): Promise<Config> {
   if (privateKeyPem == null) {
     throw new Error('RSA_PRIVATE_KEY is not set');
   }
+  const { privateKey, publicKeyPem } = await parsePrivateKey(privateKeyPem);
   const clientOrigin = process.env['CLIENT_ORIGIN'] ?? '';
   const googleCredentials = await findGoogleCredentials();
   const isRunningOnCloud = isRunningOnCloudRun();
 
   return {
-    privateKeyPem,
+    privateKey,
+    publicKeyPem,
     gcpProjectID: googleCredentials.projectId ?? '',
     clientOrigin,
     isRunningOnCloud,

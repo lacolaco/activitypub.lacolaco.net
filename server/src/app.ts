@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 
-import { getPublicKey } from '@app/util/crypto';
 import useActivityPub from '@app/web/ap';
 import useHostMeta from '@app/web/host-meta';
 import useNodeinfo from '@app/web/nodeinfo';
@@ -21,9 +20,7 @@ async function createApplication(): Promise<Hono<AppContext>> {
   app.use('*', logger());
   app.use('*', withOrigin());
   app.use('*', async (c, next) => {
-    const privateKey = config.privateKeyPem;
-    const publicKey = getPublicKey(privateKey);
-    c.set('rsaKeyPair', { privateKey, publicKey });
+    c.set('config', config);
     await next();
   });
 
