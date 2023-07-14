@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 
 import useActivityPub from '@app/web/ap';
@@ -18,6 +19,14 @@ async function createApplication(): Promise<Hono<AppContext>> {
   setupTracing();
 
   app.use('*', logger());
+  app.use(
+    '*',
+    cors({
+      origin: config.clientOrigin,
+      credentials: true,
+      allowMethods: ['GET', 'POST', 'OPTIONS'],
+    }),
+  );
   app.use('*', withOrigin());
   app.use('*', async (c, next) => {
     c.set('config', config);
