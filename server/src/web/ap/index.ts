@@ -25,6 +25,7 @@ function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
         c.status(301);
         const redirectTo = new URL(c.get('origin'));
         redirectTo.pathname = c.req.path.replace(id, u.id);
+        console.log('redirecting to', redirectTo.toString());
         c.res.headers.set('Location', redirectTo.toString());
         return c.json({ error: 'Moved Permanently' });
       }
