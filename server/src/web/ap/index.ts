@@ -23,8 +23,8 @@ function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
       const u = await userRepo.findByUsername(id);
       if (u != null) {
         c.status(301);
-        const redirectTo = new URL(c.req.url);
-        redirectTo.pathname = redirectTo.pathname.replace(id, u.id);
+        const redirectTo = new URL(c.get('origin'));
+        redirectTo.pathname = c.req.path.replace(id, u.id);
         c.res.headers.set('Location', redirectTo.toString());
         return c.json({ error: 'Moved Permanently' });
       }
