@@ -22,7 +22,7 @@ async function createApplication(): Promise<Hono<AppContext>> {
   app.use(
     '*',
     cors({
-      origin: config.clientOrigin,
+      origin: config.clientOrigins,
       credentials: true,
       allowMethods: ['GET', 'POST', 'OPTIONS'],
     }),

@@ -6,7 +6,7 @@ export type Config = {
   readonly privateKey: KeyObject;
   readonly publicKeyPem: string;
   readonly gcpProjectID: string;
-  readonly clientOrigin: string;
+  readonly clientOrigins: string[];
   readonly isRunningOnCloud: boolean;
 };
 
@@ -16,7 +16,7 @@ export async function getConfigWithEnv(): Promise<Config> {
     throw new Error('RSA_PRIVATE_KEY is not set');
   }
   const { privateKey, publicKeyPem } = await parsePrivateKey(privateKeyPem);
-  const clientOrigin = process.env['CLIENT_ORIGIN'] ?? '';
+  const clientOrigins = (process.env['CLIENT_ORIGIN'] ?? '').split(',');
   const googleCredentials = await findGoogleCredentials();
   const isRunningOnCloud = isRunningOnCloudRun();
 
@@ -24,7 +24,7 @@ export async function getConfigWithEnv(): Promise<Config> {
     privateKey,
     publicKeyPem,
     gcpProjectID: googleCredentials.projectId ?? '',
-    clientOrigin,
+    clientOrigins,
     isRunningOnCloud,
   };
 }
