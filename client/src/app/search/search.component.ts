@@ -70,7 +70,7 @@ export class SearchComponent {
     }
     try {
       const resp = await firstValueFrom(
-        this.http.get<{ person: ActivityPubPerson | null }>(`${environment.backend}/api/search/person/${userId}`),
+        this.http.get<{ person: ActivityPubPerson | null }>(`${environment.backend}/admin/search/person/${userId}`),
       );
       this.person.set(resp.person);
       this.searched.set(true);
@@ -82,7 +82,7 @@ export class SearchComponent {
 
   async requestFollow(person: ActivityPubPerson) {
     try {
-      await lastValueFrom(this.http.post(`${environment.backend}/api/following/create`, { id: person.id }));
+      await lastValueFrom(this.http.post(`${environment.backend}/admin/following/create`, { id: person.id }));
     } catch (e) {
       console.error(e);
     }
@@ -90,7 +90,7 @@ export class SearchComponent {
 
   async requestUnfollow(person: ActivityPubPerson) {
     try {
-      await lastValueFrom(this.http.post(`${environment.backend}/api/following/delete`, { id: person.id }));
+      await lastValueFrom(this.http.post(`${environment.backend}/admin/following/delete`, { id: person.id }));
     } catch (e) {
       console.error(e);
     }

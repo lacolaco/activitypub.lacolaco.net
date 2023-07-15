@@ -3,9 +3,16 @@ import { Handler, Hono } from 'hono';
 import { AppContext } from '../context';
 
 export default (app: Hono<AppContext>) => {
-  const apiRoutes = new Hono();
-  app.route('/api', apiRoutes);
+  const adminRoutes = new Hono();
+  app.route('/admin', adminRoutes);
 
+  adminRoutes.get('/users/show/:username', (c) => {
+    const headers = Object.fromEntries(c.req.headers.entries());
+    console.log(JSON.stringify(headers));
+
+    c.status(404);
+    return c.json({ error: 'Not Found' });
+  });
   // apiRoutes.get('/search/person/:resource', handleSearchPerson);
 };
 

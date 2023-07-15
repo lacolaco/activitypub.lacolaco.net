@@ -55,7 +55,7 @@ export class UserComponent {
       const username = this.#username();
       if (username) {
         const resp = await firstValueFrom(
-          this.http.get<{ user: LocalUser }>(`${environment.backend}/api/users/show/${username}`),
+          this.http.get<{ user: LocalUser }>(`${environment.backend}/admin/users/show/${username}`),
         );
         this.user.set(resp.user);
       }
