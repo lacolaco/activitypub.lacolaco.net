@@ -15,9 +15,14 @@ export function authInterceptor(): HttpInterceptorFn {
     return idToken(auth).pipe(
       switchMap((token) => {
         if (!token) {
-          return next(req);
+          return next(
+            req.clone({
+              withCredentials: true,
+            }),
+          );
         }
         const authReq = req.clone({
+          withCredentials: true,
           setHeaders: {
             Authorization: `Bearer ${token}`,
           },
