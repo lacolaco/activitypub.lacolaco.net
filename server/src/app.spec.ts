@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { assert, beforeEach, describe, test } from 'vitest';
+import { assert, beforeEach, describe, expect, test } from 'vitest';
 
 import createApplication from './app';
 import { AppContext } from './web/context';
@@ -9,6 +9,34 @@ describe('endpoints for activitypub compatibility', () => {
 
   beforeEach(async () => {
     app = await createApplication();
+  });
+
+  test('all routes are registered', async () => {
+    expect(app.routes.map((r) => `${r.method} ${r.path} ${r.handler.name || '[inline]'}`)).toMatchInlineSnapshot(`
+      [
+        "ALL * [inline]",
+        "ALL * [inline]",
+        "ALL * [inline]",
+        "ALL * [inline]",
+        "GET /.well-known/nodeinfo handleNodeinfo",
+        "GET /nodeinfo/2.1 handleNodeinfo21",
+        "GET /.well-known/host-meta handleHostMetaXML",
+        "GET /.well-known/host-meta.json handleHostMetaJSON",
+        "GET /.well-known/webfinger handleWebfinger",
+        "GET /* [inline]",
+        "POST /* [inline]",
+        "GET /inbox handleGetSharedInbox",
+        "POST /inbox handlePostSharedInbox",
+        "ALL /users/:id/* [inline]",
+        "GET /users/:id handleGetPerson",
+        "GET /users/:id/inbox handleGetInbox",
+        "POST /users/:id/inbox handlePostInbox",
+        "GET /users/:id/outbox handleGetOutbox",
+        "GET /users/:id/followers handleGetFollowers",
+        "GET /users/:id/following handleGetFollowing",
+        "GET /admin/users/show/:username [inline]",
+      ]
+    `);
   });
 
   // TODO: UsersRepository をモックできるようにする
