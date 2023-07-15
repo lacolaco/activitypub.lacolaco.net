@@ -1,3 +1,3 @@
 export const environment = {
-  backend: 'https://activitypub.lacolaco.net',
+  backend: 'https://api.lacolaco.social',
 };
