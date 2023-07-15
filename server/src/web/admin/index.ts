@@ -1,69 +1,29 @@
+import { verifyJWT } from '@app/auth/verify';
+import { Config } from '@app/domain/config';
 import { searchPerson } from '@app/usecase/admin/search-person';
-import { Handler, Hono, MiddlewareHandler } from 'hono';
-import { verify } from 'jsonwebtoken';
+import { Handler, Hono } from 'hono';
 import { AppContext } from '../context';
+import { UsersRepository } from '@app/repository/users';
 
-const jwtKeysURL = 'https://lacolaco.cloudflareaccess.com/cdn-cgi/access/certs';
-const aud = '20c040a974a2b0878ea9cf37df82bb1a5d7680ce262c27088eae68901ba4888d';
-
-function verifyJWT(): MiddlewareHandler<AppContext> {
-  return async (c, next) => {
-    const config = c.get('config');
-    if (!config.isRunningOnCloud) {
-      await next();
-      return;
-    }
-
-    const token = c.req.header('Cf-Access-Jwt-Assertion');
-    if (!token) {
-      c.status(401);
-      return c.json({ error: 'Unauthorized' });
-    }
-    console.log(token);
-    const { public_certs } = (await fetch(jwtKeysURL).then((res) => res.json())) as {
-      public_certs: { kid: string; cert: string }[];
-    };
-
-    try {
-      await new Promise((resolve, reject) => {
-        verify(
-          token,
-          ({ kid }, callback) => {
-            const key = public_certs.find((k) => k.kid === kid);
-            if (key == null) {
-              callback(new Error('Invalid kid'));
-              return;
-            }
-            callback(null, key.cert);
-          },
-          { audience: aud },
-          (err, decoded) => {
-            err ? reject(err) : resolve(decoded);
-          },
-        );
-      });
-    } catch (e) {
-      console.error(e);
-      c.status(401);
-      return c.json({ error: 'Unauthorized' });
-    }
-
-    await next();
-  };
-}
-
-export default (app: Hono<AppContext>) => {
+export default (app: Hono<AppContext>, config: Config) => {
   const adminRoutes = new Hono<AppContext>();
 
-  adminRoutes.use('*', verifyJWT());
-  adminRoutes.get('/users/show/:username', (c) => {
-    const headers = Object.fromEntries(c.req.headers.entries());
-    console.log(JSON.stringify(headers));
+  if (config.isRunningOnCloud) {
+    adminRoutes.use('*', verifyJWT());
+  }
 
-    c.status(404);
-    return c.json({ error: 'Not Found' });
+  adminRoutes.get('/users/show/:username', async (c) => {
+    const username = c.req.param('username');
+    const userRepo = new UsersRepository();
+    const user = await userRepo.findByUsername(username);
+    if (user == null) {
+      c.status(404);
+      return c.json({ error: 'Not Found' });
+    }
+
+    return c.json(user);
   });
-  // apiRoutes.get('/search/person/:resource', handleSearchPerson);
+  adminRoutes.get('/search/person/:resource', handleSearchPerson);
 
   app.route('/admin', adminRoutes);
 };

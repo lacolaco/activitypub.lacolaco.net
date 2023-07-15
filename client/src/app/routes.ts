@@ -1,7 +1,5 @@
-import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
+import { Routes, UrlSegment } from '@angular/router';
 import { UserComponent } from './user/user.component';
-import { SearchComponent } from './search/search.component';
-import { requireAuthentication } from './core/auth/guard';
 
 export const routes: Routes = [
   {
@@ -17,11 +15,6 @@ export const routes: Routes = [
       return null;
     },
     component: UserComponent,
-  },
-  {
-    path: 'search',
-    component: SearchComponent,
-    canMatch: [requireAuthentication()],
   },
   {
     path: '**',

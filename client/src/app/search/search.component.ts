@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -16,12 +16,12 @@ type ActivityPubPerson = {
 };
 
 @Component({
-  selector: 'app-search',
+  selector: 'app-search-remote-user',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormFieldModule, AppStrokedButton],
   template: `
     <div class="flex-auto flex flex-col justify-start gap-y-2">
-      <h2 class="text-2xl">Search User</h2>
+      <h2 class="text-xl">Search remote user</h2>
       <form [formGroup]="form" (submit)="searchUser()">
         <app-form-field label="@username@hostname" [showLabel]="true">
           <input type="text" placeholder="@username@hostname" formControlName="userId" />
@@ -52,6 +52,7 @@ type ActivityPubPerson = {
     </div>
   `,
   host: { class: 'flex flex-col gap-y-2 h-full' },
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SearchComponent {
   private readonly http = inject(HttpClient);
@@ -69,12 +70,12 @@ export class SearchComponent {
       return;
     }
     try {
-      const resp = await firstValueFrom(
-        this.http.get<{ person: ActivityPubPerson | null }>(`${environment.backend}/admin/search/person/${userId}`),
+      const person = await firstValueFrom(
+        this.http.get<ActivityPubPerson>(`${environment.backend}/admin/search/person/${userId}`),
       );
-      this.person.set(resp.person);
+      this.person.set(person);
       this.searched.set(true);
-      console.log(resp);
+      console.log(person);
     } catch (e) {
       console.error(e);
     }

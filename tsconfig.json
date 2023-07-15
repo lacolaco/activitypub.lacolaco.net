@@ -13,6 +13,7 @@
     "strict": true,
     "paths": {
       "@app/activitypub": ["server/src/activitypub/index.ts"],
+      "@app/auth/*": ["server/src/auth/*"],
       "@app/domain/*": ["server/src/domain/*"],
       "@app/repository/*": ["server/src/repository/*"],
       "@app/web/*": ["server/src/web/*"],

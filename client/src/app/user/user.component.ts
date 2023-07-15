@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, effect, inject, Input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, Input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { SearchComponent } from '../search/search.component';
 
 export type LocalUser = {
   id: string;
+  username: string;
   name: string;
   description: string;
   icon: { url: string };
@@ -15,25 +17,16 @@ export type LocalUser = {
 @Component({
   selector: 'app-user',
   standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, SearchComponent],
   template: `
-    <div *ngIf="user() as u" class="flex flex-col items-start rounded-lg bg-panel p-4 shadow">
-      <div>
-        <img [src]="u.icon.url" class="w-24 h-24 rounded-lg" />
-      </div>
-      <div class="flex flex-col items-start py-2">
-        <span class="font-bold text-xl">{{ u.name }}</span>
-        <span class="text-sm text-gray-600">@{{ u.id }}@{{ hostname }}</span>
-      </div>
-      <div class="py-2" [innerHTML]="u.description"></div>
-      <div class="w-full">
-        <table class="w-full">
-          <tr *ngFor="let attachment of u.attachments">
-            <td class="font-bold">{{ attachment.name }}</td>
-            <td class="ml-2" [innerHTML]="attachment.value"></td>
-          </tr>
-        </table>
-      </div>
+    <div *ngIf="user() as u" class="flex flex-col items-start gap-y-2">
+      <details class="w-full rounded-lg bg-panel p-4 shadow">
+        <summary class="text-md">@{{ u.username }}@{{ hostname }}</summary>
+        <pre class="w-full font-mono text-sm overflow-auto">{{ userJSON() }}</pre>
+      </details>
+
+      <app-search-remote-user class="w-full"></app-search-remote-user>
     </div>
   `,
   styles: [],
@@ -41,6 +34,8 @@ export type LocalUser = {
 export class UserComponent {
   private readonly http = inject(HttpClient);
   readonly user = signal<LocalUser | null>(null);
+
+  readonly userJSON = computed(() => JSON.stringify(this.user(), null, 2));
 
   readonly hostname = window.location.hostname;
 
@@ -54,10 +49,10 @@ export class UserComponent {
     effect(async () => {
       const username = this.#username();
       if (username) {
-        const resp = await firstValueFrom(
-          this.http.get<{ user: LocalUser }>(`${environment.backend}/admin/users/show/${username}`),
+        const user = await firstValueFrom(
+          this.http.get<LocalUser>(`${environment.backend}/admin/users/show/${username}`),
         );
-        this.user.set(resp.user);
+        this.user.set(user);
       }
     });
   }

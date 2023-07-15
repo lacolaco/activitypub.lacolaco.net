@@ -39,7 +39,7 @@ async function createApplication(): Promise<Hono<AppContext>> {
   useHostMeta(app);
   useWebfinger(app);
   useActivityPub(app);
-  useAdmin(app);
+  useAdmin(app, config);
 
   if (isDevelopment) {
     app.routes.forEach((route) => {
