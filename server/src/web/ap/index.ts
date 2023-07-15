@@ -169,6 +169,9 @@ const handleGetSharedInbox: Handler<AppContext> = async (c) => {
 
 const handlePostSharedInbox: Handler<AppContext> = async (c) => {
   return getTracer().startActiveSpan('ap.handlePostSharedInbox', async (span) => {
+    const payload = await c.req.json();
+    console.debug(JSON.stringify(payload));
+
     try {
       await ap.verifySignature(c.req);
     } catch (e) {
@@ -176,14 +179,12 @@ const handlePostSharedInbox: Handler<AppContext> = async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const payload = await c.req.json();
     const parsed = ap.AnyActivity.safeParse(payload);
     if (!parsed.success) {
       console.error(JSON.stringify(parsed.error));
       return c.json({ error: 'Bad Request' }, 400);
     }
     const activity = parsed.data;
-    console.debug(JSON.stringify(activity));
 
     span.setAttributes({
       'activity.type': activity.type,
