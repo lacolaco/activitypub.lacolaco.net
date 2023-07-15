@@ -35,6 +35,5 @@ const handleHostMetaJSON: Handler = async (c) => {
     ],
   };
 
-  const res = c.json(body);
-  return res;
+  return c.json(body);
 };

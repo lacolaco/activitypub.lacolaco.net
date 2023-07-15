@@ -4,3 +4,4 @@ export * from './context';
 export * from './person';
 export * from './signature';
 export * from './utilities';
+export * from './schema';

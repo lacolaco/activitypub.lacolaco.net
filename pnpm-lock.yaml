@@ -35,9 +35,6 @@ dependencies:
   '@opentelemetry/semantic-conventions':
     specifier: ^1.15.0
     version: 1.15.0
-  activitypub-http-signatures:
-    specifier: ^2.0.1
-    version: 2.0.1
   google-auth-library:
     specifier: ^8.9.0
     version: 8.9.0
@@ -946,11 +943,6 @@ packages:
     resolution: {integrity: sha512-F0SAmZ8iUtS//m8DmCTA0jlh6TDKkHQyK6xc6V4KDTyZKA9dnvX9/3sRTVQrWm79glUAZbnmmNcdYwUIHWVybw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-
-  /activitypub-http-signatures@2.0.1:
-    resolution: {integrity: sha512-Yiko/1xGQVUzFkrx90nuRrJUPZm2uzqaU6os2PkOXLPv122xGBvESz1z2H2zxdyMCfqCuOp9dQzrAatMmCeCHg==}
-    engines: {node: ^16.8.0}
-    dev: false
 
   /agent-base@6.0.2:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}

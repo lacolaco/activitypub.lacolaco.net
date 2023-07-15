@@ -1,0 +1,7 @@
+{
+  "actor": "https://social.mikutter.hachune.net/users/lacolaco",
+  "type": "Follow",
+  "id": "https://social.mikutter.hachune.net/ce3a1447-6c98-4f0c-b65d-2be2e4177b15",
+  "object": "https://activitypub.lacolaco.net/users/ug5pUwZAUGQBYhCPyHiCvWS5buc2",
+  "@context": "https://www.w3.org/ns/activitystreams"
+}

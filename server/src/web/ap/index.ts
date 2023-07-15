@@ -22,16 +22,13 @@ function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
       // if an user has the username, tell client to redirect permanently
       const u = await userRepo.findByUsername(id);
       if (u != null) {
-        c.status(301);
         const redirectTo = new URL(c.get('origin'));
         redirectTo.pathname = c.req.path.replace(id, u.id);
         console.log('redirecting to', redirectTo.toString());
         c.res.headers.set('Location', redirectTo.toString());
-        return c.json({ error: 'Moved Permanently' });
+        return c.json({ error: 'Moved Permanently' }, 301);
       }
-
-      c.status(404);
-      return c.json({ error: 'Not Found' });
+      return c.json({ error: 'Not Found' }, 404);
     }
     c.set('user', user);
     await next();
@@ -69,7 +66,7 @@ const handleGetPerson: Handler<UserRouteContext> = async (c) => {
     const config = c.get('config');
     const origin = c.get('origin');
     const user = c.get('user');
-    const person = ap.withPublicKey(ap.buildPerson(origin, user), config.publicKeyPem);
+    const person = ap.buildPerson(origin, user, config.publicKeyPem);
     const res = c.json(person);
     return res;
   });
@@ -89,14 +86,19 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
       await ap.verifySignature(c.req);
     } catch (e) {
       console.error(e);
-      c.status(400);
-      return c.json({ error: 'Bad Request' });
+      return c.json({ error: 'Unauthorized' }, 401);
     }
     const config = c.get('config');
     const origin = c.get('origin');
     const user = c.get('user');
 
-    const activity = await c.req.json<ap.Activity>();
+    const payload = await c.req.json();
+    const parsed = ap.AnyActivity.safeParse(payload);
+    if (!parsed.success) {
+      console.error(JSON.stringify(parsed.error));
+      return c.json({ error: 'Bad Request' }, 400);
+    }
+    const activity = parsed.data;
     console.debug(JSON.stringify(activity));
 
     if (ap.isFollowActivity(activity)) {
@@ -105,8 +107,7 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
         return c.json({ ok: true });
       } catch (e) {
         console.error(e);
-        c.status(500);
-        return c.json({ error: 'Internal Server Error' });
+        return c.json({ error: 'Internal Server Error' }, 500);
       }
     } else if (ap.isUndoActivity(activity)) {
       const object = activity.object;
@@ -117,8 +118,7 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
           return c.json({ ok: true });
         } catch (e) {
           console.error(e);
-          c.status(500);
-          return c.json({ error: 'Internal Server Error' });
+          return c.json({ error: 'Internal Server Error' }, 500);
         }
       }
     }
@@ -139,30 +139,32 @@ const handleGetOutbox: Handler<UserRouteContext> = async (c) => {
 const handleGetFollowers: Handler<UserRouteContext> = async (c) => {
   const origin = c.get('origin');
   const user = c.get('user');
+  const person = ap.buildPerson(origin, user);
+  if (!person.followers) {
+    return c.json({ error: 'Not Found' }, 404);
+  }
 
   const followers = await getUserFollowers(user);
-
-  const person = ap.buildPerson(origin, user);
-  const res = c.json(
+  return c.json(
     ap.buildOrderedCollection(
       person.followers,
-      followers.map((f) => new URL(f.id)),
+      followers.map((f) => f.id),
     ),
   );
-  return res;
 };
 
 const handleGetFollowing: Handler<UserRouteContext> = async (c) => {
   const origin = c.get('origin');
   const user = c.get('user');
   const person = ap.buildPerson(origin, user);
-  const res = c.json(ap.buildOrderedCollection(person.following, []));
-  return res;
+  if (!person.following) {
+    return c.json({ error: 'Not Found' }, 404);
+  }
+  return c.json(ap.buildOrderedCollection(person.following, []));
 };
 
 const handleGetSharedInbox: Handler<AppContext> = async (c) => {
-  c.status(404);
-  return c.json({ error: 'Not Found' });
+  return c.json({}, 405);
 };
 
 const handlePostSharedInbox: Handler<AppContext> = async (c) => {
@@ -171,19 +173,23 @@ const handlePostSharedInbox: Handler<AppContext> = async (c) => {
       await ap.verifySignature(c.req);
     } catch (e) {
       console.error(e);
-      c.status(400);
-      return c.json({ error: 'Bad Request' });
+      return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const activity = await c.req.json<ap.Activity>();
+    const payload = await c.req.json();
+    const parsed = ap.AnyActivity.safeParse(payload);
+    if (!parsed.success) {
+      console.error(JSON.stringify(parsed.error));
+      return c.json({ error: 'Bad Request' }, 400);
+    }
+    const activity = parsed.data;
     console.debug(JSON.stringify(activity));
 
     span.setAttributes({
       'activity.type': activity.type,
-      'activity.actor': ap.getID(activity.actor)?.toString(),
+      'activity.actor': ap.getURI(activity.actor)?.toString(),
     });
 
-    c.status(404);
-    return c.json({ error: 'Not Found' });
+    return c.json({ error: 'Not Found' }, 404);
   });
 };

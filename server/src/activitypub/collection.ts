@@ -1,12 +1,12 @@
-import { AP } from '@activity-kit/types';
 import { contextURIs } from './context';
+import { ObjectOrLinkOrURI, OrderedCollection, URI } from './schema';
 
-export function buildOrderedCollection(id: URL, items: AP.EntityReference[]): AP.OrderedCollection {
-  return {
+export function buildOrderedCollection(collectionID: URI, items: ObjectOrLinkOrURI[]) {
+  return OrderedCollection.parse({
     '@context': contextURIs,
-    id,
+    id: collectionID,
     type: 'OrderedCollection',
     totalItems: items.length,
     orderedItems: items,
-  };
+  });
 }

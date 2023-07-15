@@ -1,37 +1,9 @@
 import { getTracer } from '@app/tracing';
 import { KeyObject, createHash, sign, verify } from 'node:crypto';
-import { Person } from './person';
-import { getID } from './utilities';
+import { PublicKey } from './schema';
 
 export function getPublicKeyID(actorID: string | URL): string {
   return `${actorID.toString()}#key`;
-}
-
-/**
- * Public key for HTTP Signatures.
- *
- * @see https://docs.joinmastodon.org/spec/activitypub/#publicKey
- */
-export type PublicKey = {
-  id: string;
-  owner: string;
-  publicKeyPem: string;
-};
-
-export function withPublicKey(person: Person, publicKey: string): Person {
-  const id = getID(person);
-  if (id == null) {
-    throw new Error('person.id is null');
-  }
-
-  return {
-    ...person,
-    publicKey: {
-      id: getPublicKeyID(id.toString()),
-      owner: id.toString(),
-      publicKeyPem: publicKey,
-    },
-  };
 }
 
 /**
@@ -77,19 +49,20 @@ export function createDigest(body: object) {
 
 export async function signHeaders(
   method: 'POST',
-  url: URL,
+  url: string,
   body: object,
   publicKeyID: string,
   privateKey: KeyObject,
   now = new Date(),
 ) {
+  const parsedURL = new URL(url);
   const dateStr = now.toUTCString();
   const digest = createDigest(body);
 
   const signString = createSignString(
-    { method, url },
+    { method, url: parsedURL },
     {
-      host: url.host,
+      host: parsedURL.host,
       date: dateStr,
       digest: `SHA-256=${digest}`,
     },
@@ -97,7 +70,7 @@ export async function signHeaders(
   const signature = sign('SHA-256', Buffer.from(signString), privateKey).toString('base64');
 
   const headers = {
-    Host: url.host,
+    Host: parsedURL.host,
     Date: dateStr,
     Digest: `SHA-256=${digest}`,
     Signature:

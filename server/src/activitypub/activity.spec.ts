@@ -1,24 +1,22 @@
-import { AP } from '@activity-kit/types';
 import { describe, expect, test } from 'vitest';
 import { buildAcceptAcivity } from './activity';
+import { FollowActivity, URI } from './schema';
 
 describe('buildAcceptAcivity', () => {
   test('returns an Accept activity', () => {
-    const actorID = new URL('https://example.com/users/alice');
-    const object = {
+    const actorID = URI.parse('https://example.com/users/alice');
+    const object = FollowActivity.parse({
       '@context': 'https://www.w3.org/ns/activitystreams',
       type: 'Follow',
-      id: new URL('https://example.com/users/alice/follows/123'),
-      actor: new URL('https://example.com/users/alice'),
-      object: new URL('https://example.com/users/bob'),
-    } satisfies AP.Follow;
+      id: URI.parse('https://example.com/users/alice/follows/123'),
+      actor: URI.parse('https://example.com/users/alice'),
+      object: URI.parse('https://example.com/users/bob'),
+    });
     const accept = buildAcceptAcivity(actorID, object);
 
-    expect(accept.id.toString().startsWith('https://example.com/users/alice/accept/')).toBe(true);
-    expect(accept).toMatchObject({
-      type: 'Accept',
-      actor: actorID,
-      object: object,
-    });
+    expect(accept.type).toStrictEqual('Accept');
+    expect(accept.id?.toString().startsWith('https://example.com/users/alice/accept/')).toBe(true);
+    expect(accept.actor).toStrictEqual(actorID);
+    expect(accept.object).toStrictEqual(object);
   });
 });

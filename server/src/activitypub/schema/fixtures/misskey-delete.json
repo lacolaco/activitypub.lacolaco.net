@@ -1,0 +1,31 @@
+{
+  "object": "https://misskey.io/users/9h7mlp4eqi",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://w3id.org/security/v1",
+    {
+      "PropertyValue": "schema:PropertyValue",
+      "discoverable": "toot:discoverable",
+      "_misskey_quote": "misskey:_misskey_quote",
+      "schema": "http://schema.org#",
+      "_misskey_content": "misskey:_misskey_content",
+      "sensitive": "as:sensitive",
+      "toot": "http://joinmastodon.org/ns#",
+      "misskey": "https://misskey-hub.net/ns#",
+      "featured": "toot:featured",
+      "vcard": "http://www.w3.org/2006/vcard/ns#",
+      "value": "schema:value",
+      "_misskey_votes": "misskey:_misskey_votes",
+      "isCat": "misskey:isCat",
+      "Hashtag": "as:Hashtag",
+      "_misskey_reaction": "misskey:_misskey_reaction",
+      "quoteUrl": "as:quoteUrl",
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "Emoji": "toot:Emoji"
+    }
+  ],
+  "id": "https://misskey.io/70467ebe-2cec-43c9-a4e3-8a96249ad44c",
+  "type": "Delete",
+  "published": "2023-07-15T15:14:15.121Z",
+  "actor": "https://misskey.io/users/9h7mlp4eqi"
+}

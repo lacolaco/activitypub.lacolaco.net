@@ -1,0 +1,12 @@
+{
+  "actor": "https://social.mikutter.hachune.net/users/lacolaco",
+  "id": "https://social.mikutter.hachune.net/users/lacolaco#follows/37260/undo",
+  "object": {
+    "object": "https://activitypub.lacolaco.net/users/ug5pUwZAUGQBYhCPyHiCvWS5buc2",
+    "actor": "https://social.mikutter.hachune.net/users/lacolaco",
+    "id": "https://social.mikutter.hachune.net/5184e4f2-cb73-4a1c-855e-54a56fe47112",
+    "type": "Follow"
+  },
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Undo"
+}

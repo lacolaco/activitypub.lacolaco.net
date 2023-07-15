@@ -30,8 +30,7 @@ export async function searchPerson(resource: string) {
 
     // fetch person with ap
     try {
-      const person = await fetchPersonByID(new URL(personURL));
-      return person;
+      return await fetchPersonByID(personURL);
     } catch (e) {
       console.error(e);
       throw new Error(`person not found: ${resource}`);

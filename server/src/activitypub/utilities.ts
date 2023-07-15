@@ -1,33 +1,22 @@
-import { KeyObject } from 'crypto';
-import { Activity } from './activity';
+import { KeyObject } from 'node:crypto';
 import { signHeaders } from './signature';
+import { AnyActivity, ObjectOrURI, URI } from './schema';
 
-export const getID = (entity: unknown) => {
-  if (entity == null) {
-    return null;
+export const getURI = (object: ObjectOrURI) => {
+  if (typeof object === 'string') {
+    return object;
   }
-  if (typeof entity === 'string') {
-    return new URL(entity);
-  }
-  if (entity instanceof URL) {
-    return entity;
-  }
-  if (typeof entity === 'object' && 'id' in entity) {
-    if (typeof entity.id === 'string') {
-      return new URL(entity.id);
-    }
-    if (entity.id instanceof URL) {
-      return entity.id;
-    }
+  const { id } = object;
+  if (typeof id === 'string') {
+    return id;
   }
   return null;
 };
 
-export async function postActivity(inbox: URL, activity: Activity, publicKeyID: string, privateKey: KeyObject) {
+export async function postActivity(inbox: URI, activity: AnyActivity, publicKeyID: string, privateKey: KeyObject) {
   console.debug(`postActivity: ${inbox.toString()}`);
   console.debug(JSON.stringify(activity));
   const headers = await signHeaders('POST', inbox, activity, publicKeyID, privateKey);
-  console.debug(JSON.stringify(headers));
   const res = await fetch(inbox, {
     method: 'POST',
     headers: {

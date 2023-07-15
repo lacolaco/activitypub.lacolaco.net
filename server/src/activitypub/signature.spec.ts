@@ -31,7 +31,7 @@ describe('signature', () => {
     test('signs a request', async () => {
       const privateKey = (await getConfigWithEnv()).privateKey;
 
-      const inbox = new URL('https://remote.example.com/inbox');
+      const inbox = 'https://remote.example.com/inbox';
       const body = { hello: 'world' };
       const actorID = 'https://example.com/users/1';
 
@@ -114,7 +114,7 @@ describe('signature', () => {
       const privateKey = config.privateKey;
       const publicKeyPem = config.publicKeyPem;
 
-      const inbox = new URL('https://remote.example.com/inbox');
+      const inbox = 'https://remote.example.com/inbox';
       const body = { hello: 'world' };
       const actorID = 'https://example.com/users/1';
 

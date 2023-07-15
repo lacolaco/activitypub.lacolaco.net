@@ -1,0 +1,108 @@
+{
+  "attachment": [
+    {
+      "type": "PropertyValue",
+      "value": "<a href=\"https://twitter.com/laco2net\" target=\"_blank\" rel=\"nofollow noopener noreferrer me\" translate=\"no\"><span class=\"invisible\">https://</span><span class=\"\">twitter.com/laco2net</span><span class=\"invisible\"></span></a>",
+      "name": "Twitter"
+    },
+    {
+      "type": "PropertyValue",
+      "value": "<span class=\"h-card\" translate=\"no\"><a href=\"https://misskey.io/@lacolaco\" class=\"u-url mention\">@<span>lacolaco@misskey.io</span></a></span>",
+      "name": "Misskey"
+    },
+    {
+      "type": "PropertyValue",
+      "value": "<span class=\"h-card\" translate=\"no\"><a href=\"http://activitypub.lacolaco.net/users/ug5pUwZAUGQBYhCPyHiCvWS5buc2\" class=\"u-url mention\">@<span>lacolaco@activitypub.lacolaco.net</span></a></span>",
+      "name": "自作AP"
+    }
+  ],
+  "publicKey": {
+    "id": "https://social.mikutter.hachune.net/users/lacolaco#main-key",
+    "owner": "https://social.mikutter.hachune.net/users/lacolaco",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0Gd1iSY7qiQNuekn2qWX\nmTu7IPKxH1T7YkZfwHf6HM3QDgh8jbf39XKJIeUDlcQzf6Z2haXAkB0/wNF6FWIy\ndSKP3YbAK5kS/7HMK+l9M9oRQNSGEOguExbPtV35kQTWB0bWP2J8igObSAOPd0jY\nFEVpRa6s2caLVdbUj8hz0w3KKeP0dfF9nF+UTbzqWjUmLGTNdFKl/T6x6SBMrXmM\nfqyaTY1FEODWGyBfH6rmsG1EJyxWSslMnaM+eG5UG5gWXqChs47+xftRp0+gPJuH\nwyiyDXzM21GRrVd11vRFlUcX5obanVoujFMkfMMt2w2w/90szNaVIcyzoPBZCgE3\ngwIDAQAB\n-----END PUBLIC KEY-----\n"
+  },
+  "featuredTags": "https://social.mikutter.hachune.net/users/lacolaco/collections/tags",
+  "icon": {
+    "url": "https://social.mikutter.hachune.net/system/accounts/avatars/000/090/817/original/0ba19e75fe3e931c.png",
+    "mediaType": "image/png",
+    "type": "Image"
+  },
+  "endpoints": {
+    "sharedInbox": "https://social.mikutter.hachune.net/inbox"
+  },
+  "featured": "https://social.mikutter.hachune.net/users/lacolaco/collections/featured",
+  "id": "https://social.mikutter.hachune.net/users/lacolaco",
+  "devices": "https://social.mikutter.hachune.net/users/lacolaco/collections/devices",
+  "followers": "https://social.mikutter.hachune.net/users/lacolaco/followers",
+  "published": "2020-12-31T00:00:00Z",
+  "discoverable": false,
+  "tag": [],
+  "outbox": "https://social.mikutter.hachune.net/users/lacolaco/outbox",
+  "name": "らこらこ",
+  "summary": "<p>lacolaco in fediverse!</p>",
+  "preferredUsername": "lacolaco",
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://w3id.org/security/v1",
+    {
+      "suspended": "toot:suspended",
+      "schema": "http://schema.org#",
+      "messageFranking": "toot:messageFranking",
+      "Ed25519Signature": "toot:Ed25519Signature",
+      "deviceId": "toot:deviceId",
+      "claim": {
+        "@id": "toot:claim",
+        "@type": "@id"
+      },
+      "messageType": "toot:messageType",
+      "publicKeyBase64": "toot:publicKeyBase64",
+      "Ed25519Key": "toot:Ed25519Key",
+      "featuredTags": {
+        "@type": "@id",
+        "@id": "toot:featuredTags"
+      },
+      "toot": "http://joinmastodon.org/ns#",
+      "fingerprintKey": {
+        "@id": "toot:fingerprintKey",
+        "@type": "@id"
+      },
+      "Curve25519Key": "toot:Curve25519Key",
+      "alsoKnownAs": {
+        "@id": "as:alsoKnownAs",
+        "@type": "@id"
+      },
+      "PropertyValue": "schema:PropertyValue",
+      "Device": "toot:Device",
+      "identityKey": {
+        "@id": "toot:identityKey",
+        "@type": "@id"
+      },
+      "discoverable": "toot:discoverable",
+      "focalPoint": {
+        "@id": "toot:focalPoint",
+        "@container": "@list"
+      },
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "devices": {
+        "@id": "toot:devices",
+        "@type": "@id"
+      },
+      "cipherText": "toot:cipherText",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "value": "schema:value",
+      "EncryptedMessage": "toot:EncryptedMessage",
+      "movedTo": {
+        "@id": "as:movedTo",
+        "@type": "@id"
+      }
+    }
+  ],
+  "url": "https://social.mikutter.hachune.net/@lacolaco",
+  "inbox": "https://social.mikutter.hachune.net/users/lacolaco/inbox",
+  "type": "Person",
+  "manuallyApprovesFollowers": false,
+  "following": "https://social.mikutter.hachune.net/users/lacolaco/following"
+}

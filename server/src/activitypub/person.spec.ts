@@ -8,7 +8,7 @@ describe('buildPerson', () => {
 
     const person = buildPerson('http://localhost', user);
 
-    expect(person).toMatchInlineSnapshot(`
+    expect(JSON.parse(JSON.stringify(person))).toMatchInlineSnapshot(`
       {
         "@context": [
           "https://www.w3.org/ns/activitystreams",
@@ -45,10 +45,10 @@ describe('buildPerson', () => {
         "name": "test",
         "outbox": "http://localhost/users/1/outbox",
         "preferredUsername": "test",
-        "published": 2006-01-02T15:04:05.999Z,
+        "published": "2006-01-02T15:04:05.999Z",
         "summary": "test",
         "type": "Person",
-        "updated": 2006-01-02T15:04:05.999Z,
+        "updated": "2006-01-02T15:04:05.999Z",
         "url": "https://example.com/@test",
       }
     `);

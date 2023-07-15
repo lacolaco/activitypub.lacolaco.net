@@ -21,7 +21,6 @@
     "@opentelemetry/sdk-trace-base": "^1.15.0",
     "@opentelemetry/sdk-trace-node": "^1.15.0",
     "@opentelemetry/semantic-conventions": "^1.15.0",
-    "activitypub-http-signatures": "^2.0.1",
     "google-auth-library": "^8.9.0",
     "hono": "^3.2.7",
     "jsonwebtoken": "^9.0.1",

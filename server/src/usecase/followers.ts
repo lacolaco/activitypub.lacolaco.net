@@ -2,10 +2,10 @@ import { Config } from '@app/domain/config';
 import { RemoteUser } from '@app/domain/remote-user';
 import { User } from '@app/domain/user';
 import { UserFollowersRepository } from '@app/repository/user-followers';
-import { FollowActivity, UndoActivity, buildAcceptAcivity } from '../activitypub/activity';
+import { FollowActivity, UndoActivity, buildAcceptAcivity } from '@app/activitypub';
 import { buildPerson, fetchPersonByID } from '../activitypub/person';
 import { getPublicKeyID } from '../activitypub/signature';
-import { getID, postActivity } from '../activitypub/utilities';
+import { getURI, postActivity } from '../activitypub/utilities';
 
 export async function getUserFollowers(user: User): Promise<RemoteUser[]> {
   const followersRepo = new UserFollowersRepository();
@@ -14,14 +14,14 @@ export async function getUserFollowers(user: User): Promise<RemoteUser[]> {
 }
 
 export async function acceptFollowRequest(config: Config, origin: string, user: User, activity: FollowActivity) {
-  const actorID = getID(activity.actor);
+  const actorID = getURI(activity.actor);
   if (actorID == null) {
     throw new Error('actorID is null');
   }
   console.log('accepting follow request from', actorID.toString());
   // resolve remote user
   const actor = await fetchPersonByID(actorID);
-  const inboxURL = getID(actor.inbox);
+  const inboxURL = getURI(actor.inbox);
   if (inboxURL == null) {
     throw new Error('inboxURL is null');
   }
@@ -48,7 +48,7 @@ export async function acceptFollowRequest(config: Config, origin: string, user: 
 }
 
 export async function deleteFollower(config: Config, origin: string, user: User, activity: UndoActivity) {
-  const actorID = getID(activity.actor);
+  const actorID = getURI(activity.actor);
   if (actorID == null) {
     throw new Error('actorID is null');
   }
@@ -56,7 +56,7 @@ export async function deleteFollower(config: Config, origin: string, user: User,
   console.log('accepting unfollow request from', actorID.toString());
   // resolve remote user
   const actor = await fetchPersonByID(actorID);
-  const inboxURL = getID(actor.inbox);
+  const inboxURL = getURI(actor.inbox);
   if (inboxURL == null) {
     throw new Error('inboxURL is null');
   }

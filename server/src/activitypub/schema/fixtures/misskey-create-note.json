@@ -1,0 +1,50 @@
+{
+  "object": {
+    "sensitive": false,
+    "attributedTo": "https://misskey.io/users/9bdgn9zxoi",
+    "content": "<p><span>うーーーーん、httpsigの実装をcavage版に合わせてみたがまだダメだなあ</span></p>",
+    "type": "Note",
+    "inReplyTo": null,
+    "to": ["https://www.w3.org/ns/activitystreams#Public"],
+    "_misskey_content": "うーーーーん、httpsigの実装をcavage版に合わせてみたがまだダメだなあ",
+    "source": {
+      "content": "うーーーーん、httpsigの実装をcavage版に合わせてみたがまだダメだなあ",
+      "mediaType": "text/x.misskeymarkdown"
+    },
+    "attachment": [],
+    "tag": [],
+    "published": "2023-07-14T00:24:37.848Z",
+    "cc": ["https://misskey.io/users/9bdgn9zxoi/followers"],
+    "id": "https://misskey.io/notes/9h5eicbc54"
+  },
+  "published": "2023-07-14T00:24:37.848Z",
+  "id": "https://misskey.io/notes/9h5eicbc54/activity",
+  "to": ["https://www.w3.org/ns/activitystreams#Public"],
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://w3id.org/security/v1",
+    {
+      "PropertyValue": "schema:PropertyValue",
+      "misskey": "https://misskey-hub.net/ns#",
+      "discoverable": "toot:discoverable",
+      "_misskey_content": "misskey:_misskey_content",
+      "Emoji": "toot:Emoji",
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "sensitive": "as:sensitive",
+      "featured": "toot:featured",
+      "_misskey_votes": "misskey:_misskey_votes",
+      "quoteUrl": "as:quoteUrl",
+      "toot": "http://joinmastodon.org/ns#",
+      "value": "schema:value",
+      "isCat": "misskey:isCat",
+      "Hashtag": "as:Hashtag",
+      "vcard": "http://www.w3.org/2006/vcard/ns#",
+      "_misskey_quote": "misskey:_misskey_quote",
+      "schema": "http://schema.org#",
+      "_misskey_reaction": "misskey:_misskey_reaction"
+    }
+  ],
+  "cc": ["https://misskey.io/users/9bdgn9zxoi/followers"],
+  "actor": "https://misskey.io/users/9bdgn9zxoi",
+  "type": "Create"
+}
