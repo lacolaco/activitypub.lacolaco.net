@@ -26,6 +26,7 @@ async function createApplication(): Promise<Hono<AppContext>> {
       origin: config.clientOrigins,
       credentials: true,
       allowMethods: ['GET', 'POST', 'OPTIONS'],
+      allowHeaders: ['Content-Type', 'Authorization'],
     }),
   );
   app.use('*', withOrigin());

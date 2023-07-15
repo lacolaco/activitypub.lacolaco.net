@@ -34,6 +34,7 @@ describe('endpoints for activitypub compatibility', () => {
         "GET /users/:id/outbox handleGetOutbox",
         "GET /users/:id/followers handleGetFollowers",
         "GET /users/:id/following handleGetFollowing",
+        "ALL /admin/* [inline]",
         "GET /admin/users/show/:username [inline]",
       ]
     `);
