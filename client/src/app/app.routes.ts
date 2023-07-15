@@ -1,7 +1,12 @@
 import { Routes, UrlSegment } from '@angular/router';
 import { UserComponent } from './user/user.component';
+import { UsersComponent } from './users/users.component';
 
 export const routes: Routes = [
+  {
+    path: 'users',
+    component: UsersComponent,
+  },
   {
     // "@:username" is not supported by default
     matcher: (url) => {
@@ -17,7 +22,11 @@ export const routes: Routes = [
     component: UserComponent,
   },
   {
+    path: 'users/:username',
+    component: UserComponent,
+  },
+  {
     path: '**',
-    redirectTo: '@lacolaco',
+    redirectTo: '/users',
   },
 ];

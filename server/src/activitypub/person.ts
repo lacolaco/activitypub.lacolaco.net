@@ -1,6 +1,6 @@
 import { AP, isType } from '@activity-kit/types';
 import { User } from '@app/domain/user';
-import { contextURIs } from './context';
+import { contextURIsWithExtensions } from './context';
 import { buildPropertyValue } from './property-value';
 
 export type Person = AP.Person & Record<string, unknown>;
@@ -10,7 +10,7 @@ export function buildPerson(origin: string, user: User) {
   const userURI = `${origin}/users/${user.id}`;
 
   return {
-    '@context': contextURIs,
+    '@context': contextURIsWithExtensions,
     id: new URL(userURI),
     type: 'Person',
     name: user.displayName,

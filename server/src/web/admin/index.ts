@@ -1,9 +1,9 @@
 import { verifyJWT } from '@app/auth/verify';
 import { Config } from '@app/domain/config';
 import { searchPerson } from '@app/usecase/admin/search-person';
+import * as admin from '@app/usecase/admin/users';
 import { Handler, Hono } from 'hono';
 import { AppContext } from '../context';
-import { UsersRepository } from '@app/repository/users';
 
 export default (app: Hono<AppContext>, config: Config) => {
   const adminRoutes = new Hono<AppContext>();
@@ -12,10 +12,14 @@ export default (app: Hono<AppContext>, config: Config) => {
     adminRoutes.use('*', verifyJWT());
   }
 
-  adminRoutes.get('/users/show/:username', async (c) => {
+  adminRoutes.get('/users/list', async (c) => {
+    const users = await admin.getUsers();
+    return c.json(users);
+  });
+
+  adminRoutes.get('/users/:username', async (c) => {
     const username = c.req.param('username');
-    const userRepo = new UsersRepository();
-    const user = await userRepo.findByUsername(username);
+    const user = await admin.getUserByUsername(username);
     if (user == null) {
       c.status(404);
       return c.json({ error: 'Not Found' });
@@ -23,6 +27,7 @@ export default (app: Hono<AppContext>, config: Config) => {
 
     return c.json(user);
   });
+
   adminRoutes.get('/search/person/:resource', handleSearchPerson);
 
   app.route('/admin', adminRoutes);

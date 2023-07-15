@@ -2,7 +2,7 @@ import * as ap from '@app/activitypub';
 import { User } from '@app/domain/user';
 import { UsersRepository } from '@app/repository/users';
 import { getTracer } from '@app/tracing';
-import { acceptFollowRequest, deleteFollower, getUserFollowers } from '@app/usecase/relationship';
+import { acceptFollowRequest, deleteFollower, getUserFollowers } from '@app/usecase/followers';
 import { Handler, Hono, MiddlewareHandler } from 'hono';
 import { assertContentTypeHeader } from '../../middleware/asserts';
 import { AppContext } from '../context';

@@ -10,12 +10,15 @@
           "inlineTemplate": true,
           "inlineStyle": true,
           "style": "scss",
+          "standalone": true,
+          "changeDetection": "OnPush",
           "skipTests": true
         },
         "@schematics/angular:class": {
           "skipTests": true
         },
         "@schematics/angular:directive": {
+          "standalone": true,
           "skipTests": true
         },
         "@schematics/angular:guard": {
@@ -25,6 +28,7 @@
           "skipTests": true
         },
         "@schematics/angular:pipe": {
+          "standalone": true,
           "skipTests": true
         },
         "@schematics/angular:resolver": {

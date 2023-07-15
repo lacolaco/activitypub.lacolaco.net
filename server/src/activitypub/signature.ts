@@ -3,8 +3,8 @@ import { KeyObject, createHash, sign, verify } from 'node:crypto';
 import { Person } from './person';
 import { getID } from './utilities';
 
-export function getPublicKeyID(actorID: string): string {
-  return `${actorID}#key`;
+export function getPublicKeyID(actorID: string | URL): string {
+  return `${actorID.toString()}#key`;
 }
 
 /**

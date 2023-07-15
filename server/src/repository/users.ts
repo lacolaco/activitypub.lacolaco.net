@@ -13,40 +13,44 @@ type UserDocument = {
   updatedAt: Timestamp;
 };
 
+function toUser(doc: UserDocument, id: string): User {
+  return User.parse({
+    ...doc,
+    id,
+    createdAt: doc.createdAt.toDate(),
+    updatedAt: doc.updatedAt.toDate(),
+  });
+}
+
 export class UsersRepository {
   readonly db = new Firestore();
 
   async findByID(uid: string): Promise<User | null> {
     const collection = this.db.collection('users') as CollectionReference<UserDocument>;
-    const userDoc = await collection.doc(uid).get();
-    const data = userDoc.data();
+    const doc = await collection.doc(uid).get();
+    const data = doc.data();
     if (data == null) {
       return null;
     }
 
-    return User.parse({
-      ...data,
-      id: userDoc.id,
-      createdAt: data.createdAt.toDate(),
-      updatedAt: data.updatedAt.toDate(),
-    });
+    return toUser(data, doc.id);
   }
 
   async findByUsername(username: string): Promise<User | null> {
     const collection = this.db.collection('users') as CollectionReference<UserDocument>;
     const query = collection.where('username', '==', username).limit(1);
-    const snapshot = await query.get();
-    if (snapshot.empty) {
+    const items = await query.get();
+    if (items.empty) {
       return null;
     }
 
-    const userDoc = snapshot.docs[0];
-    const data = userDoc.data();
-    return User.parse({
-      ...data,
-      id: userDoc.id,
-      createdAt: data.createdAt.toDate(),
-      updatedAt: data.updatedAt.toDate(),
-    });
+    const doc = items.docs[0];
+    return toUser(doc.data(), doc.id);
+  }
+
+  async getUsers(): Promise<User[]> {
+    const collection = this.db.collection('users') as CollectionReference<UserDocument>;
+    const items = await collection.get();
+    return items.docs.map((doc) => toUser(doc.data(), doc.id));
   }
 }

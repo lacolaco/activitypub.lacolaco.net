@@ -1,18 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, Input, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../environments/environment';
 import { SearchComponent } from '../search/search.component';
-
-export type LocalUser = {
-  id: string;
-  username: string;
-  name: string;
-  description: string;
-  icon: { url: string };
-  attachments: Array<{ name: string; value: string }>;
-};
+import { AdminApiClient } from '../shared/api';
+import { LocalUser } from '../shared/models';
 
 @Component({
   selector: 'app-user',
@@ -21,18 +11,20 @@ export type LocalUser = {
   imports: [CommonModule, SearchComponent],
   template: `
     <div *ngIf="user() as u" class="flex flex-col items-start gap-y-2">
+      <h2 class="text-lg">@{{ u.username }}@{{ hostname }}</h2>
       <details class="w-full rounded-lg bg-panel p-4 shadow">
-        <summary class="text-md">@{{ u.username }}@{{ hostname }}</summary>
+        <summary class="text-md">Raw JSON</summary>
         <pre class="w-full font-mono text-sm overflow-auto">{{ userJSON() }}</pre>
       </details>
-
-      <app-search-remote-user class="w-full"></app-search-remote-user>
+      <div>
+        <h3>create new note</h3>
+      </div>
     </div>
   `,
   styles: [],
 })
 export class UserComponent {
-  private readonly http = inject(HttpClient);
+  private readonly api = inject(AdminApiClient);
   readonly user = signal<LocalUser | null>(null);
 
   readonly userJSON = computed(() => JSON.stringify(this.user(), null, 2));
@@ -49,9 +41,7 @@ export class UserComponent {
     effect(async () => {
       const username = this.#username();
       if (username) {
-        const user = await firstValueFrom(
-          this.http.get<LocalUser>(`${environment.backend}/admin/users/show/${username}`),
-        );
+        const user = await this.api.getUserByUsername(username);
         this.user.set(user);
       }
     });

@@ -1,5 +1,7 @@
-export const contextURIs = [
-  'https://www.w3.org/ns/activitystreams',
+export const contextURIs = ['https://www.w3.org/ns/activitystreams'];
+
+export const contextURIsWithExtensions = [
+  ...contextURIs,
   'https://w3id.org/security/v1',
   {
     manuallyApprovesFollowers: 'as:manuallyApprovesFollowers',

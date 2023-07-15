@@ -22,9 +22,8 @@ export function isAcceptActivity(object: unknown): object is AcceptActivity {
   return isType<AP.Accept>(object, AP.ActivityTypes.ACCEPT);
 }
 
-export function buildAcceptAcivity(actorID: URL, object: Activity) {
-  const uuid = randomUUID();
-  const id = new URL(`${actorID}/accept/${uuid}`);
+export function buildAcceptAcivity(actorID: URL, object: Activity, acceptID: string = randomUUID()) {
+  const id = new URL(`${actorID}/accept/${acceptID}`);
   return {
     '@context': contextURIs,
     type: 'Accept',
