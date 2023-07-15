@@ -25,18 +25,23 @@ function verifyJWT(): MiddlewareHandler<AppContext> {
     };
 
     try {
-      verify(
-        token,
-        ({ kid }, callback) => {
-          const key = public_certs.find((k) => k.kid === kid);
-          if (key == null) {
-            callback(new Error('Invalid kid'));
-            return;
-          }
-          callback(null, key.cert);
-        },
-        { audience: aud },
-      );
+      await new Promise((resolve, reject) => {
+        verify(
+          token,
+          ({ kid }, callback) => {
+            const key = public_certs.find((k) => k.kid === kid);
+            if (key == null) {
+              callback(new Error('Invalid kid'));
+              return;
+            }
+            callback(null, key.cert);
+          },
+          { audience: aud },
+          (err, decoded) => {
+            err ? reject(err) : resolve(decoded);
+          },
+        );
+      });
     } catch (e) {
       console.error(e);
       c.status(401);
