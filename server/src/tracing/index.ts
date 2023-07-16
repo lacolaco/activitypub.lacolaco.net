@@ -1,7 +1,7 @@
 import { Config } from '@app/domain/config';
 import { TraceExporter } from '@google-cloud/opentelemetry-cloud-trace-exporter';
 import { CloudPropagator, X_CLOUD_TRACE_HEADER } from '@google-cloud/opentelemetry-cloud-trace-propagator';
-import { Span, SpanKind, context, propagation, trace } from '@opentelemetry/api';
+import { DiagConsoleLogger, DiagLogLevel, Span, SpanKind, context, diag, propagation, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { CompositePropagator, W3CBaggagePropagator, W3CTraceContextPropagator } from '@opentelemetry/core';
 import { ConsoleSpanExporter, NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
@@ -12,7 +12,6 @@ export function setupTracing(config: Config) {
 
   const exporter = config.isRunningOnCloud ? new TraceExporter() : new ConsoleSpanExporter();
   provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
-
   provider.register({
     contextManager: new AsyncLocalStorageContextManager(),
     propagator: new CompositePropagator({
@@ -20,7 +19,7 @@ export function setupTracing(config: Config) {
     }),
   });
 
-  trace.setGlobalTracerProvider(provider);
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 }
 
 export function getTracer() {
@@ -51,7 +50,7 @@ export function withTracing(): MiddlewareHandler {
           span.setAttributes({
             '/http/status_code': c.res.status,
           });
-          span!.end();
+          span.end();
         },
       );
     });
