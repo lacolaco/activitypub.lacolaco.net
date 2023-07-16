@@ -1,12 +1,14 @@
 import { Config } from '@app/domain/config';
-import { Logger } from '@app/logger';
+import { Logger, createLoggerWithTrace } from '@app/logger';
 import { getOrigin } from '@app/util/url';
+import { context, trace } from '@opentelemetry/api';
 import { MiddlewareHandler } from 'hono';
 
 export type AppContext = {
   Variables: {
     readonly origin: string;
     readonly config: Config;
+    readonly logger: Logger;
   };
 };
 
@@ -29,8 +31,12 @@ export function withConfig(config: Config): MiddlewareHandler<AppContext> {
   };
 }
 
-export function withLogger(logger: Logger): MiddlewareHandler<AppContext> {
+export function withLogger(base: Logger): MiddlewareHandler<AppContext> {
   return async (c, next) => {
+    const spanContext = trace.getSpanContext(context.active());
+    const logger = spanContext ? createLoggerWithTrace(base, spanContext) : base;
+    c.set('logger', logger);
+
     const { method, url } = c.req;
     logger.info(`--> ${method} ${url}`);
     await next();

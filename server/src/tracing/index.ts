@@ -78,9 +78,3 @@ export function runInSpan<T>(name: string, fn: (span: Span) => T): Promise<T> {
   });
 }
 
-export function buildTraceName(projectID: string, traceID: string): string {
-  if (projectID == '' || traceID == '') {
-    return '';
-  }
-  return `projects/${projectID}/traces/${traceID}`;
-}
