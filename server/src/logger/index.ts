@@ -16,7 +16,7 @@ export function createLogger(config: Config) {
       level: 'info',
     });
   } else {
-    return pino({ level: 'debug' });
+    return pino({ level: 'trace' });
   }
 }
 

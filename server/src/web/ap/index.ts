@@ -15,6 +15,7 @@ type UserRouteContext = AppContext & {
 
 function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
   return async (c, next) => {
+    const logger = c.get('logger');
     const userRepo = new UsersRepository();
     const id = c.req.param('id');
     const user = await userRepo.findByID(id);
@@ -26,7 +27,7 @@ function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
       if (u != null) {
         const redirectTo = new URL(origin);
         redirectTo.pathname = c.req.path.replace(id, u.id);
-        console.log('redirecting to', redirectTo.toString());
+        logger.info('redirecting to', redirectTo.toString());
         c.res.headers.set('Location', redirectTo.toString());
         return c.json({ error: 'Moved Permanently' }, 301);
       }
@@ -67,6 +68,7 @@ const handleGetPerson: Handler<UserRouteContext> = async (c) => {
     const config = c.get('config');
     const origin = c.get('origin');
     const user = c.get('user');
+    c.get('logger').debug({ user });
     const person = ap.buildPerson(origin, user, config.publicKeyPem);
     return activityjson(c, person);
   });
@@ -78,10 +80,11 @@ const handleGetInbox: Handler<UserRouteContext> = async (c) => {
 
 const handlePostInbox: Handler<UserRouteContext> = async (c) => {
   return runInSpan('ap.handlePostInbox', async (span) => {
+    const logger = c.get('logger');
     try {
       await ap.verifySignature(c.req);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       return c.json({ error: 'Unauthorized' }, 401);
     }
     const config = c.get('config');
@@ -91,18 +94,18 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
     const payload = await c.req.json();
     const parsed = ap.AnyActivity.safeParse(payload);
     if (!parsed.success) {
-      console.error(JSON.stringify(parsed.error));
+      logger.error(parsed.error);
       return c.json({ error: 'Bad Request' }, 400);
     }
     const activity = parsed.data;
-    console.debug(JSON.stringify(activity));
+    logger.debug({ activity });
 
     if (ap.isFollowActivity(activity)) {
       try {
         await acceptFollowRequest(config, origin, user, activity);
         return activityjson(c, { ok: true });
       } catch (e) {
-        console.error(e);
+        logger.error(e);
         return c.json({ error: 'Internal Server Error' }, 500);
       }
     } else if (ap.isUndoActivity(activity)) {
@@ -113,13 +116,13 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
           await deleteFollower(config, origin, user, activity);
           return activityjson(c, { ok: true });
         } catch (e) {
-          console.error(e);
+          logger.error(e);
           return c.json({ error: 'Internal Server Error' }, 500);
         }
       }
     }
 
-    console.log('unsupported activity');
+    logger.info('unsupported activity');
     return activityjson(c, {});
   });
 };
@@ -172,22 +175,25 @@ const handleGetSharedInbox: Handler<AppContext> = async (c) => {
 
 const handlePostSharedInbox: Handler<AppContext> = async (c) => {
   return runInSpan('ap.handlePostSharedInbox', async (span) => {
+    const logger = c.get('logger');
     const payload = await c.req.json();
-    console.debug(JSON.stringify(payload));
+    logger.debug(JSON.stringify(payload));
+    logger.debug({ payload });
 
     try {
       await ap.verifySignature(c.req);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
     const parsed = ap.AnyActivity.safeParse(payload);
     if (!parsed.success) {
-      console.error(JSON.stringify(parsed.error));
+      logger.error(JSON.stringify(parsed.error));
       return c.json({ error: 'Bad Request' }, 400);
     }
     const activity = parsed.data;
+    logger.debug({ activity });
 
     span.setAttributes({
       'activity.type': activity.type,
