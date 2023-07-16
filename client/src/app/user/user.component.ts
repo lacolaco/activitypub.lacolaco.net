@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, Input, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { SearchComponent } from '../search/search.component';
 import { AdminApiClient } from '../shared/api';
 import { LocalUser } from '../shared/models';
@@ -8,17 +9,29 @@ import { LocalUser } from '../shared/models';
   selector: 'app-user',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, SearchComponent],
+  imports: [CommonModule, RouterLink, SearchComponent],
   template: `
-    <div *ngIf="user() as u" class="flex flex-col items-start gap-y-2">
-      <h2 class="text-lg">@{{ u.username }}@{{ u.host }}</h2>
-      <details class="w-full rounded-lg bg-panel p-4 shadow">
-        <summary class="text-md">Raw JSON</summary>
-        <pre class="w-full font-mono text-sm overflow-auto">{{ userJSON() }}</pre>
-      </details>
-      <div>
-        <h3>create new note</h3>
-      </div>
+    <div class="flex flex-col items-start gap-y-2">
+      <header class="flex flex-row gap-x-1 text-xl">
+        <a routerLink="/users">Users</a>
+        <span class="text-gray-500">/</span>
+        <h2>@{{ username }}@{{ hostname }}</h2>
+      </header>
+
+      <ng-container *ngIf="user() as u">
+        <details class="w-full rounded-lg bg-panel p-4 shadow">
+          <summary class="text-sm">Raw JSON</summary>
+          <pre class="w-full font-mono text-xs overflow-auto">{{ userJSON() }}</pre>
+        </details>
+
+        <div>
+          <h3>Edit user data</h3>
+        </div>
+
+        <div>
+          <h3>Create new note</h3>
+        </div>
+      </ng-container>
     </div>
   `,
   styles: [],
@@ -31,14 +44,20 @@ export class UserComponent {
 
   readonly #hostname = signal<string | null>(null);
 
-  @Input() set hostname(hostname: string) {
+  @Input() set hostname(hostname: string | null) {
     this.#hostname.set(hostname);
+  }
+  get hostname() {
+    return this.#hostname();
   }
 
   readonly #username = signal<string | null>(null);
 
-  @Input() set username(username: string) {
+  @Input() set username(username: string | null) {
     this.#username.set(username);
+  }
+  get username() {
+    return this.#username();
   }
 
   constructor() {
