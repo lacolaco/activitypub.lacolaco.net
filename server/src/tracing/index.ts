@@ -10,7 +10,7 @@ import { MiddlewareHandler } from 'hono';
 export function setupTracing(config: Config) {
   const provider = new NodeTracerProvider({});
 
-  const exporter = config.isRunningOnCloud ? new TraceExporter() : new TraceExporter();
+  const exporter = config.isRunningOnCloud ? new TraceExporter() : new ConsoleSpanExporter();
   provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
 
   provider.register({
