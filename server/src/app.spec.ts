@@ -18,6 +18,7 @@ describe('endpoints for activitypub compatibility', () => {
         "ALL * [inline]",
         "ALL * [inline]",
         "ALL * [inline]",
+        "ALL * [inline]",
         "GET /.well-known/nodeinfo handleNodeinfo",
         "GET /nodeinfo/2.1 handleNodeinfo21",
         "GET /.well-known/host-meta handleHostMetaXML",
