@@ -5,7 +5,7 @@
     "format": "prettier --cache --write .",
     "start:server": "dotenv -- tsx watch ./server/src/main.ts",
     "build:client": "pnpm --filter client run build",
-    "build:server": "esbuild server/src/main.ts --bundle --platform=node --target=node18 --supported:top-level-await=false --outfile=server/dist/main.js",
+    "build:server": "tsx tools/build-server.ts",
     "test": "vitest"
   },
   "license": "MIT",
@@ -31,6 +31,7 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@esbuild-plugins/tsconfig-paths": "^0.1.2",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.4.1",
     "@types/node-fetch": "^2.6.4",
