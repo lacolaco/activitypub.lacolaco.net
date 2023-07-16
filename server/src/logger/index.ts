@@ -1,5 +1,4 @@
 import { Config } from '@app/domain/config';
-import { getGCPProjectID } from '@app/util/project';
 import { SpanContext, trace } from '@opentelemetry/api';
 import { getPinoOptions } from '@relaycorp/pino-cloud';
 import pino from 'pino';
@@ -32,11 +31,11 @@ function buildTraceName(projectID: string, traceID: string): string {
   return `projects/${projectID}/traces/${traceID}`;
 }
 
-export function createLoggerWithTrace(parent: Logger, spanContext: SpanContext) {
-  if (!trace.isSpanContextValid(spanContext)) {
+export function createLoggerWithTrace(parent: Logger, config: Config, spanContext: SpanContext) {
+  if (!trace.isSpanContextValid(spanContext) || config.gcpProjectID == null) {
     return parent.child({});
   }
-  const traceName = buildTraceName(getGCPProjectID(), spanContext.traceId);
+  const traceName = buildTraceName(config.gcpProjectID, spanContext.traceId);
   return parent.child({
     [traceKey]: traceName,
     [spanKey]: spanContext.spanId,

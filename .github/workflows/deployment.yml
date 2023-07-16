@@ -61,6 +61,6 @@ jobs:
           --image $IMAGE_NAME:${{ github.sha }} \
           --allow-unauthenticated \
           --service-account ${{ vars.CLOUDRUN_SERVER_SERVICE_ACCOUNT }} \
-          --set-env-vars=CLIENT_ORIGIN=${{ vars.CLIENT_ORIGIN }} \
+          --set-env-vars=CLIENT_ORIGIN=${{ vars.CLIENT_ORIGIN }},GCP_PROJECT=${GCP_PROJECT} \
           --set-secrets=RSA_PRIVATE_KEY=rsa_private:latest \
-          --execution-environment gen2 --region asia-northeast1 --platform managed --memory 1G
+          --execution-environment gen2 --region asia-northeast1 --platform managed --memory 512M

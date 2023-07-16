@@ -77,4 +77,3 @@ export function runInSpan<T>(name: string, fn: (span: Span) => T): Promise<T> {
     });
   });
 }
-

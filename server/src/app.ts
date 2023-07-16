@@ -18,7 +18,7 @@ async function createApplication(config: Config) {
   app.use('*', withConfig(config));
   app.use('*', withOrigin());
   app.use('*', withTracing());
-  app.use('*', withLogger(logger));
+  app.use('*', withLogger(config, logger));
 
   app.use(
     '*',
