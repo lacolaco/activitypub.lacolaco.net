@@ -10,7 +10,7 @@ import { MiddlewareHandler } from 'hono';
 export function setupTracing(config: Config) {
   const provider = new NodeTracerProvider({});
 
-  const exporter = config.isRunningOnCloud ? new TraceExporter() : new ConsoleSpanExporter();
+  const exporter = config.isRunningOnCloud ? new TraceExporter() : new TraceExporter();
   provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
 
   provider.register({
@@ -34,21 +34,26 @@ export function withTracing(): MiddlewareHandler {
     };
     let traceContext = propagation.extract(context.active(), traceHeaders);
     if (trace.getSpanContext(traceContext) == null) {
-      console.log('No trace context found, creating a new one');
-      traceContext = trace.setSpan(
-        traceContext,
-        getTracer().startSpan('request', {
+      console.log('No trace context found');
+    }
+    await context.with(traceContext, async () => {
+      await getTracer().startActiveSpan(
+        'request',
+        {
           attributes: {
             '/http/method': c.req.method,
             '/http/url': c.req.url,
           },
           kind: SpanKind.SERVER,
-          root: true,
-        }),
+        },
+        async (span) => {
+          await next();
+          span.setAttributes({
+            '/http/status_code': c.res.status,
+          });
+          span!.end();
+        },
       );
-    }
-    await context.with(traceContext, async () => {
-      await next();
     });
   };
 }
