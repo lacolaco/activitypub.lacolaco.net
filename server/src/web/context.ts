@@ -7,7 +7,6 @@ export type AppContext = {
   Variables: {
     readonly origin: string;
     readonly config: Config;
-    readonly logger: Logger;
   };
 };
 
@@ -32,7 +31,6 @@ export function withConfig(config: Config): MiddlewareHandler<AppContext> {
 
 export function withLogger(logger: Logger): MiddlewareHandler<AppContext> {
   return async (c, next) => {
-    c.set('logger', logger);
     const { method, url } = c.req;
     logger.info(`--> ${method} ${url}`);
     await next();
