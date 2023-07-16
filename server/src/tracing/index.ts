@@ -2,7 +2,6 @@ import { Config } from '@app/domain/config';
 import { TraceExporter } from '@google-cloud/opentelemetry-cloud-trace-exporter';
 import { CloudPropagator, X_CLOUD_TRACE_HEADER } from '@google-cloud/opentelemetry-cloud-trace-propagator';
 import { DiagConsoleLogger, DiagLogLevel, Span, SpanKind, context, diag, propagation, trace } from '@opentelemetry/api';
-import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { CompositePropagator, W3CBaggagePropagator, W3CTraceContextPropagator } from '@opentelemetry/core';
 import { ConsoleSpanExporter, NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { MiddlewareHandler } from 'hono';
@@ -13,7 +12,6 @@ export function setupTracing(config: Config) {
   const exporter = config.isRunningOnCloud ? new TraceExporter() : new ConsoleSpanExporter();
   provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
   provider.register({
-    contextManager: new AsyncLocalStorageContextManager(),
     propagator: new CompositePropagator({
       propagators: [new CloudPropagator(), new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
     }),
