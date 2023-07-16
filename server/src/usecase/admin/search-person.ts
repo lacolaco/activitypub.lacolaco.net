@@ -1,11 +1,11 @@
 import { fetchPersonByID } from '@app/activitypub';
-import { getTracer } from '@app/tracing';
+import { runInSpan } from '@app/tracing';
 import { JRDObject } from '@app/webfinger';
 
 const resourceRegexp = /^@(.+)@(.+)$/;
 
 export async function searchPerson(resource: string) {
-  return getTracer().startActiveSpan('searchPerson', async (span) => {
+  return runInSpan('searchPerson', async (span) => {
     // fetch person id with webfinger
     const [, username, domain] = resource.match(resourceRegexp) ?? [];
     if (domain == null) {

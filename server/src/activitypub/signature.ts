@@ -1,23 +1,9 @@
-import { getTracer } from '@app/tracing';
+import { runInSpan } from '@app/tracing';
 import { KeyObject, createHash, sign, verify } from 'node:crypto';
 import { PublicKey } from './schema';
 
 export function getPublicKeyID(actorID: string | URL): string {
   return `${actorID.toString()}#key`;
-}
-
-/**
- * Convert string to bytes.
- */
-function stob(s: string) {
-  return Uint8Array.from(s, (c) => c.charCodeAt(0));
-}
-
-/**
- * Convert bytes to string.
- */
-function btos(b: ArrayBuffer) {
-  return String.fromCharCode(...new Uint8Array(b));
 }
 
 function createSignString(req: { method: string; url: URL }, headers: Record<string, string>, headerNames?: string[]) {
@@ -55,31 +41,33 @@ export async function signHeaders(
   privateKey: KeyObject,
   now = new Date(),
 ) {
-  const parsedURL = new URL(url);
-  const dateStr = now.toUTCString();
-  const digest = createDigest(body);
+  return runInSpan('signHeaders', () => {
+    const parsedURL = new URL(url);
+    const dateStr = now.toUTCString();
+    const digest = createDigest(body);
 
-  const signString = createSignString(
-    { method, url: parsedURL },
-    {
-      host: parsedURL.host,
-      date: dateStr,
-      digest: `SHA-256=${digest}`,
-    },
-  );
-  const signature = sign('SHA-256', Buffer.from(signString), privateKey).toString('base64');
+    const signString = createSignString(
+      { method, url: parsedURL },
+      {
+        host: parsedURL.host,
+        date: dateStr,
+        digest: `SHA-256=${digest}`,
+      },
+    );
+    const signature = sign('SHA-256', Buffer.from(signString), privateKey).toString('base64');
 
-  const headers = {
-    Host: parsedURL.host,
-    Date: dateStr,
-    Digest: `SHA-256=${digest}`,
-    Signature:
-      `keyId="${publicKeyID}",` +
-      `algorithm="rsa-sha256",` +
-      `headers="(request-target) host date digest",` +
-      `signature="${signature}"`,
-  };
-  return headers;
+    const headers = {
+      Host: parsedURL.host,
+      Date: dateStr,
+      Digest: `SHA-256=${digest}`,
+      Signature:
+        `keyId="${publicKeyID}",` +
+        `algorithm="rsa-sha256",` +
+        `headers="(request-target) host date digest",` +
+        `signature="${signature}"`,
+    };
+    return headers;
+  });
 }
 
 export type ResolvePublicKeyFn = (keyID: string) => Promise<PublicKey>;
@@ -88,34 +76,36 @@ export async function verifySignature(
   req: { url: string; method: string; headers: Headers },
   resolvePublicKey: ResolvePublicKeyFn = fetchPublicKey,
 ) {
-  const { url, method, headers } = req;
-  const sigHeader = headers.get('Signature');
-  if (sigHeader == null) {
-    throw new Error('Signature header is missing');
-  }
-  const signatureFields = parseSignatureString(sigHeader);
-  const signature = signatureFields.signature;
-  const headerNames = signatureFields.headers.split(/\s+/) ?? ['(request-target)', 'host', 'date', 'digest'];
-  const keyID = signatureFields.keyId;
-  if (keyID == null) {
-    throw new Error('keyId is missing');
-  }
-  const { publicKeyPem } = await resolvePublicKey(keyID);
+  return runInSpan('verifySignature', async (span) => {
+    const { url, method, headers } = req;
+    const sigHeader = headers.get('Signature');
+    if (sigHeader == null) {
+      throw new Error('Signature header is missing');
+    }
+    const signatureFields = parseSignatureString(sigHeader);
+    const signature = signatureFields.signature;
+    const headerNames = signatureFields.headers.split(/\s+/) ?? ['(request-target)', 'host', 'date', 'digest'];
+    const keyID = signatureFields.keyId;
+    if (keyID == null) {
+      throw new Error('keyId is missing');
+    }
+    const { publicKeyPem } = await resolvePublicKey(keyID);
 
-  const headersObject = Object.fromEntries(headers.entries());
-  const signString = createSignString({ method, url: new URL(url) }, headersObject, headerNames);
+    const headersObject = Object.fromEntries(headers.entries());
+    const signString = createSignString({ method, url: new URL(url) }, headersObject, headerNames);
 
-  try {
-    verify('SHA-256', Buffer.from(signString), publicKeyPem, Buffer.from(signature));
-    return true;
-  } catch (err) {
-    console.error(err);
-    throw new Error('Signature verification failed');
-  }
+    try {
+      verify('SHA-256', Buffer.from(signString), publicKeyPem, Buffer.from(signature));
+      return true;
+    } catch (err) {
+      console.error(err);
+      throw new Error('Signature verification failed');
+    }
+  });
 }
 
 async function fetchPublicKey(keyID: string) {
-  return getTracer().startActiveSpan('fetchPublicKey', async (span) => {
+  return runInSpan('fetchPublicKey', async (span) => {
     span.setAttribute('keyID', keyID);
     console.debug(`fetchPublicKey: ${keyID}`);
 

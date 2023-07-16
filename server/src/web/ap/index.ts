@@ -1,7 +1,7 @@
 import * as ap from '@app/activitypub';
 import { User } from '@app/domain/user';
 import { UsersRepository } from '@app/repository/users';
-import { getTracer } from '@app/tracing';
+import { runInSpan } from '@app/tracing';
 import { acceptFollowRequest, deleteFollower, getUserFollowers } from '@app/usecase/followers';
 import { Handler, Hono, MiddlewareHandler } from 'hono';
 import { assertContentTypeHeader } from '../../middleware/asserts';
@@ -64,7 +64,7 @@ export default (app: Hono<AppContext>) => {
 };
 
 const handleGetPerson: Handler<UserRouteContext> = async (c) => {
-  return getTracer().startActiveSpan('ap.handleGetPerson', async (span) => {
+  return runInSpan('ap.handleGetPerson', async (span) => {
     const config = c.get('config');
     const origin = c.get('origin');
     const user = c.get('user');
@@ -75,15 +75,11 @@ const handleGetPerson: Handler<UserRouteContext> = async (c) => {
 };
 
 const handleGetInbox: Handler<UserRouteContext> = async (c) => {
-  const origin = c.get('origin');
-  const user = c.get('user');
-  const person = ap.buildPerson(origin, user);
-  const res = c.json(ap.buildOrderedCollection(person.inbox, []));
-  return res;
+  return c.json({}, 405);
 };
 
 const handlePostInbox: Handler<UserRouteContext> = async (c) => {
-  return getTracer().startActiveSpan('ap.handlePostInbox', async (span) => {
+  return runInSpan('ap.handlePostInbox', async (span) => {
     try {
       await ap.verifySignature(c.req);
     } catch (e) {
@@ -131,38 +127,44 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
 };
 
 const handleGetOutbox: Handler<UserRouteContext> = async (c) => {
-  const origin = c.get('origin');
-  const user = c.get('user');
-  const person = ap.buildPerson(origin, user);
-  const res = c.json(ap.buildOrderedCollection(person.outbox, []));
-  return res;
+  return runInSpan('ap.handleGetOutbox', async (span) => {
+    const origin = c.get('origin');
+    const user = c.get('user');
+    const person = ap.buildPerson(origin, user);
+    const res = c.json(ap.buildOrderedCollection(person.outbox, []));
+    return res;
+  });
 };
 
 const handleGetFollowers: Handler<UserRouteContext> = async (c) => {
-  const origin = c.get('origin');
-  const user = c.get('user');
-  const person = ap.buildPerson(origin, user);
-  if (!person.followers) {
-    return c.json({ error: 'Not Found' }, 404);
-  }
+  return runInSpan('ap.handleGetFollowers', async (span) => {
+    const origin = c.get('origin');
+    const user = c.get('user');
+    const person = ap.buildPerson(origin, user);
+    if (!person.followers) {
+      return c.json({ error: 'Not Found' }, 404);
+    }
 
-  const followers = await getUserFollowers(user);
-  return c.json(
-    ap.buildOrderedCollection(
-      person.followers,
-      followers.map((f) => f.id),
-    ),
-  );
+    const followers = await getUserFollowers(user);
+    return c.json(
+      ap.buildOrderedCollection(
+        person.followers,
+        followers.map((f) => f.id),
+      ),
+    );
+  });
 };
 
 const handleGetFollowing: Handler<UserRouteContext> = async (c) => {
-  const origin = c.get('origin');
-  const user = c.get('user');
-  const person = ap.buildPerson(origin, user);
-  if (!person.following) {
-    return c.json({ error: 'Not Found' }, 404);
-  }
-  return c.json(ap.buildOrderedCollection(person.following, []));
+  return runInSpan('ap.handleGetFollowing', async (span) => {
+    const origin = c.get('origin');
+    const user = c.get('user');
+    const person = ap.buildPerson(origin, user);
+    if (!person.following) {
+      return c.json({ error: 'Not Found' }, 404);
+    }
+    return c.json(ap.buildOrderedCollection(person.following, []));
+  });
 };
 
 const handleGetSharedInbox: Handler<AppContext> = async (c) => {
@@ -170,7 +172,7 @@ const handleGetSharedInbox: Handler<AppContext> = async (c) => {
 };
 
 const handlePostSharedInbox: Handler<AppContext> = async (c) => {
-  return getTracer().startActiveSpan('ap.handlePostSharedInbox', async (span) => {
+  return runInSpan('ap.handlePostSharedInbox', async (span) => {
     const payload = await c.req.json();
     console.debug(JSON.stringify(payload));
 

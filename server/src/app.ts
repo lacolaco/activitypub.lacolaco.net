@@ -15,9 +15,8 @@ async function createApplication(): Promise<Hono<AppContext>> {
   const app = new Hono<AppContext>();
 
   const config = await getConfigWithEnv();
-  const isDevelopment = !config.isRunningOnCloud;
 
-  setupTracing();
+  setupTracing(config);
 
   app.use('*', logger());
   app.use(
@@ -41,7 +40,7 @@ async function createApplication(): Promise<Hono<AppContext>> {
   useActivityPub(app);
   useAdmin(app, config);
 
-  if (isDevelopment) {
+  if (!config.isRunningOnCloud) {
     app.routes.forEach((route) => {
       console.log(`${route.method} ${route.path}`);
     });

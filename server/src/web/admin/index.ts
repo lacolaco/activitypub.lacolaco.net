@@ -4,6 +4,7 @@ import { searchPerson } from '@app/usecase/admin/search-person';
 import * as admin from '@app/usecase/admin/users';
 import { Handler, Hono } from 'hono';
 import { AppContext } from '../context';
+import { runInSpan } from '@app/tracing';
 
 export default (app: Hono<AppContext>, config: Config) => {
   const adminRoutes = new Hono<AppContext>();
@@ -18,15 +19,18 @@ export default (app: Hono<AppContext>, config: Config) => {
   });
 
   adminRoutes.get('/users/:hostname/:username', async (c) => {
-    const hostname = c.req.param('hostname');
-    const username = c.req.param('username');
-    const user = await admin.getUserByUsername(hostname, username);
-    if (user == null) {
-      c.status(404);
-      return c.json({ error: 'Not Found' });
-    }
+    return runInSpan('admin.getUserByUsername', async (span) => {
+      const hostname = c.req.param('hostname');
+      const username = c.req.param('username');
+      span.setAttributes({ hostname, username });
+      const user = await admin.getUserByUsername(hostname, username);
+      if (user == null) {
+        c.status(404);
+        return c.json({ error: 'Not Found' });
+      }
 
-    return c.json(user);
+      return c.json(user);
+    });
   });
 
   adminRoutes.get('/search/person/:resource', handleSearchPerson);
