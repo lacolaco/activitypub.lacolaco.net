@@ -4,13 +4,14 @@ import { Span, trace } from '@opentelemetry/api';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { ConsoleSpanExporter, NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
+import { MiddlewareHandler } from 'hono';
 
 export function setupTracing(config: Config) {
   // Create and configure NodeTracerProvider
   const provider = new NodeTracerProvider();
   registerInstrumentations({
     tracerProvider: provider,
-    instrumentations: [new HttpInstrumentation()],
+    instrumentations: [new HttpInstrumentation({})],
   });
 
   const exporter = config.isRunningOnCloud ? new TraceExporter() : new ConsoleSpanExporter();
@@ -26,6 +27,19 @@ export function setupTracing(config: Config) {
 
 export function getTracer() {
   return trace.getTracer('default');
+}
+
+export function withTracing(): MiddlewareHandler {
+  return async (c, next) => {
+    const spanContext = trace.getActiveSpan()?.spanContext();
+    console.log(`currentSpan: ${spanContext?.spanId} traceID: ${spanContext?.traceId}`);
+    const span = getTracer().startSpan('hono.request');
+    try {
+      await next();
+    } finally {
+      span.end();
+    }
+  };
 }
 
 export function runInSpan<T>(name: string, fn: (span: Span) => T): Promise<T> {

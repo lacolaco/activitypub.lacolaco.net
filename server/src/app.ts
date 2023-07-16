@@ -8,7 +8,7 @@ import useHostMeta from '@app/web/host-meta';
 import useNodeinfo from '@app/web/nodeinfo';
 import useWebfinger from '@app/web/webfinger';
 import { getConfigWithEnv } from './domain/config';
-import { setupTracing } from './tracing';
+import { setupTracing, withTracing } from './tracing';
 import { AppContext, withOrigin } from './web/context';
 
 async function createApplication(): Promise<Hono<AppContext>> {
@@ -18,6 +18,7 @@ async function createApplication(): Promise<Hono<AppContext>> {
 
   setupTracing(config);
 
+  app.use('*', withTracing());
   app.use('*', logger());
   app.use(
     '*',
