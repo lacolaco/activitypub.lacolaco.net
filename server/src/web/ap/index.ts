@@ -15,7 +15,7 @@ type UserRouteContext = AppContext & {
 
 function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
   return async (c, next) => {
-    await runInSpan('ap.setUserMiddleware', async (span) => {
+    return await runInSpan('ap.setUserMiddleware', async (span) => {
       const logger = c.get('logger');
       const userRepo = new UsersRepository();
       const id = c.req.param('id');
