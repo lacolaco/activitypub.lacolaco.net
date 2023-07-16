@@ -16,6 +16,7 @@
     "@google-cloud/opentelemetry-cloud-trace-exporter": "^2.1.0",
     "@google-cloud/opentelemetry-cloud-trace-propagator": "^0.17.0",
     "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/context-async-hooks": "^1.15.0",
     "@opentelemetry/core": "^1.15.0",
     "@opentelemetry/instrumentation": "^0.41.0",
     "@opentelemetry/instrumentation-http": "^0.41.0",

@@ -20,6 +20,9 @@ dependencies:
   '@opentelemetry/api':
     specifier: ^1.4.1
     version: 1.4.1
+  '@opentelemetry/context-async-hooks':
+    specifier: ^1.15.0
+    version: 1.15.0(@opentelemetry/api@1.4.1)
   '@opentelemetry/core':
     specifier: ^1.15.0
     version: 1.15.0(@opentelemetry/api@1.4.1)

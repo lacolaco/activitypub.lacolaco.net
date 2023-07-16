@@ -1,21 +1,20 @@
 import { Config } from '@app/domain/config';
 import { TraceExporter } from '@google-cloud/opentelemetry-cloud-trace-exporter';
 import { CloudPropagator } from '@google-cloud/opentelemetry-cloud-trace-propagator';
-import { Span, trace } from '@opentelemetry/api';
+import { Span, context, propagation, trace } from '@opentelemetry/api';
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { CompositePropagator, W3CBaggagePropagator, W3CTraceContextPropagator } from '@opentelemetry/core';
-import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { BasicTracerProvider, ConsoleSpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
+import { ConsoleSpanExporter, NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { MiddlewareHandler } from 'hono';
 
 export function setupTracing(config: Config) {
-  const provider = new BasicTracerProvider({});
-
-  registerInstrumentations({ tracerProvider: provider });
+  const provider = new NodeTracerProvider({});
 
   const exporter = config.isRunningOnCloud ? new TraceExporter() : new ConsoleSpanExporter();
   provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
 
   provider.register({
+    contextManager: new AsyncLocalStorageContextManager(),
     propagator: new CompositePropagator({
       propagators: [new CloudPropagator(), new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
     }),
@@ -30,15 +29,11 @@ export function getTracer() {
 
 export function withTracing(): MiddlewareHandler {
   return async (c, next) => {
-    console.log(JSON.stringify(Object.fromEntries(c.req.headers.entries())));
-    const spanContext = trace.getActiveSpan()?.spanContext();
-    console.log(`currentSpan: ${spanContext?.spanId} traceID: ${spanContext?.traceId}`);
-    const span = getTracer().startSpan('hono.request');
-    try {
+    const headers = Object.fromEntries(c.req.headers.entries());
+    const traceContext = propagation.extract(context.active(), headers);
+    await context.with(traceContext, async () => {
       await next();
-    } finally {
-      span.end();
-    }
+    });
   };
 }
 
