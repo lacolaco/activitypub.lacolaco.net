@@ -1,0 +1,14 @@
+{
+  "id": "https://mastodon.opencloud.lu/users/parallelosec#delete",
+  "actor": "https://mastodon.opencloud.lu/users/parallelosec",
+  "type": "Delete",
+  "to": ["https://www.w3.org/ns/activitystreams#Public"],
+  "object": "https://mastodon.opencloud.lu/users/parallelosec",
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "signature": {
+    "signatureValue": "DpRlU3GJXqj4Qu2S6hULwqYfHajgsyXR3K6qVAmDST1atRv/rWLS2SRdbjnERItRos5K5bfJc5LUTge8QKfposZfh9EsKbffKgmEKwR/plBcXMzK/tSVUj95OKDmtyM701R2kCbH2jiVrvpaRYiJHWZy8VAa6geIbiELh5yg4J1Vs/xO8zjshfggRw2Kf35BvKLquYJiAiGCsJGguVTToNDk4krJreSG17VzzBPxsFOYsV+SKAST1NHtsZi974FUwQd7Aa7mbyryfC231A+3DJ5c0GghmAA+gRer6EYpekP5nuXA/PRKWq8xJ4mfgSLSAWfdzko4kV3qnJnOH4PQHQ==",
+    "creator": "https://mastodon.opencloud.lu/users/parallelosec#main-key",
+    "type": "RsaSignature2017",
+    "created": "2023-07-16T12:43:33Z"
+  }
+}

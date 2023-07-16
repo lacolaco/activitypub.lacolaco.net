@@ -28,8 +28,14 @@ describe('activitypub schema', () => {
       expect(parsed).toBeTruthy();
     });
 
-    test('misskey-delete as AnyActivity', async () => {
-      const json = await import('./fixtures/misskey-delete.json');
+    test('misskey-delete-person as AnyActivity', async () => {
+      const json = await import('./fixtures/misskey-delete-person.json');
+      const parsed = AnyActivity.parse(json);
+      expect(parsed).toBeTruthy();
+    });
+
+    test('mastodon-delete-person as AnyActivity', async () => {
+      const json = await import('./fixtures/mastodon-delete-person.json');
       const parsed = AnyActivity.parse(json);
       expect(parsed).toBeTruthy();
     });
