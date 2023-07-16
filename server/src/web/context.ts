@@ -34,7 +34,8 @@ export function withLogger(logger: Logger): MiddlewareHandler<AppContext> {
   return async (c, next) => {
     c.set('logger', logger);
     const { method, url } = c.req;
-    logger.info(`${method} ${url}`);
+    logger.info(`--> ${method} ${url}`);
     await next();
+    logger.info(`<-- ${method} ${url} ${c.res.status}`);
   };
 }
