@@ -6,27 +6,30 @@ import { CompositePropagator, W3CBaggagePropagator, W3CTraceContextPropagator } 
 import { ConsoleSpanExporter, NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
 import { MiddlewareHandler } from 'hono';
 
-let provider: NodeTracerProvider | null = null;
+let initialized = false;
 
 export function setupTracing(config: Config): { shutdown: () => Promise<void> } {
-  if (provider != null) {
+  if (initialized) {
     console.log('TraceProvider already setup');
-  } else {
-    provider = new NodeTracerProvider({});
-
-    const exporter = config.isRunningOnCloud ? new TraceExporter() : new ConsoleSpanExporter();
-    provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
-    provider.register({
-      propagator: new CompositePropagator({
-        propagators: [new CloudPropagator(), new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
-      }),
-    });
-    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
+    return {
+      shutdown: async () => {},
+    };
   }
+  initialized = true;
+
+  const provider = new NodeTracerProvider({});
+  const exporter = config.isRunningOnCloud ? new TraceExporter() : new ConsoleSpanExporter();
+  provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
+  provider.register({
+    propagator: new CompositePropagator({
+      propagators: [new CloudPropagator(), new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
+    }),
+  });
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
+
   return {
     shutdown: async () => {
-      await provider?.shutdown();
-      provider = null;
+      await provider.shutdown();
     },
   };
 }
