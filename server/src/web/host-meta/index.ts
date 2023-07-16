@@ -19,9 +19,7 @@ const handleHostMetaXML: Handler = async (c) => {
     <Link rel="lrdd" template="${origin}/.well-known/webfinger?resource={uri}"/>
 </XRD>`;
 
-  const res = c.text(body);
-  res.headers.set('Content-Type', 'application/xrd+xml; charset=utf-8');
-  return res;
+  return c.text(body, { headers: { 'Content-Type': 'application/xrd+xml; charset=utf-8' } });
 };
 
 const handleHostMetaJSON: Handler = async (c) => {
@@ -34,6 +32,5 @@ const handleHostMetaJSON: Handler = async (c) => {
       },
     ],
   };
-
   return c.json(body);
 };

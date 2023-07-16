@@ -9,8 +9,7 @@ export default (app: Hono<AppContext>) => {
 
 const handleNodeinfo: Handler = async (c) => {
   const origin = c.get('origin');
-
-  const res = c.json({
+  return c.json({
     links: [
       {
         rel: 'http://nodeinfo.diaspora.software/ns/schema/2.1',
@@ -18,11 +17,10 @@ const handleNodeinfo: Handler = async (c) => {
       },
     ],
   });
-  return res;
 };
 
 const handleNodeinfo21: Handler = async (c) => {
-  const res = c.json({
+  return c.json({
     version: '2.1',
     openRegistrations: false,
     protocols: ['activitypub'],
@@ -31,14 +29,9 @@ const handleNodeinfo21: Handler = async (c) => {
       version: pkg.dependencies.hono,
     },
     usage: {
-      users: {
-        total: 1,
-      },
+      users: { total: 1 },
     },
-    services: {
-      inbound: [],
-      outbound: [],
-    },
+    services: { inbound: [], outbound: [] },
     metadata: {
       nodeName: 'らこらこインターネット',
       nodeDescription: 'らこらこインターネット',
@@ -50,5 +43,4 @@ const handleNodeinfo21: Handler = async (c) => {
       },
     },
   });
-  return res;
 };

@@ -118,12 +118,13 @@ export type Person = z.infer<typeof Person>;
 
 export const Collection = ActivityPubObject.extend({
   type: z.literal('Collection'),
-  totalItems: z.number(),
-  items: z.array(ObjectOrLinkOrURI),
+  totalItems: z.number().optional(),
+  items: z.array(ObjectOrLinkOrURI).optional(),
 });
 
 export const OrderedCollection = Collection.extend({
   type: z.literal('OrderedCollection'),
+  totalItems: z.number(),
   orderedItems: z.array(ObjectOrLinkOrURI),
 });
 export type OrderedCollection = z.infer<typeof OrderedCollection>;

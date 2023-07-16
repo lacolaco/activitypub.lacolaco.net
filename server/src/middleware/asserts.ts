@@ -5,12 +5,10 @@ export const assertAcceptHeader =
   async (c, next) => {
     const accept = c.req.headers.get('Accept');
     if (accept == null) {
-      c.status(400);
-      return c.text('Bad Request');
+      return c.text('Bad Request', 400);
     }
     if (!allowed.some((a) => accept.includes(a))) {
-      c.status(400);
-      return c.text('Bad Request');
+      return c.text('Bad Request', 400);
     }
     await next();
   };
@@ -20,12 +18,10 @@ export const assertContentTypeHeader =
   async (c, next) => {
     const contentType = c.req.headers.get('Content-Type');
     if (contentType == null) {
-      c.status(400);
-      return c.text('Bad Request');
+      return c.text('Bad Request', 400);
     }
     if (!allowed.some((a) => contentType.includes(a))) {
-      c.status(400);
-      return c.text('Bad Request');
+      return c.text('Bad Request', 400);
     }
     await next();
   };

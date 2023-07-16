@@ -41,9 +41,7 @@ async function createApplication(): Promise<Hono<AppContext>> {
   useAdmin(app, config);
 
   if (!config.isRunningOnCloud) {
-    app.routes.forEach((route) => {
-      console.log(`${route.method} ${route.path}`);
-    });
+    app.showRoutes();
   }
 
   return app;

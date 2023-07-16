@@ -3,7 +3,7 @@ import { User } from '@app/domain/user';
 import { UsersRepository } from '@app/repository/users';
 import { runInSpan } from '@app/tracing';
 import { acceptFollowRequest, deleteFollower, getUserFollowers } from '@app/usecase/followers';
-import { Handler, Hono, MiddlewareHandler } from 'hono';
+import { Context, Handler, Hono, MiddlewareHandler } from 'hono';
 import { assertContentTypeHeader } from '../../middleware/asserts';
 import { AppContext } from '../context';
 
@@ -37,25 +37,24 @@ function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
   };
 }
 
-const setActivityJSONContentType = (): MiddlewareHandler => async (c, next) => {
-  await next();
-  c.res.headers.set('Content-Type', 'application/activity+json');
-};
+function activityjson<T>(c: Context, data: T, status = 200) {
+  return c.json(data, { status, headers: { 'Content-Type': 'application/activity+json' } });
+}
 
 export default (app: Hono<AppContext>) => {
+  const assertActivityJSONContentType = assertContentTypeHeader(['application/activity+json']);
+
   const apRoutes = new Hono<AppContext>();
-  // middlewares
-  apRoutes.get('*', setActivityJSONContentType());
-  apRoutes.post('*', assertContentTypeHeader(['application/activity+json']));
   // routes
   apRoutes.get('/inbox', handleGetSharedInbox);
-  apRoutes.post('/inbox', handlePostSharedInbox);
+  apRoutes.post('/inbox', assertActivityJSONContentType, handlePostSharedInbox);
 
   const userRoutes = new Hono<UserRouteContext>();
+  // https://github.com/honojs/hono/issues/1240
+  userRoutes.get('/', setUserMiddleware(), handleGetPerson);
   userRoutes.use('*', setUserMiddleware());
-  userRoutes.get('/', handleGetPerson);
   userRoutes.get('/inbox', handleGetInbox);
-  userRoutes.post('/inbox', handlePostInbox);
+  userRoutes.post('/inbox', assertActivityJSONContentType, handlePostInbox);
   userRoutes.get('/outbox', handleGetOutbox);
   userRoutes.get('/followers', handleGetFollowers);
   userRoutes.get('/following', handleGetFollowing);
@@ -69,8 +68,7 @@ const handleGetPerson: Handler<UserRouteContext> = async (c) => {
     const origin = c.get('origin');
     const user = c.get('user');
     const person = ap.buildPerson(origin, user, config.publicKeyPem);
-    const res = c.json(person);
-    return res;
+    return activityjson(c, person);
   });
 };
 
@@ -102,7 +100,7 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
     if (ap.isFollowActivity(activity)) {
       try {
         await acceptFollowRequest(config, origin, user, activity);
-        return c.json({ ok: true });
+        return activityjson(c, { ok: true });
       } catch (e) {
         console.error(e);
         return c.json({ error: 'Internal Server Error' }, 500);
@@ -113,7 +111,7 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
       if (ap.isFollowActivity(object)) {
         try {
           await deleteFollower(config, origin, user, activity);
-          return c.json({ ok: true });
+          return activityjson(c, { ok: true });
         } catch (e) {
           console.error(e);
           return c.json({ error: 'Internal Server Error' }, 500);
@@ -122,7 +120,7 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
     }
 
     console.log('unsupported activity');
-    return c.json({});
+    return activityjson(c, {});
   });
 };
 
@@ -146,7 +144,8 @@ const handleGetFollowers: Handler<UserRouteContext> = async (c) => {
     }
 
     const followers = await getUserFollowers(user);
-    return c.json(
+    return activityjson(
+      c,
       ap.buildOrderedCollection(
         person.followers,
         followers.map((f) => f.id),
@@ -163,7 +162,7 @@ const handleGetFollowing: Handler<UserRouteContext> = async (c) => {
     if (!person.following) {
       return c.json({ error: 'Not Found' }, 404);
     }
-    return c.json(ap.buildOrderedCollection(person.following, []));
+    return activityjson(c, ap.buildOrderedCollection(person.following, []));
   });
 };
 

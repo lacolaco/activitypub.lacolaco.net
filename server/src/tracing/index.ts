@@ -23,9 +23,12 @@ export function getTracer() {
 }
 
 export function runInSpan<T>(name: string, fn: (span: Span) => T): Promise<T> {
-  return getTracer().startActiveSpan(name, async (span) => {
+  return getTracer().startActiveSpan(name, (span) => {
     try {
-      return await fn(span);
+      const ret = Promise.resolve(fn(span));
+      return ret.finally(() => {
+        span.end();
+      });
     } finally {
       span.end();
     }

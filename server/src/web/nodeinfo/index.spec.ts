@@ -39,36 +39,36 @@ describe('nodeinfo', () => {
     const body = await res.json();
 
     expect(body).toMatchInlineSnapshot(`
-			{
-			  "metadata": {
-			    "disableRegistration": true,
-			    "maintainer": {
-			      "email": "https://github.com/lacolaco#where-you-can-contact-me",
-			      "name": "lacolaco",
-			    },
-			    "nodeDescription": "らこらこインターネット",
-			    "nodeName": "らこらこインターネット",
-			    "themeColor": "#77b58c",
-			  },
-			  "openRegistrations": false,
-			  "protocols": [
-			    "activitypub",
-			  ],
-			  "services": {
-			    "inbound": [],
-			    "outbound": [],
-			  },
-			  "software": {
-			    "name": "Hono",
-			    "version": "^3.2.7",
-			  },
-			  "usage": {
-			    "users": {
-			      "total": 1,
-			    },
-			  },
-			  "version": "2.1",
-			}
-		`);
+      {
+        "metadata": {
+          "disableRegistration": true,
+          "maintainer": {
+            "email": "https://github.com/lacolaco#where-you-can-contact-me",
+            "name": "lacolaco",
+          },
+          "nodeDescription": "らこらこインターネット",
+          "nodeName": "らこらこインターネット",
+          "themeColor": "#77b58c",
+        },
+        "openRegistrations": false,
+        "protocols": [
+          "activitypub",
+        ],
+        "services": {
+          "inbound": [],
+          "outbound": [],
+        },
+        "software": {
+          "name": "Hono",
+          "version": "^3.3.0",
+        },
+        "usage": {
+          "users": {
+            "total": 1,
+          },
+        },
+        "version": "2.1",
+      }
+    `);
   });
 });

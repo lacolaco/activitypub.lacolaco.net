@@ -27,16 +27,17 @@ const handleWebfinger: Handler = async (c) => {
     return c.json({ error: 'Not Found' }, 404);
   }
 
-  const res = c.json<JRDObject>({
-    subject: resource,
-    links: [
-      {
-        rel: 'self',
-        type: 'application/activity+json',
-        href: `${origin}/users/${user.id}`,
-      },
-    ],
-  });
-  res.headers.set('Content-Type', 'application/jrd+json');
-  return res;
+  return c.json<JRDObject>(
+    {
+      subject: resource,
+      links: [
+        {
+          rel: 'self',
+          type: 'application/activity+json',
+          href: `${origin}/users/${user.id}`,
+        },
+      ],
+    },
+    { headers: { 'Content-Type': 'application/jrd+json' } },
+  );
 };

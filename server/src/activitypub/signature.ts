@@ -41,7 +41,7 @@ export async function signHeaders(
   privateKey: KeyObject,
   now = new Date(),
 ) {
-  return runInSpan('signHeaders', () => {
+  return runInSpan('signHeaders', async () => {
     const parsedURL = new URL(url);
     const dateStr = now.toUTCString();
     const digest = createDigest(body);
