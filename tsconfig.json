@@ -18,6 +18,7 @@
       "@app/repository/*": ["server/src/repository/*"],
       "@app/web/*": ["server/src/web/*"],
       "@app/tracing": ["server/src/tracing/index.ts"],
+      "@app/logger": ["server/src/logger/index.ts"],
       "@app/usecase/*": ["server/src/usecase/*"],
       "@app/util/*": ["server/src/util/*"],
       "@app/webfinger": ["server/src/webfinger/index.ts"]

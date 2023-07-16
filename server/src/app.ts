@@ -1,25 +1,25 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
 
 import useAdmin from '@app/web/admin';
 import useActivityPub from '@app/web/ap';
 import useHostMeta from '@app/web/host-meta';
 import useNodeinfo from '@app/web/nodeinfo';
 import useWebfinger from '@app/web/webfinger';
-import { getConfigWithEnv } from './domain/config';
-import { setupTracing, withTracing } from './tracing';
-import { AppContext, withOrigin } from './web/context';
+import { Config } from './domain/config';
+import { createLogger } from './logger';
+import { withTracing } from './tracing';
+import { AppContext, withConfig, withLogger, withOrigin } from './web/context';
 
-async function createApplication(): Promise<Hono<AppContext>> {
+async function createApplication(config: Config) {
   const app = new Hono<AppContext>();
+  const logger = createLogger(config);
 
-  const config = await getConfigWithEnv();
-
-  setupTracing(config);
-
+  app.use('*', withConfig(config));
+  app.use('*', withOrigin());
   app.use('*', withTracing());
-  app.use('*', logger());
+  app.use('*', withLogger(logger));
+
   app.use(
     '*',
     cors({
@@ -29,11 +29,6 @@ async function createApplication(): Promise<Hono<AppContext>> {
       allowHeaders: ['Content-Type', 'Authorization'],
     }),
   );
-  app.use('*', withOrigin());
-  app.use('*', async (c, next) => {
-    c.set('config', config);
-    await next();
-  });
 
   useNodeinfo(app);
   useHostMeta(app);

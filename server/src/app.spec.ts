@@ -2,13 +2,15 @@ import { Hono } from 'hono';
 import { assert, beforeEach, describe, expect, test } from 'vitest';
 
 import createApplication from './app';
+import { getConfigWithEnv } from './domain/config';
 import { AppContext } from './web/context';
 
 describe('endpoints for activitypub compatibility', () => {
   let app: Hono<AppContext>;
 
   beforeEach(async () => {
-    app = await createApplication();
+    const config = getConfigWithEnv();
+    app = await createApplication(config);
   });
 
   test('all routes are registered', async () => {

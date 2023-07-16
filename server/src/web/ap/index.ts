@@ -4,7 +4,7 @@ import { UsersRepository } from '@app/repository/users';
 import { runInSpan } from '@app/tracing';
 import { acceptFollowRequest, deleteFollower, getUserFollowers } from '@app/usecase/followers';
 import { Context, Handler, Hono, MiddlewareHandler } from 'hono';
-import { assertContentTypeHeader } from '../../middleware/asserts';
+import { assertContentTypeHeader } from '../assertion';
 import { AppContext } from '../context';
 
 type UserRouteContext = AppContext & {
