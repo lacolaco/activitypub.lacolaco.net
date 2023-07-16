@@ -1,6 +1,6 @@
 import { Config } from '@app/domain/config';
 import { TraceExporter } from '@google-cloud/opentelemetry-cloud-trace-exporter';
-import { CloudPropagator } from '@google-cloud/opentelemetry-cloud-trace-propagator';
+import { CloudPropagator, X_CLOUD_TRACE_HEADER } from '@google-cloud/opentelemetry-cloud-trace-propagator';
 import { Span, context, propagation, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { CompositePropagator, W3CBaggagePropagator, W3CTraceContextPropagator } from '@opentelemetry/core';
@@ -29,8 +29,10 @@ export function getTracer() {
 
 export function withTracing(): MiddlewareHandler {
   return async (c, next) => {
-    const headers = Object.fromEntries(c.req.headers.entries());
-    const traceContext = propagation.extract(context.active(), headers);
+    const traceHeaders = {
+      [X_CLOUD_TRACE_HEADER]: c.req.headers.get(X_CLOUD_TRACE_HEADER) ?? '',
+    };
+    const traceContext = propagation.extract(context.active(), traceHeaders);
     await context.with(traceContext, async () => {
       await next();
     });
