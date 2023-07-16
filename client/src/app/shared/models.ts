@@ -1,5 +1,6 @@
 export type LocalUser = {
   id: string;
+  host: string;
   username: string;
   displayName: string;
   description: string;

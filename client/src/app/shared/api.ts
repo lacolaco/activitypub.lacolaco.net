@@ -12,8 +12,8 @@ export class AdminApiClient {
     return firstValueFrom(this.#http.get<LocalUser[]>(`${environment.backend}/admin/users/list`));
   }
 
-  async getUserByUsername(username: string) {
-    return firstValueFrom(this.#http.get<LocalUser>(`${environment.backend}/admin/users/${username}`));
+  async getUserByUsername(hostname: string, username: string) {
+    return firstValueFrom(this.#http.get<LocalUser>(`${environment.backend}/admin/users/${hostname}/${username}`));
   }
 
   async searchRemotePerson(resource: string) {

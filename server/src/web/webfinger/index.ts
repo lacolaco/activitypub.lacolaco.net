@@ -7,6 +7,8 @@ export default (app: Hono<AppContext>) => {
   app.get('/.well-known/webfinger', handleWebfinger);
 };
 
+const resourceRegexp = /^acct\:(.+)@(.+)$/;
+
 const handleWebfinger: Handler = async (c) => {
   const origin = c.get('origin');
 
@@ -15,10 +17,12 @@ const handleWebfinger: Handler = async (c) => {
   if (resource == null) {
     return c.json({ error: 'Bad Request' }, 400);
   }
-  const [, username] = resource.split('@')[0].split(':');
-
+  const [, username, hostname] = resource.match(resourceRegexp) ?? [];
+  if (username == null || hostname == null) {
+    return c.json({ error: 'Bad Request' }, 400);
+  }
   const userRepo = new UsersRepository();
-  const user = await userRepo.findByUsername(username);
+  const user = await userRepo.findByUsername(hostname, username);
   if (user == null) {
     return c.json({ error: 'Not Found' }, 404);
   }

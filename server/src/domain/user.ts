@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const User = z.object({
   id: z.string(),
+  host: z.string(),
   username: z.string(),
   displayName: z.string(),
   description: z.string().nullable(),

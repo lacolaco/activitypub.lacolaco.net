@@ -11,7 +11,7 @@ import { LocalUser } from '../shared/models';
   imports: [CommonModule, SearchComponent],
   template: `
     <div *ngIf="user() as u" class="flex flex-col items-start gap-y-2">
-      <h2 class="text-lg">@{{ u.username }}@{{ hostname }}</h2>
+      <h2 class="text-lg">@{{ u.username }}@{{ u.host }}</h2>
       <details class="w-full rounded-lg bg-panel p-4 shadow">
         <summary class="text-md">Raw JSON</summary>
         <pre class="w-full font-mono text-sm overflow-auto">{{ userJSON() }}</pre>
@@ -29,7 +29,11 @@ export class UserComponent {
 
   readonly userJSON = computed(() => JSON.stringify(this.user(), null, 2));
 
-  readonly hostname = window.location.hostname;
+  readonly #hostname = signal<string | null>(null);
+
+  @Input() set hostname(hostname: string) {
+    this.#hostname.set(hostname);
+  }
 
   readonly #username = signal<string | null>(null);
 
@@ -39,9 +43,10 @@ export class UserComponent {
 
   constructor() {
     effect(async () => {
+      const hostname = this.#hostname();
       const username = this.#username();
-      if (username) {
-        const user = await this.api.getUserByUsername(username);
+      if (hostname && username) {
+        const user = await this.api.getUserByUsername(hostname, username);
         this.user.set(user);
       }
     });

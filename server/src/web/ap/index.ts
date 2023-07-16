@@ -20,9 +20,11 @@ function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
     const user = await userRepo.findByID(id);
     if (user == null) {
       // if an user has the username, tell client to redirect permanently
-      const u = await userRepo.findByUsername(id);
+      const origin = c.get('origin');
+      const hostname = new URL(origin).hostname;
+      const u = await userRepo.findByUsername(hostname, id);
       if (u != null) {
-        const redirectTo = new URL(c.get('origin'));
+        const redirectTo = new URL(origin);
         redirectTo.pathname = c.req.path.replace(id, u.id);
         console.log('redirecting to', redirectTo.toString());
         c.res.headers.set('Location', redirectTo.toString());

@@ -8,21 +8,7 @@ export const routes: Routes = [
     component: UsersComponent,
   },
   {
-    // "@:username" is not supported by default
-    matcher: (url) => {
-      const match = url[0]?.path.match(/^@([a-zA-Z0-9_]+)$/);
-      if (match) {
-        return {
-          consumed: url,
-          posParams: { username: new UrlSegment(match[1], {}) },
-        };
-      }
-      return null;
-    },
-    component: UserComponent,
-  },
-  {
-    path: 'users/:username',
+    path: 'users/:hostname/:username',
     component: UserComponent,
   },
   {

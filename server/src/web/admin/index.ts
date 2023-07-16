@@ -17,9 +17,10 @@ export default (app: Hono<AppContext>, config: Config) => {
     return c.json(users);
   });
 
-  adminRoutes.get('/users/:username', async (c) => {
+  adminRoutes.get('/users/:hostname/:username', async (c) => {
+    const hostname = c.req.param('hostname');
     const username = c.req.param('username');
-    const user = await admin.getUserByUsername(username);
+    const user = await admin.getUserByUsername(hostname, username);
     if (user == null) {
       c.status(404);
       return c.json({ error: 'Not Found' });

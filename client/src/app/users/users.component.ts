@@ -17,7 +17,7 @@ import { CreateUserComponent } from './create-user/create-user.component';
       <ul class="flex flex-col gap-y-2">
         <li *ngFor="let user of users()" class="p-4 rounded border border-gray-300">
           <div>
-            <a [routerLink]="['/users', user.username]">@{{ user.username }}/{{ user.id }}</a>
+            <a [routerLink]="['/users', user.host, user.username]">@{{ user.username }}/{{ user.id }}</a>
           </div>
         </li>
       </ul>

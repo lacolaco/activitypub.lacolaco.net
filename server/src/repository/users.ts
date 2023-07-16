@@ -1,5 +1,5 @@
 import { User } from '@app/domain/user';
-import { CollectionReference, Firestore, Timestamp } from '@google-cloud/firestore';
+import { CollectionReference, Filter, Firestore, Timestamp } from '@google-cloud/firestore';
 
 type UserDocument = {
   id: string;
@@ -36,9 +36,10 @@ export class UsersRepository {
     return toUser(data, doc.id);
   }
 
-  async findByUsername(username: string): Promise<User | null> {
+  async findByUsername(hostname: string, username: string): Promise<User | null> {
     const collection = this.db.collection('users') as CollectionReference<UserDocument>;
-    const query = collection.where('username', '==', username).limit(1);
+    const filter = Filter.and(Filter.where('host', '==', hostname), Filter.where('username', '==', username));
+    const query = collection.where(filter).limit(1);
     const items = await query.get();
     if (items.empty) {
       return null;
