@@ -15,26 +15,29 @@ type UserRouteContext = AppContext & {
 
 function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
   return async (c, next) => {
-    const logger = c.get('logger');
-    const userRepo = new UsersRepository();
-    const id = c.req.param('id');
-    const user = await userRepo.findByID(id);
-    if (user == null) {
-      // if an user has the username, tell client to redirect permanently
-      const origin = c.get('origin');
-      const hostname = new URL(origin).hostname;
-      const u = await userRepo.findByUsername(hostname, id);
-      if (u != null) {
-        const redirectTo = new URL(origin);
-        redirectTo.pathname = c.req.path.replace(id, u.id);
-        logger.info('redirecting to', redirectTo.toString());
-        c.res.headers.set('Location', redirectTo.toString());
-        return c.json({ error: 'Moved Permanently' }, 301);
+    await runInSpan('ap.setUserMiddleware', async (span) => {
+      const logger = c.get('logger');
+      const userRepo = new UsersRepository();
+      const id = c.req.param('id');
+      span.setAttribute('request.id', id);
+      const user = await userRepo.findByID(id);
+      if (user == null) {
+        // if an user has the username, tell client to redirect permanently
+        const origin = c.get('origin');
+        const hostname = new URL(origin).hostname;
+        const u = await userRepo.findByUsername(hostname, id);
+        if (u != null) {
+          const redirectTo = new URL(origin);
+          redirectTo.pathname = c.req.path.replace(id, u.id);
+          logger.info('redirecting to', redirectTo.toString());
+          c.res.headers.set('Location', redirectTo.toString());
+          return c.json({ error: 'Moved Permanently' }, 301);
+        }
+        return c.json({ error: 'Not Found' }, 404);
       }
-      return c.json({ error: 'Not Found' }, 404);
-    }
-    c.set('user', user);
-    await next();
+      c.set('user', user);
+      await next();
+    });
   };
 }
 
