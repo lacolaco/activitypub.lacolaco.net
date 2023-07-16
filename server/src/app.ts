@@ -13,12 +13,12 @@ import { AppContext, withConfig, withLogger, withOrigin } from './web/context';
 
 async function createApplication(config: Config) {
   const app = new Hono<AppContext>();
-  const logger = createLogger(config);
+  // const logger = createLogger(config);
 
   app.use('*', withConfig(config));
   app.use('*', withOrigin());
   app.use('*', withTracing());
-  app.use('*', withLogger(logger));
+  // app.use('*', withLogger(logger));
 
   app.use(
     '*',
