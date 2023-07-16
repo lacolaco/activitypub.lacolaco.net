@@ -1,7 +1,7 @@
 import { Config } from '@app/domain/config';
+import { Logger } from '@app/logger';
 import { getOrigin } from '@app/util/url';
 import { MiddlewareHandler } from 'hono';
-import { Logger } from 'winston';
 
 export type AppContext = {
   Variables: {

@@ -1,18 +1,20 @@
 import { Config } from '@app/domain/config';
-import { LoggingWinston } from '@google-cloud/logging-winston';
-import * as winston from 'winston';
+import pino from 'pino';
+import { getPinoOptions } from '@relaycorp/pino-cloud';
+
+export type Logger = pino.Logger;
+
+const gcpPinoOptions = getPinoOptions('gcp', {
+  name: 'lacolaco-activitypub',
+});
 
 export function createLogger(config: Config) {
-  const logger = winston.createLogger({
-    level: 'verbose',
-    transports: [new winston.transports.Console({ format: winston.format.simple() })],
-  });
-
   if (config.isRunningOnCloud) {
-    logger.configure({
+    return pino({
+      ...gcpPinoOptions,
       level: 'info',
-      transports: [logger.add(new LoggingWinston({}))],
     });
+  } else {
+    return pino({ level: 'debug' });
   }
-  return logger;
 }
