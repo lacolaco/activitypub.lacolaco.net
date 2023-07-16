@@ -1,11 +1,17 @@
 import { Config } from '@app/domain/config';
 import { TraceExporter } from '@google-cloud/opentelemetry-cloud-trace-exporter';
 import { Span, trace } from '@opentelemetry/api';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { ConsoleSpanExporter, NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
 
 export function setupTracing(config: Config) {
   // Create and configure NodeTracerProvider
   const provider = new NodeTracerProvider();
+  registerInstrumentations({
+    tracerProvider: provider,
+    instrumentations: [new HttpInstrumentation()],
+  });
 
   const exporter = config.isRunningOnCloud ? new TraceExporter() : new ConsoleSpanExporter();
 
