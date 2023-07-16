@@ -1,7 +1,7 @@
 import { Config } from '@app/domain/config';
 import { TraceExporter } from '@google-cloud/opentelemetry-cloud-trace-exporter';
 import { CloudPropagator, X_CLOUD_TRACE_HEADER } from '@google-cloud/opentelemetry-cloud-trace-propagator';
-import { Span, context, propagation, trace } from '@opentelemetry/api';
+import { Span, SpanKind, context, propagation, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { CompositePropagator, W3CBaggagePropagator, W3CTraceContextPropagator } from '@opentelemetry/core';
 import { ConsoleSpanExporter, NodeTracerProvider, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
@@ -32,7 +32,21 @@ export function withTracing(): MiddlewareHandler {
     const traceHeaders = {
       [X_CLOUD_TRACE_HEADER]: c.req.headers.get(X_CLOUD_TRACE_HEADER) ?? '',
     };
-    const traceContext = propagation.extract(context.active(), traceHeaders);
+    let traceContext = propagation.extract(context.active(), traceHeaders);
+    if (trace.getSpanContext(traceContext) == null) {
+      console.log('No trace context found, creating a new one');
+      traceContext = trace.setSpan(
+        traceContext,
+        getTracer().startSpan('request', {
+          attributes: {
+            '/http/method': c.req.method,
+            '/http/url': c.req.url,
+          },
+          kind: SpanKind.SERVER,
+          root: true,
+        }),
+      );
+    }
     await context.with(traceContext, async () => {
       await next();
     });
@@ -41,14 +55,10 @@ export function withTracing(): MiddlewareHandler {
 
 export function runInSpan<T>(name: string, fn: (span: Span) => T): Promise<T> {
   return getTracer().startActiveSpan(name, (span) => {
-    try {
-      const ret = Promise.resolve(fn(span));
-      return ret.finally(() => {
-        span.end();
-      });
-    } finally {
+    const ret = Promise.resolve(fn(span));
+    return ret.finally(() => {
       span.end();
-    }
+    });
   });
 }
 
