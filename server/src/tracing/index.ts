@@ -16,8 +16,7 @@ export function setupTracing(config: Config) {
       propagators: [new CloudPropagator(), new W3CTraceContextPropagator(), new W3CBaggagePropagator()],
     }),
   });
-
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
+  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
 }
 
 export function getTracer() {
