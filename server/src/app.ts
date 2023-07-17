@@ -20,7 +20,6 @@ async function createApplication(config: Config) {
   app.use('*', withTracing());
   app.use('*', withLogger(config, logger));
 
-  console.log('config.clientOrigins', config.clientOrigins);
   app.use(
     '*',
     cors({
