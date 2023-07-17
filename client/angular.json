@@ -50,7 +50,6 @@
             "main": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
             "assets": ["src/robots.txt", "src/assets"],
             "styles": ["src/styles.scss"],
             "scripts": []

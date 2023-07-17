@@ -23,4 +23,10 @@ export class AdminApiClient {
   async getFollowers(username: string) {
     return firstValueFrom(this.#http.get<LocalUser[]>(`${environment.backend}/admin/users/${username}/followers`));
   }
+
+  async postUserNote(user: LocalUser, note: { content: string }) {
+    return firstValueFrom(
+      this.#http.post<LocalUser>(`${environment.backend}/admin/users/${user.host}/${user.username}/notes`, note),
+    );
+  }
 }

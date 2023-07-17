@@ -75,6 +75,7 @@ export const ActivityPubObject = ActivityStreamsObject.extend({
   updated: DateTime.optional(),
   attachment: z.array(ActivityStreamsObject).optional(),
 });
+export type ActivityPubObject = z.infer<typeof ActivityPubObject>;
 
 /**
  * Public key for HTTP Signatures.

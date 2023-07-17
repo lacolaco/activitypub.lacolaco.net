@@ -5,3 +5,4 @@ export * from './person';
 export * from './signature';
 export * from './utilities';
 export * from './schema';
+export * from './note';

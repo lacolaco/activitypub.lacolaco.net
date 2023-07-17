@@ -6,6 +6,7 @@ import { acceptFollowRequest, deleteFollower, getUserFollowers } from '@app/usec
 import { Context, Handler, Hono, MiddlewareHandler } from 'hono';
 import { assertContentTypeHeader } from '../assertion';
 import { AppContext } from '../context';
+import { buildOutbox } from '@app/usecase/outbox';
 
 type UserRouteContext = AppContext & {
   Variables: {
@@ -135,9 +136,8 @@ const handleGetOutbox: Handler<UserRouteContext> = async (c) => {
   return runInSpan('ap.handleGetOutbox', async (span) => {
     const origin = c.get('origin');
     const user = c.get('user');
-    const person = ap.buildPerson(origin, user);
-    const res = c.json(ap.buildOrderedCollection(person.outbox, []));
-    return res;
+    const outbox = await buildOutbox(origin, user);
+    return c.json(outbox);
   });
 };
 

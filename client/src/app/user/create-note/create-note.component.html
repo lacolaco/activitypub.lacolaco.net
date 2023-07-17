@@ -1,0 +1,14 @@
+<form class="flex flex-col gap-y-2">
+  <div class="flex flex-col">
+    <label for="content">Content</label>
+    <textarea
+      id="content"
+      class="w-full rounded h-32"
+      name="content"
+      [ngModel]="content()"
+      (ngModelChange)="content.set($event)"
+    ></textarea>
+  </div>
+
+  <button type="submit" class="border border-gray-700 p-2" (click)="submit()">Create</button>
+</form>

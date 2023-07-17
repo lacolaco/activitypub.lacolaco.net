@@ -1,10 +1,12 @@
 import { verifyJWT } from '@app/auth/verify';
 import { Config } from '@app/domain/config';
 import { searchPerson } from '@app/usecase/admin/search-person';
-import * as admin from '@app/usecase/admin/users';
+import { queryUserByUsername, queryUsers } from '@app/usecase/admin/users';
 import { Handler, Hono } from 'hono';
 import { AppContext } from '../context';
 import { runInSpan } from '@app/tracing';
+import { createUserNote } from '@app/usecase/admin/notes';
+import { CreateNoteParams } from '@app/domain/note';
 
 export default (app: Hono<AppContext>, config: Config) => {
   const adminRoutes = new Hono<AppContext>();
@@ -15,7 +17,7 @@ export default (app: Hono<AppContext>, config: Config) => {
 
   adminRoutes.get('/users', async (c) => {
     return runInSpan('admin.getUsers', async (span) => {
-      const users = await admin.getUsers();
+      const users = await queryUsers();
       return c.json(users);
     });
   });
@@ -24,10 +26,24 @@ export default (app: Hono<AppContext>, config: Config) => {
     return runInSpan('admin.getUser', async (span) => {
       const { hostname, username } = c.req.param();
       span.setAttributes({ hostname, username });
-      const user = await admin.getUserByUsername(hostname, username);
+      const user = await queryUserByUsername(hostname, username);
       if (user == null) {
         return c.json({ error: 'Not Found' }, 404);
       }
+      return c.json(user);
+    });
+  });
+
+  adminRoutes.post('/users/:hostname/:username/notes', async (c) => {
+    return runInSpan('admin.postUserNotes', async (span) => {
+      const { hostname, username } = c.req.param();
+      span.setAttributes({ hostname, username });
+      const user = await queryUserByUsername(hostname, username);
+      if (user == null) {
+        return c.json({ error: 'Not Found' }, 404);
+      }
+      const body = await c.req.json<CreateNoteParams>();
+      await createUserNote(user, body);
       return c.json(user);
     });
   });

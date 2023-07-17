@@ -1,9 +1,12 @@
-import { contextURIs } from './context';
-import { ObjectOrLinkOrURI, OrderedCollection, URI } from './schema';
+import { ActivityStreamsObject, ObjectOrLinkOrURI, OrderedCollection, URI } from './schema';
 
-export function buildOrderedCollection(collectionID: URI, items: ObjectOrLinkOrURI[]) {
+export function buildOrderedCollection(
+  collectionID: URI,
+  items: ObjectOrLinkOrURI[],
+  contextURIs: ActivityStreamsObject['@context'] = [],
+) {
   return OrderedCollection.parse({
-    '@context': contextURIs,
+    ...(contextURIs && { '@context': contextURIs }),
     id: collectionID,
     type: 'OrderedCollection',
     totalItems: items.length,

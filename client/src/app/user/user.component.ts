@@ -1,15 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, Input, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { SearchComponent } from '../search/search.component';
 import { AdminApiClient } from '../shared/api';
 import { LocalUser } from '../shared/models';
+import { CreateNoteComponent } from './create-note/create-note.component';
 
 @Component({
   selector: 'app-user',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, SearchComponent],
+  imports: [CommonModule, RouterLink, CreateNoteComponent],
   template: `
     <div class="flex flex-col items-start gap-y-2">
       <header class="flex flex-row gap-x-1 text-xl">
@@ -28,8 +28,9 @@ import { LocalUser } from '../shared/models';
           <h3>Edit user data</h3>
         </div>
 
-        <div>
-          <h3>Create new note</h3>
+        <div class="flex flex-col w-full">
+          <h3 class="font-bold text-lg">Create new note</h3>
+          <app-create-note [user]="u" class="w-full"></app-create-note>
         </div>
       </ng-container>
     </div>
