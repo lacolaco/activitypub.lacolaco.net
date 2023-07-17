@@ -45,6 +45,12 @@ describe('activitypub schema', () => {
       const parsed = AnyActivity.parse(json);
       expect(parsed).toBeTruthy();
     });
+
+    test('minidon-create-note as CreateActivity', async () => {
+      const json = await import('./fixtures/minidon-create-note.json');
+      const parsed = AnyActivity.parse(json);
+      expect(parsed).toBeTruthy();
+    });
   });
 
   describe('Person', () => {

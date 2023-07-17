@@ -1,0 +1,19 @@
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://minidon-debug-alice.lacolaco.workers.dev/u/alice/s/ef166a05-f7f2-4f03-bc16-e3d8c36dfba1/activity",
+  "type": "Create",
+  "actor": "https://minidon-debug-alice.lacolaco.workers.dev/u/alice",
+  "published": "2023-07-17T23:11:58Z",
+  "to": ["https://www.w3.org/ns/activitystreams#Public"],
+  "cc": ["https://minidon-debug-alice.lacolaco.workers.dev/u/alice/followers"],
+  "object": {
+    "id": "https://minidon-debug-alice.lacolaco.workers.dev/u/alice/s/ef166a05-f7f2-4f03-bc16-e3d8c36dfba1",
+    "type": "Note",
+    "attributedTo": "https://minidon-debug-alice.lacolaco.workers.dev/u/alice",
+    "content": "test",
+    "url": "https://minidon-debug-alice.lacolaco.workers.dev/u/alice/s/ef166a05-f7f2-4f03-bc16-e3d8c36dfba1",
+    "published": "2023-07-17T23:11:58Z",
+    "to": ["https://www.w3.org/ns/activitystreams#Public"],
+    "cc": ["https://minidon-debug-alice.lacolaco.workers.dev/u/alice/followers"]
+  }
+}

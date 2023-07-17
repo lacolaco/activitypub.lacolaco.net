@@ -22,15 +22,19 @@ export async function createUserNote(user: User, note: CreateNoteParams, private
   // send Create activity to followers
   const origin = getOrigin(user.host);
   const actor = buildPerson(origin, user);
+  if (actor.followers == null) {
+    console.log('User', user.id, 'has no followers');
+    return;
+  }
   const followersRepo = new UserFollowersRepository();
   const followers = await followersRepo.list(user);
+  const noteObject = createNoteObject(actor, { ...newNote, cc: [actor.followers] });
   for (const follower of followers) {
     const inboxPerson = await fetchPersonByID(follower.id);
     if (inboxPerson == null) {
       console.log('Follower', follower.id, 'not found');
       continue;
     }
-    const noteObject = createNoteObject(actor, { ...newNote, cc: [follower.id] });
     const createActivity = buildCreateActivity(actor.id, noteObject);
     console.log('Sending Create activity to', follower.id);
     try {
