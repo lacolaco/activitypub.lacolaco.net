@@ -13,22 +13,21 @@ export default (app: Hono<AppContext>, config: Config) => {
     adminRoutes.use('*', verifyJWT());
   }
 
-  adminRoutes.get('/users/list', async (c) => {
-    const users = await admin.getUsers();
-    return c.json(users);
+  adminRoutes.get('/users', async (c) => {
+    return runInSpan('admin.getUsers', async (span) => {
+      const users = await admin.getUsers();
+      return c.json(users);
+    });
   });
 
   adminRoutes.get('/users/:hostname/:username', async (c) => {
-    return runInSpan('admin.getUserByUsername', async (span) => {
-      const hostname = c.req.param('hostname');
-      const username = c.req.param('username');
+    return runInSpan('admin.getUser', async (span) => {
+      const { hostname, username } = c.req.param();
       span.setAttributes({ hostname, username });
       const user = await admin.getUserByUsername(hostname, username);
       if (user == null) {
-        c.status(404);
-        return c.json({ error: 'Not Found' });
+        return c.json({ error: 'Not Found' }, 404);
       }
-
       return c.json(user);
     });
   });
@@ -39,13 +38,14 @@ export default (app: Hono<AppContext>, config: Config) => {
 };
 
 const handleSearchPerson: Handler<AppContext> = async (c) => {
-  const resource = c.req.param('resource');
-
-  try {
-    const person = await searchPerson(resource);
-    return c.json(person);
-  } catch (e) {
-    c.status(404);
-    return c.json({ error: 'Not Found' });
-  }
+  return runInSpan('admin.searchPerson', async (span) => {
+    const { resource } = c.req.param();
+    span.setAttributes({ resource });
+    try {
+      const person = await searchPerson(resource);
+      return c.json(person);
+    } catch (e) {
+      return c.json({ error: 'Not Found' }, 404);
+    }
+  });
 };

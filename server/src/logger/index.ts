@@ -13,7 +13,7 @@ export function createLogger(config: Config) {
   if (config.isRunningOnCloud) {
     return pino({
       ...gcpPinoOptions,
-      level: 'info',
+      level: 'trace',
     });
   } else {
     return pino({ level: 'trace' });

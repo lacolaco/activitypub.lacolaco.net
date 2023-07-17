@@ -9,7 +9,7 @@ export class AdminApiClient {
   #http = inject(HttpClient);
 
   async getUsers() {
-    return firstValueFrom(this.#http.get<LocalUser[]>(`${environment.backend}/admin/users/list`));
+    return firstValueFrom(this.#http.get<LocalUser[]>(`${environment.backend}/admin/users`));
   }
 
   async getUserByUsername(hostname: string, username: string) {

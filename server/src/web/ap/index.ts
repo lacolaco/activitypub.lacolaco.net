@@ -54,14 +54,15 @@ export default (app: Hono<AppContext>) => {
   apRoutes.post('/inbox', assertActivityJSONContentType, handlePostSharedInbox);
 
   const userRoutes = new Hono<UserRouteContext>();
-  // https://github.com/honojs/hono/issues/1240
-  userRoutes.get('/', setUserMiddleware(), handleGetPerson);
   userRoutes.use('*', setUserMiddleware());
+
+  userRoutes.get('/', handleGetPerson);
   userRoutes.get('/inbox', handleGetInbox);
   userRoutes.post('/inbox', assertActivityJSONContentType, handlePostInbox);
   userRoutes.get('/outbox', handleGetOutbox);
   userRoutes.get('/followers', handleGetFollowers);
   userRoutes.get('/following', handleGetFollowing);
+
   apRoutes.route('/users/:id', userRoutes);
   app.route('/', apRoutes);
 };
