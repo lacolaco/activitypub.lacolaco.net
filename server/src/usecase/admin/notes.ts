@@ -1,6 +1,7 @@
 import {
   buildCreateActivity,
   buildPerson,
+  contextURIsWithExtensions,
   createNoteObject,
   fetchPersonByID,
   getPublicKeyID,
@@ -29,13 +30,13 @@ export async function createUserNote(user: User, note: CreateNoteParams, private
   const followersRepo = new UserFollowersRepository();
   const followers = await followersRepo.list(user);
   const noteObject = createNoteObject(actor, { ...newNote, cc: [actor.followers] });
+  const createActivity = buildCreateActivity(actor.id, noteObject, { contextURIs: contextURIsWithExtensions });
   for (const follower of followers) {
     const inboxPerson = await fetchPersonByID(follower.id);
     if (inboxPerson == null) {
       console.log('Follower', follower.id, 'not found');
       continue;
     }
-    const createActivity = buildCreateActivity(actor.id, noteObject);
     console.log('Sending Create activity to', follower.id);
     try {
       await postActivity(inboxPerson.inbox, createActivity, getPublicKeyID(actor.id), privateKey);
