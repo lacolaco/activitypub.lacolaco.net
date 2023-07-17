@@ -43,7 +43,7 @@ export default (app: Hono<AppContext>, config: Config) => {
         return c.json({ error: 'Not Found' }, 404);
       }
       const body = await c.req.json<CreateNoteParams>();
-      await createUserNote(user, body);
+      await createUserNote(user, body, c.get('config').privateKey);
       return c.json(user);
     });
   });

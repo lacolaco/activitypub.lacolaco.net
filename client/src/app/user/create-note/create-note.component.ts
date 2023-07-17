@@ -24,7 +24,7 @@ export class CreateNoteComponent {
     const note = {
       content: this.content(),
     };
-
     await this.api.postUserNote(this.user, note);
+    this.content.set('');
   }
 }

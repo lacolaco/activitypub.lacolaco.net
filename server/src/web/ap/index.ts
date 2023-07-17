@@ -204,6 +204,6 @@ const handlePostSharedInbox: Handler<AppContext> = async (c) => {
       'activity.actor': ap.getURI(activity.actor)?.toString(),
     });
 
-    return c.json({ error: 'Not Found' }, 404);
+    return c.json({ error: 'Not Found' }, 405);
   });
 };

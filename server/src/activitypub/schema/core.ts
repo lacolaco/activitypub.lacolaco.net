@@ -10,14 +10,6 @@ const JSONLDObject = z.object({
   '@context': z.any().or(z.array(z.any())).optional(),
 });
 
-// https://www.w3.org/TR/activitystreams-core/#object
-export const ActivityStreamsObject = JSONLDObject.extend({
-  '@context': z.any().or(z.array(z.any())).optional(),
-  type: z.string().optional(),
-  id: URI.optional(),
-}).passthrough();
-export type ActivityStreamsObject = z.infer<typeof ActivityStreamsObject>;
-
 export const ActivityStreamsLink = JSONLDObject.extend({
   href: URI,
   name: z.string(),
@@ -26,6 +18,15 @@ export type ActivityStreamsLink = z.infer<typeof ActivityStreamsLink>;
 
 export const LinkOrURI = z.union([ActivityStreamsLink, URI]);
 export type LinkOrURI = z.infer<typeof LinkOrURI>;
+
+// https://www.w3.org/TR/activitystreams-core/#object
+export const ActivityStreamsObject = JSONLDObject.extend({
+  '@context': z.any().or(z.array(z.any())).optional(),
+  type: z.string().optional(),
+  id: URI.optional(),
+}).passthrough();
+export type ActivityStreamsObject = z.infer<typeof ActivityStreamsObject>;
+
 export const ObjectOrURI = z.union([ActivityStreamsObject, URI]);
 export type ObjectOrURI = z.infer<typeof ObjectOrURI>;
 export const ObjectOrLink = z.union([ActivityStreamsObject, ActivityStreamsLink]);
@@ -40,6 +41,10 @@ export const BaseActivity = ActivityStreamsObject.extend({
   actor: ObjectRef,
   object: ObjectRef.optional(),
   target: ObjectRef.optional(),
+  to: z.array(LinkOrURI).optional(),
+  cc: z.array(LinkOrURI).optional(),
+  inReplyTo: ObjectOrLinkOrURI.optional(),
+  attributedTo: ObjectOrLinkOrURI.or(z.array(ObjectOrLinkOrURI)).optional(),
 });
 export type BaseActivity = z.infer<typeof BaseActivity>;
 

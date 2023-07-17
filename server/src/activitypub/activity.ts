@@ -5,6 +5,7 @@ import {
   ActivityPubObject,
   ActivityStreamsObject,
   AnyActivity,
+  CreateActivity,
   FollowActivity,
   ObjectRef,
   URI,
@@ -43,13 +44,20 @@ export function buildAcceptAcivity(actorID: URI, object: AnyActivity, acceptID: 
   });
 }
 
-export function buildCreateActivity(actorID: URI, object: ActivityPubObject, createID: string = randomUUID()) {
-  const id = new URL(`${actorID}/create/${createID}`);
-  return AcceptActivity.parse({
-    '@context': contextURIsWithExtensions,
-    type: 'Create',
+export function buildCreateActivity(
+  actorID: URI,
+  object: ActivityPubObject,
+  options: { createID?: string; contextURIs?: ActivityPubObject['@context'] } = {},
+) {
+  const id = new URL(`${actorID}/create/${options.createID ?? randomUUID()}`);
+  return CreateActivity.parse({
+    ...(options.contextURIs && { '@context': options.contextURIs }),
     id,
+    type: 'Create',
     actor: actorID,
     object: object,
+    to: object.to,
+    cc: object.cc,
+    published: object.published,
   });
 }

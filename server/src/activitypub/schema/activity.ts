@@ -16,5 +16,10 @@ export const AcceptActivity = TransitiveActivity.extend({
 });
 export type AcceptActivity = z.infer<typeof AcceptActivity>;
 
-export const AnyActivity = z.union([FollowActivity, UndoActivity, AcceptActivity, BaseActivity]);
+export const CreateActivity = TransitiveActivity.extend({
+  type: z.literal('Create'),
+});
+export type CreateActivity = z.infer<typeof CreateActivity>;
+
+export const AnyActivity = z.union([FollowActivity, UndoActivity, AcceptActivity, CreateActivity, BaseActivity]);
 export type AnyActivity = z.infer<typeof AnyActivity>;
