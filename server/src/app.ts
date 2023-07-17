@@ -20,12 +20,12 @@ async function createApplication(config: Config) {
   app.use('*', withTracing());
   app.use('*', withLogger(config, logger));
 
+  console.log('config.clientOrigins', config.clientOrigins);
   app.use(
     '*',
     cors({
       origin: config.clientOrigins,
       credentials: true,
-      allowMethods: ['GET', 'POST', 'OPTIONS'],
       allowHeaders: ['Content-Type', 'Authorization'],
     }),
   );
