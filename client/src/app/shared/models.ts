@@ -15,3 +15,13 @@ export type ActivityPubPerson = {
   summary: string;
   icon?: { url: string };
 };
+
+export type NewUserParams = {
+  host: string;
+  username: string;
+  displayName: string;
+  description: string;
+  icon: { url: string };
+  attachments: Array<{ name: string; value: string }>;
+  url: string;
+};

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { ActivityPubPerson, LocalUser } from './models';
+import { ActivityPubPerson, LocalUser, NewUserParams } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminApiClient {
@@ -14,6 +14,10 @@ export class AdminApiClient {
 
   async getUserByUsername(hostname: string, username: string) {
     return firstValueFrom(this.#http.get<LocalUser>(`${environment.backend}/admin/users/${hostname}/${username}`));
+  }
+
+  async createUser(params: NewUserParams) {
+    return firstValueFrom(this.#http.post<LocalUser>(`${environment.backend}/admin/users`, params));
   }
 
   async searchRemotePerson(resource: string) {

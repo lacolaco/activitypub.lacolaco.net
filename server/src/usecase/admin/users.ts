@@ -1,3 +1,4 @@
+import { NewUserParams, newUser } from '@app/domain/user';
 import { UsersRepository } from '@app/repository/users';
 import { runInSpan } from '@app/tracing';
 
@@ -16,6 +17,15 @@ export async function queryUserByUsername(hostname: string, username: string) {
     if (user == null) {
       return null;
     }
+    return user;
+  });
+}
+
+export async function createUser(params: NewUserParams) {
+  return runInSpan('admin.createUser', async (span) => {
+    const user = newUser(params);
+    const userRepo = new UsersRepository();
+    await userRepo.insertUser(user);
     return user;
   });
 }
