@@ -47,7 +47,7 @@ describe('nodeinfo', () => {
             "name": "lacolaco",
           },
           "nodeDescription": "らこらこインターネット",
-          "nodeName": "らこらこインターネット",
+          "nodeName": "lacolaco.social",
           "themeColor": "#77b58c",
         },
         "openRegistrations": false,
