@@ -1,8 +1,0 @@
-{
-    "links": [
-        {
-            "rel": "lrdd",
-            "template": "https://{{ .Host }}/.well-known/webfinger?resource={uri}"
-        }
-    ]
-}
