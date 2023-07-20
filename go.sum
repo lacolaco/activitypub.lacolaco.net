@@ -26,8 +26,8 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.11.
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0.35.1 h1:s503Jzh+SCMN557CUTsenBo8vNxmGZK7zWdNlePQ9TU=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.35.1 h1:IB4aQsSppxP/PVmnCstDm9v00hsPowqrohoW4FZ+amc=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.35.1/go.mod h1:H785fvlgotVZqht+1rHhXSs8EJ8uPVmpBYkTYO3ccpc=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1 h1:UcJNMnXeuy7QUCDjmu+rGDJsvK4GFKy8oR34vNj/29o=
-github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.35.1/go.mod h1:1+b5oFxaeaSoN5Iapn/8DV9VCJOvNA9jVLXJFcoGXOM=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.41.0 h1:3B4/rbjhQCl8nNftFgFFqfYOOlKgkiNWhILg5wCC5VY=
+github.com/GoogleCloudPlatform/opentelemetry-operations-go/propagator v0.41.0/go.mod h1:ML9pY4SjdBE/fTBnIwTaJu+5ZahLW3e/snaUPuOdcck=
 github.com/MicahParks/keyfunc v1.5.1 h1:RlyyYgKQI/adkIw1yXYtPvTAOb7hBhSX42aH23d8N0Q=
 github.com/MicahParks/keyfunc v1.5.1/go.mod h1:IdnCilugA0O/99dW+/MkvlyrsX8+L8+x95xuVNtM5jw=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
