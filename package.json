@@ -10,6 +10,9 @@
   },
   "license": "MIT",
   "packageManager": "pnpm@8.6.7",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@activity-kit/types": "^0.4.36",
     "@google-cloud/firestore": "^6.6.1",
