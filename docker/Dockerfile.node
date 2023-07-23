@@ -24,7 +24,7 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 
 # Copy the binary to the production image from the builder stage.
-COPY --from=builder /app/server/dist ./
+COPY --from=builder /app/packages/server/dist ./
 
 RUN corepack enable
 RUN pnpm i --production

@@ -1,5 +1,5 @@
 import { Handler, Hono } from 'hono';
-import * as pkg from '../../../../package.json';
+import * as pkg from '../../../../../package.json';
 import { AppContext } from '../context';
 
 export default (app: Hono<AppContext>) => {
