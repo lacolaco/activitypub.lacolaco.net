@@ -27,6 +27,7 @@ jobs:
           service_account: ${{ vars.GOOGLE_DEPLOY_SERVICE_ACCOUNT }}
       - uses: ./.github/actions/setup-node
       - run: cp .env.example .env
+        working-directory: ./packages/server
       - run: pnpm install
       - run: pnpm run server test run
 
