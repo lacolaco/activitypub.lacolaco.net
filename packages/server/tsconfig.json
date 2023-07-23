@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "target": "es2021",
+    "module": "es2022",
+    "moduleResolution": "node",
+    "types": ["node"],
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "paths": {
+      "@app/activitypub": ["src/activitypub/index.ts"],
+      "@app/auth/*": ["src/auth/*"],
+      "@app/domain/*": ["src/domain/*"],
+      "@app/repository/*": ["src/repository/*"],
+      "@app/web/*": ["src/web/*"],
+      "@app/tracing": ["src/tracing/index.ts"],
+      "@app/logger": ["src/logger/index.ts"],
+      "@app/usecase/*": ["src/usecase/*"],
+      "@app/util/*": ["src/util/*"],
+      "@app/webfinger": ["src/webfinger/index.ts"]
+    }
+  }
+}

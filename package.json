@@ -3,10 +3,14 @@
   "private": true,
   "scripts": {
     "format": "prettier --cache --write .",
-    "start:server": "dotenv -- tsx watch ./server/src/main.ts",
-    "build:client": "pnpm --filter client run build",
-    "build:server": "tsx tools/build-server.ts",
-    "test": "vitest"
+    "client": "pnpm -F \"client\"",
+    "server": "pnpm -F \"server\"",
+    "start:client": "pnpm run client run start",
+    "start:server": "pnpm run server run start",
+    "build:client": "pnpm run client run build",
+    "build:server": "pnpm run server run build",
+    "test": "pnpm -r test",
+    "pack:server": "docker build -f docker/Dockerfile.node ."
   },
   "license": "MIT",
   "packageManager": "pnpm@8.6.8",

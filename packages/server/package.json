@@ -1,0 +1,9 @@
+{
+  "name": "server",
+  "private": true,
+  "scripts": {
+    "start": "dotenv -- tsx watch ./src/main.ts",
+    "build": "tsx ./tools/build-server.ts",
+    "test": "vitest"
+  }
+}
