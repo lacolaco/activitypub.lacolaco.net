@@ -37,6 +37,7 @@
     "hono": "^3.3.0",
     "jsonwebtoken": "^9.0.1",
     "pino": "^8.14.1",
+    "pino-pretty": "^10.1.0",
     "zod": "^3.21.4"
   },
   "devDependencies": {

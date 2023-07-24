@@ -11,12 +11,12 @@ const gcpPinoOptions = getPinoOptions('gcp', {
 
 export function createLogger(config: Config) {
   if (config.isRunningOnCloud) {
+    return pino({ ...gcpPinoOptions, level: 'trace' });
+  } else {
     return pino({
-      ...gcpPinoOptions,
+      transport: { target: 'pino-pretty' },
       level: 'trace',
     });
-  } else {
-    return pino({ level: 'trace' });
   }
 }
 
