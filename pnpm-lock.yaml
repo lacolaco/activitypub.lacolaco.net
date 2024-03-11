@@ -74,7 +74,7 @@ importers:
     devDependencies:
       '@esbuild-plugins/tsconfig-paths':
         specifier: ^0.1.2
-        version: 0.1.2(esbuild@0.18.11)(typescript@5.1.6)
+        version: 0.1.2(esbuild@0.18.11)(typescript@5.4.2)
       '@types/jsonwebtoken':
         specifier: ^9.0.2
         version: 9.0.2
@@ -97,11 +97,11 @@ importers:
         specifier: ^3.12.7
         version: 3.12.7
       typescript:
-        specifier: ~5.1.4
-        version: 5.1.6
+        specifier: ~5.4.0
+        version: 5.4.2
       vite-tsconfig-paths:
         specifier: ^4.2.0
-        version: 4.2.0(typescript@5.1.6)
+        version: 4.2.0(typescript@5.4.2)
       vitest:
         specifier: ^0.33.0
         version: 0.33.0
@@ -144,13 +144,13 @@ importers:
     devDependencies:
       '@angular-devkit/build-angular':
         specifier: ^16.1.4
-        version: 16.1.4(@angular/compiler-cli@16.1.4)(@types/node@20.4.1)(tailwindcss@3.3.3)(typescript@5.1.6)
+        version: 16.1.4(@angular/compiler-cli@16.1.4)(@types/node@20.4.1)(tailwindcss@3.3.3)(typescript@5.4.2)
       '@angular/cli':
         specifier: ~16.1.4
         version: 16.1.4
       '@angular/compiler-cli':
         specifier: ^16.1.4
-        version: 16.1.4(@angular/compiler@16.1.4)(typescript@5.1.6)
+        version: 16.1.4(@angular/compiler@16.1.4)(typescript@5.4.2)
       '@tailwindcss/forms':
         specifier: ^0.5.4
         version: 0.5.4(tailwindcss@3.3.3)
@@ -167,8 +167,8 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
       typescript:
-        specifier: ~5.1.0
-        version: 5.1.6
+        specifier: ~5.4.0
+        version: 5.4.2
 
   packages/server: {}
 
@@ -203,7 +203,7 @@ packages:
       - chokidar
     dev: true
 
-  /@angular-devkit/build-angular@16.1.4(@angular/compiler-cli@16.1.4)(@types/node@20.4.1)(tailwindcss@3.3.3)(typescript@5.1.6):
+  /@angular-devkit/build-angular@16.1.4(@angular/compiler-cli@16.1.4)(@types/node@20.4.1)(tailwindcss@3.3.3)(typescript@5.4.2):
     resolution: {integrity: sha512-LiHM7R20fTHg/eM+Iabotj08edP5wVBQahRfVNLxERo8X6VJgSjVChnsh3AQJkRywlGuFe20AOQYpyLyN367Ug==}
     engines: {node: ^16.14.0 || >=18.10.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
     peerDependencies:
@@ -242,7 +242,7 @@ packages:
       '@angular-devkit/architect': 0.1601.4(chokidar@3.5.3)
       '@angular-devkit/build-webpack': 0.1601.4(chokidar@3.5.3)(webpack-dev-server@4.15.0)(webpack@5.86.0)
       '@angular-devkit/core': 16.1.4(chokidar@3.5.3)
-      '@angular/compiler-cli': 16.1.4(@angular/compiler@16.1.4)(typescript@5.1.6)
+      '@angular/compiler-cli': 16.1.4(@angular/compiler@16.1.4)(typescript@5.4.2)
       '@babel/core': 7.22.5
       '@babel/generator': 7.22.7
       '@babel/helper-annotate-as-pure': 7.22.5
@@ -254,7 +254,7 @@ packages:
       '@babel/runtime': 7.22.5
       '@babel/template': 7.22.5
       '@discoveryjs/json-ext': 0.5.7
-      '@ngtools/webpack': 16.1.4(@angular/compiler-cli@16.1.4)(typescript@5.1.6)(webpack@5.86.0)
+      '@ngtools/webpack': 16.1.4(@angular/compiler-cli@16.1.4)(typescript@5.4.2)(webpack@5.86.0)
       '@vitejs/plugin-basic-ssl': 1.0.1(vite@4.3.9)
       ansi-colors: 4.1.3
       autoprefixer: 10.4.14(postcss@8.4.24)
@@ -298,7 +298,7 @@ packages:
       text-table: 0.2.0
       tree-kill: 1.2.2
       tslib: 2.5.3
-      typescript: 5.1.6
+      typescript: 5.4.2
       vite: 4.3.9(@types/node@20.4.1)(less@4.1.3)(sass@1.63.2)(terser@5.17.7)
       webpack: 5.86.0(esbuild@0.18.11)
       webpack-dev-middleware: 6.1.1(webpack@5.86.0)
@@ -420,7 +420,7 @@ packages:
       tslib: 2.6.0
     dev: false
 
-  /@angular/compiler-cli@16.1.4(@angular/compiler@16.1.4)(typescript@5.1.6):
+  /@angular/compiler-cli@16.1.4(@angular/compiler@16.1.4)(typescript@5.4.2):
     resolution: {integrity: sha512-JerJOZeOLaHFHrfWMm4m9tEw+MdNNIMPj3TSauJ6uZPbFokGeqS2GsUBMjuQlwh5xY4duh1HtRsohvshpl306A==}
     engines: {node: ^16.14.0 || >=18.10.0}
     hasBin: true
@@ -436,7 +436,7 @@ packages:
       reflect-metadata: 0.1.13
       semver: 7.5.4
       tslib: 2.6.0
-      typescript: 5.1.6
+      typescript: 5.4.2
       yargs: 17.7.2
     transitivePeerDependencies:
       - supports-color
@@ -1762,7 +1762,7 @@ packages:
       get-tsconfig: 4.6.2
     dev: true
 
-  /@esbuild-plugins/tsconfig-paths@0.1.2(esbuild@0.18.11)(typescript@5.1.6):
+  /@esbuild-plugins/tsconfig-paths@0.1.2(esbuild@0.18.11)(typescript@5.4.2):
     resolution: {integrity: sha512-TusFR26Y+Ze+Zm+NdfqZTSG4XyrXKxIaAfYCL3jASEI/gHjSdoCujATjzNWaaXs6Sk6Bv2D7NLr4Jdz1gysy/Q==}
     peerDependencies:
       esbuild: '*'
@@ -1772,7 +1772,7 @@ packages:
       esbuild: 0.18.11
       find-up: 5.0.0
       strip-json-comments: 3.1.1
-      typescript: 5.1.6
+      typescript: 5.4.2
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -2349,7 +2349,7 @@ packages:
     resolution: {integrity: sha512-Hcv+nVC0kZnQ3tD9GVu5xSMR4VVYOteQIr/hwFPVEvPdlXqgGEuRjiheChHgdM+JyqdgNcmzZOX/tnl0JOiI7A==}
     dev: true
 
-  /@ngtools/webpack@16.1.4(@angular/compiler-cli@16.1.4)(typescript@5.1.6)(webpack@5.86.0):
+  /@ngtools/webpack@16.1.4(@angular/compiler-cli@16.1.4)(typescript@5.4.2)(webpack@5.86.0):
     resolution: {integrity: sha512-+8bfavDH8eWxjlJFYr6bkjcRHhy95j+f8oNn7/sGLNu4L96nuE2AZ011XIu2dJahCnNiBvwc1EpkKa92t9rkaA==}
     engines: {node: ^16.14.0 || >=18.10.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
     peerDependencies:
@@ -2357,8 +2357,8 @@ packages:
       typescript: '>=4.9.3 <5.2'
       webpack: ^5.54.0
     dependencies:
-      '@angular/compiler-cli': 16.1.4(@angular/compiler@16.1.4)(typescript@5.1.6)
-      typescript: 5.1.6
+      '@angular/compiler-cli': 16.1.4(@angular/compiler@16.1.4)(typescript@5.4.2)
+      typescript: 5.4.2
       webpack: 5.86.0(esbuild@0.18.11)
     dev: true
 
@@ -3928,6 +3928,7 @@ packages:
 
   /debug@3.2.7:
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
+    requiresBuild: true
     peerDependencies:
       supports-color: '*'
     peerDependenciesMeta:
@@ -6078,6 +6079,7 @@ packages:
 
   /node-addon-api@3.2.1:
     resolution: {integrity: sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -6100,6 +6102,7 @@ packages:
   /node-gyp-build@4.6.0:
     resolution: {integrity: sha512-NTZVKn9IylLwUzaKjkas1e4u2DLNcV4rdYagA4PWdPwW87Bi7z+BznyKSRwS/761tV/lzCGXplWsiaMjLqP2zQ==}
     hasBin: true
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -6517,6 +6520,7 @@ packages:
   /pify@4.0.1:
     resolution: {integrity: sha512-uB80kBFb/tfd68bVleG9T5GGsGPjJrLAUpR5PZIrhBnIaRTQRjqdJSsIKkOP6OAIFbj7GOrcudc5pNjZ+geV2g==}
     engines: {node: '>=6'}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -6876,6 +6880,7 @@ packages:
 
   /prr@1.0.1:
     resolution: {integrity: sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -7238,6 +7243,7 @@ packages:
 
   /sax@1.2.4:
     resolution: {integrity: sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==}
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -7278,6 +7284,7 @@ packages:
   /semver@5.7.2:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
     hasBin: true
+    requiresBuild: true
     dev: true
     optional: true
 
@@ -7869,7 +7876,7 @@ packages:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
     dev: true
 
-  /tsconfck@2.1.1(typescript@5.1.6):
+  /tsconfck@2.1.1(typescript@5.4.2):
     resolution: {integrity: sha512-ZPCkJBKASZBmBUNqGHmRhdhM8pJYDdOXp4nRgj/O0JwUwsMq50lCDRQP/M5GBNAA0elPrq4gAeu4dkaVCuKWww==}
     engines: {node: ^14.13.1 || ^16 || >=18}
     hasBin: true
@@ -7879,7 +7886,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      typescript: 5.1.6
+      typescript: 5.4.2
     dev: true
 
   /tslib@2.5.3:
@@ -7940,8 +7947,8 @@ packages:
     resolution: {integrity: sha512-KNNZtayBCtmnNmbo5mG47p1XsCyrx6iVqomjcZnec/1Y5GGARaxPs6r49RnSPeUP3YjNYiU9sQHAtY4BBvnZwg==}
     dev: true
 
-  /typescript@5.1.6:
-    resolution: {integrity: sha512-zaWCozRZ6DLEWAWFrVDz1H6FVXzUSfTy5FUMWsQlU8Ym5JP9eO4xkTIROFCQvhQf61z6O/G6ugw3SgAnvvm+HA==}
+  /typescript@5.4.2:
+    resolution: {integrity: sha512-+2/g0Fds1ERlP6JsakQQDXjZdZMM+rqpamFZJEKh4kwTIn3iDkgKtby0CeNd5ATNZ4Ry1ax15TMx0W2V+miizQ==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
@@ -8077,7 +8084,7 @@ packages:
       - terser
     dev: true
 
-  /vite-tsconfig-paths@4.2.0(typescript@5.1.6):
+  /vite-tsconfig-paths@4.2.0(typescript@5.4.2):
     resolution: {integrity: sha512-jGpus0eUy5qbbMVGiTxCL1iB9ZGN6Bd37VGLJU39kTDD6ZfULTTb1bcc5IeTWqWJKiWV5YihCaibeASPiGi8kw==}
     peerDependencies:
       vite: '*'
@@ -8087,7 +8094,7 @@ packages:
     dependencies:
       debug: 4.3.4
       globrex: 0.1.2
-      tsconfck: 2.1.1(typescript@5.1.6)
+      tsconfck: 2.1.1(typescript@5.4.2)
     transitivePeerDependencies:
       - supports-color
       - typescript
