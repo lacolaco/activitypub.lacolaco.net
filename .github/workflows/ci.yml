@@ -12,14 +12,14 @@ jobs:
   build-server:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node
       - run: pnpm run pack:server
 
   test-server:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: google-github-actions/auth@v1.1.1
         id: 'auth'
         with:
@@ -34,7 +34,7 @@ jobs:
   test-client:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node
       - run: pnpm install
       - run: pnpm run client build
