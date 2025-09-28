@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@activity-kit/types": "^0.4.36",
-    "@google-cloud/firestore": "^6.6.1",
+    "@google-cloud/firestore": "^7.0.0",
     "@google-cloud/opentelemetry-cloud-trace-exporter": "^2.1.0",
     "@google-cloud/opentelemetry-cloud-trace-propagator": "^0.17.0",
     "@hono/node-server": "^1.0.2",
