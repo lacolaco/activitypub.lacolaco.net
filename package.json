@@ -38,7 +38,7 @@
     "jsonwebtoken": "^9.0.1",
     "pino": "^8.14.1",
     "pino-pretty": "^10.1.0",
-    "zod": "^3.21.4"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@esbuild-plugins/tsconfig-paths": "^0.1.2",
