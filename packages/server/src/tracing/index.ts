@@ -41,7 +41,7 @@ export function getTracer() {
 export function withTracing(): MiddlewareHandler {
   return async (c, next) => {
     const traceHeaders = {
-      [X_CLOUD_TRACE_HEADER]: c.req.headers.get(X_CLOUD_TRACE_HEADER) ?? '',
+      [X_CLOUD_TRACE_HEADER]: c.req.header(X_CLOUD_TRACE_HEADER) ?? '',
     };
     let traceContext = propagation.extract(context.active(), traceHeaders);
     if (trace.getSpanContext(traceContext) == null) {

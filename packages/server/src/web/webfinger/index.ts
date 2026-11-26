@@ -38,11 +38,10 @@ const handleWebfinger: Handler = async (c) => {
         },
       ],
     },
+    200,
     {
-      headers: {
-        'Content-Type': 'application/jrd+json',
-        'Cache-Control': `max-age=${60 * 60}, public`,
-      },
+      'Content-Type': 'application/jrd+json',
+      'Cache-Control': `max-age=${60 * 60}, public`,
     },
   );
 };

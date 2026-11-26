@@ -5,7 +5,6 @@ import { AdminApiClient } from '../../shared/api';
 
 @Component({
   selector: 'app-create-user',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, FormsModule],
   template: `

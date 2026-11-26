@@ -6,7 +6,6 @@ import { SearchComponent } from './search/search.component';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   imports: [CommonModule, RouterLink, RouterOutlet, AppStrokedButton, SearchComponent],
   template: `
     <header class="p-4 shadow-gray-500 shadow-sm z-10">

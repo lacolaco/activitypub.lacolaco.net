@@ -4,6 +4,7 @@ import { UsersRepository } from '@app/repository/users';
 import { runInSpan } from '@app/tracing';
 import { acceptFollowRequest, deleteFollower, getUserFollowers } from '@app/usecase/followers';
 import { Context, Handler, Hono, MiddlewareHandler } from 'hono';
+import { ContentfulStatusCode } from 'hono/utils/http-status';
 import { assertContentTypeHeader } from '../assertion';
 import { AppContext } from '../context';
 import { buildOutbox } from '@app/usecase/outbox';
@@ -19,7 +20,7 @@ function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
     return await runInSpan('ap.setUserMiddleware', async (span) => {
       const logger = c.get('logger');
       const userRepo = new UsersRepository();
-      const id = c.req.param('id');
+      const id = c.req.param('id')!;
       span.setAttribute('request.id', id);
       const user = await userRepo.findByID(id);
       if (user == null) {
@@ -42,8 +43,8 @@ function setUserMiddleware(): MiddlewareHandler<UserRouteContext> {
   };
 }
 
-function activityjson<T>(c: Context, data: T, status = 200) {
-  return c.json(data, { status, headers: { 'Content-Type': 'application/activity+json' } });
+function activityjson<T>(c: Context, data: T, status: ContentfulStatusCode = 200) {
+  return c.json(data, status, { 'Content-Type': 'application/activity+json' });
 }
 
 export default (app: Hono<AppContext>) => {
@@ -87,7 +88,7 @@ const handlePostInbox: Handler<UserRouteContext> = async (c) => {
   return runInSpan('ap.handlePostInbox', async (span) => {
     const logger = c.get('logger');
     try {
-      await ap.verifySignature(c.req);
+      await ap.verifySignature(c.req.raw);
     } catch (e) {
       logger.error(e);
       return c.json({ error: 'Unauthorized' }, 401);
@@ -185,7 +186,7 @@ const handlePostSharedInbox: Handler<AppContext> = async (c) => {
     logger.debug({ payload });
 
     try {
-      await ap.verifySignature(c.req);
+      await ap.verifySignature(c.req.raw);
     } catch (e) {
       logger.error(e);
       return c.json({ error: 'Unauthorized' }, 401);

@@ -60,7 +60,7 @@ describe('nodeinfo', () => {
         },
         "software": {
           "name": "Hono",
-          "version": "^3.3.0",
+          "version": "^4.13.22",
         },
         "usage": {
           "users": {

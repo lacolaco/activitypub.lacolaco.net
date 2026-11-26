@@ -8,7 +8,6 @@ import { CreateUserComponent } from './create-user/create-user.component';
 
 @Component({
   selector: 'app-users',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterLink, SearchComponent, CreateUserComponent],
   template: `
@@ -17,7 +16,7 @@ import { CreateUserComponent } from './create-user/create-user.component';
       <ul class="flex flex-col gap-y-2">
         <li *ngFor="let user of users()" class="p-4 rounded border border-gray-300">
           <div class="flex flex-col gap-y-1">
-            <a [routerLink]="['/users', user.host, user.username]">@{{ user.username }}@{{ user.host }}</a>
+            <a [routerLink]="['/users', user.host, user.username]">&#64;{{ user.username }}&#64;{{ user.host }}</a>
             <span class="text-gray-500 text-xs">{{ user.id }}</span>
           </div>
         </li>

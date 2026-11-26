@@ -6,7 +6,6 @@ import { AdminApiClient } from '../../shared/api';
 
 @Component({
   selector: 'app-create-note',
-  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './create-note.component.html',
   host: { class: 'block' },

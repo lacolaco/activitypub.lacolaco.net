@@ -7,7 +7,7 @@ export default (app: Hono<AppContext>) => {
 };
 
 const handleHostMetaXML: Handler = async (c) => {
-  const accept = c.req.headers.get('Accept');
+  const accept = c.req.header('Accept');
   const origin = c.get('origin');
 
   if (accept === 'application/json') {
@@ -19,11 +19,9 @@ const handleHostMetaXML: Handler = async (c) => {
     <Link rel="lrdd" template="${origin}/.well-known/webfinger?resource={uri}"/>
 </XRD>`;
 
-  return c.text(body, {
-    headers: {
-      'Content-Type': 'application/xrd+xml; charset=utf-8',
-      'Cache-Control': `max-age=${60 * 60}, public`,
-    },
+  return c.text(body, 200, {
+    'Content-Type': 'application/xrd+xml; charset=utf-8',
+    'Cache-Control': `max-age=${60 * 60}, public`,
   });
 };
 

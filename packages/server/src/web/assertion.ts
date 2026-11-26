@@ -3,7 +3,7 @@ import { MiddlewareHandler } from 'hono';
 export const assertAcceptHeader =
   (allowed: string[]): MiddlewareHandler =>
   async (c, next) => {
-    const accept = c.req.headers.get('Accept');
+    const accept = c.req.header('Accept');
     if (accept == null) {
       return c.text('Bad Request', 400);
     }
@@ -16,7 +16,7 @@ export const assertAcceptHeader =
 export const assertContentTypeHeader =
   (allowed: string[]): MiddlewareHandler =>
   async (c, next) => {
-    const contentType = c.req.headers.get('Content-Type');
+    const contentType = c.req.header('Content-Type');
     if (contentType == null) {
       return c.text('Bad Request', 400);
     }

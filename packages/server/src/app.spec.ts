@@ -16,11 +16,11 @@ describe('endpoints for activitypub compatibility', () => {
   test('all routes are registered', async () => {
     expect(app.routes.map((r) => `${r.method} ${r.path} ${r.handler.name || '[inline]'}`)).toMatchInlineSnapshot(`
       [
-        "ALL * [inline]",
-        "ALL * [inline]",
-        "ALL * [inline]",
-        "ALL * [inline]",
-        "ALL * [inline]",
+        "ALL /* [inline]",
+        "ALL /* [inline]",
+        "ALL /* [inline]",
+        "ALL /* [inline]",
+        "ALL /* cors",
         "GET /.well-known/nodeinfo handleNodeinfo",
         "GET /nodeinfo/2.1 handleNodeinfo21",
         "GET /.well-known/host-meta handleHostMetaXML",

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { showRoutes } from 'hono/dev';
 
 import useAdmin from '@app/web/admin';
 import useActivityPub from '@app/web/ap';
@@ -36,7 +37,7 @@ async function createApplication(config: Config) {
   useAdmin(app, config);
 
   if (!config.isRunningOnCloud) {
-    app.showRoutes();
+    showRoutes(app);
   }
 
   return app;

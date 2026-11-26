@@ -8,7 +8,6 @@ import { FormFieldModule } from '../shared/ui/form-field';
 
 @Component({
   selector: 'app-search-remote-user',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, FormFieldModule, AppStrokedButton],
   template: `
     <div class="flex-auto flex flex-col justify-start gap-y-2">

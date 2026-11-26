@@ -7,7 +7,6 @@ import { CreateNoteComponent } from './create-note/create-note.component';
 
 @Component({
   selector: 'app-user',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, RouterLink, CreateNoteComponent],
   template: `
@@ -15,7 +14,7 @@ import { CreateNoteComponent } from './create-note/create-note.component';
       <header class="flex flex-row gap-x-1 text-xl">
         <a routerLink="/users">Users</a>
         <span class="text-gray-500">/</span>
-        <h2>@{{ username }}@{{ hostname }}</h2>
+        <h2>&#64;{{ username }}&#64;{{ hostname }}</h2>
       </header>
 
       <ng-container *ngIf="user() as u">
