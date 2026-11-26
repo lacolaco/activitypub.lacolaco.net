@@ -16,9 +16,9 @@ describe('host-meta', () => {
     const res = await app.request(req);
     const body = await res.text();
     expect(body).toMatchInlineSnapshot(`
-      "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>
-      <XRD xmlns=\\"http://docs.oasis-open.org/ns/xri/xrd-1.0\\">
-          <Link rel=\\"lrdd\\" template=\\"https://localhost:80/.well-known/webfinger?resource={uri}\\"/>
+      "<?xml version="1.0" encoding="UTF-8"?>
+      <XRD xmlns="http://docs.oasis-open.org/ns/xri/xrd-1.0">
+          <Link rel="lrdd" template="https://localhost:80/.well-known/webfinger?resource={uri}"/>
       </XRD>"
     `);
   });
